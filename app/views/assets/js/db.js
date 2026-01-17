@@ -1,5 +1,5 @@
 // Base de datos de productos de joyería
-const ruta = "http://localhost/AXStore/app/views/assets/";
+const ruta = "http://localhost/AXStore2026_1/app/views/assets/";
 const products = [
     {
         id: 1,

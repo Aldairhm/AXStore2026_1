@@ -495,7 +495,7 @@ border-radius: 20px 20px 0 0;
 
 /* Hero section - Estilo Galería de Lujo */
 .hero {
-    background: url(http://localhost/AXStore/app/views/assets/images/hero_desktop.webp) no-repeat right center, var(--dark-color);
+    background: url(http://localhost/AXStore2026_1/app/views/assets/images/hero_desktop.webp) no-repeat right center, var(--dark-color);
     background-size: cover;
     background-position: center;
     background-attachment: fixed;

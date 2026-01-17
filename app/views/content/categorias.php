@@ -1,74 +1,66 @@
-<?php
-// 1. Definimos el título dinámico antes de cargar el header
-include  "./app/views/inc/head.php";
-// 2. Cargamos la cabecera (que ya contiene el <head> y el menú)
-include  "./app/views/inc/header.php";
-?>
+<!DOCTYPE html>
+<html lang="en">
+<?php require_once "./app/views/inc/head.php"; ?>
 
-<section class="container fade-in" style="margin-top: 120px;">
-    <div class="d-flex" style="justify-content: space-between; align-items: center; margin-bottom: 40px;">
-        <h2 class="section-title">Categorías Registradas</h2>
-        <button class="btn" onclick="abrirModal()">
-            <i class="fas fa-plus"></i> Nueva Categoría
-        </button>
-    </div>
+<body>
+    <?php require_once "./app/views/inc/header.php"; ?>
 
-    <div class="luxury-table-container">
-        <table class="luxury-table">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Descripcion</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="tablaCategorias">
-                <tr>
-                    <td>#1</td>
-                    <td style="font-family: 'Playfair Display', serif; font-weight: 600;">Accesorios de Carro</td>
-                    <td style="color: var(--text-light);">Pasillo A</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</section>
-
-<div id="modalCategoria" class="checkout-modal">
-    <div class="checkout-content">
-        <div class="checkout-header">
-            <h3>Registrar Categoría</h3>
-            <span class="close-checkout" onclick="cerrarModal()">&times;</span>
+    <section class="container fade-in" style="margin-top: 120px;">
+        <div class="d-flex" style="justify-content: space-between; align-items: center; margin-bottom: 40px;">
+            <h2 class="section-title">Categorías Registradas</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCategoria">
+                <i class="fas fa-plus"></i> Nueva Categoría
+            </button>
         </div>
-        <div class="checkout-body">
-            <form id="formCategoria">
-                <div class="form-group">
-                    <label>Nombre</label>
-                    <input type="text" name="nombre" required>
+
+        <div class="luxury-table-container">
+            <table class="luxury-table table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaCategorias">
+
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="modal fade" id="modalCategoria" tabindex="-1" aria-labelledby="modalCategoriaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalCategoriaLabel">Registrar Categoría</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="form-group">
-                    <label>Descripcion</label>
-                    <input type="text" name="ubicacion">
+                <div class="modal-body">
+                    <form id="formCategoria">
+                        <input type="hidden" id="id_categoria" value="0">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" name="nombre" id="nombre" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea name="descripcion" id="descripcion" class="form-control" rows="3" required></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" id="btnEnviar">Guardar Categoría</button>
+                        </div>
+                    </form>
                 </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn">Guardar</button>
-                    <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
-</div>
 
-<?php
-// 3. Cargamos el pie de página (scripts y cierre de etiquetas)
-require_once "./app/views/inc/footer.php";
-?>
+    <?php require_once "./app/views/inc/script.php"; ?>
+    <?php require_once "./app/views/inc/footer.php"; ?>
+    <script src="app/views/assets/js/categoria.js?v=34"></script>
 
-<script>
-    function abrirModal() {
-        document.getElementById('modalCategoria').style.display = 'flex';
-    }
+</body>
 
-    function cerrarModal() {
-        document.getElementById('modalCategoria').style.display = 'none';
-    }
-</script>
+</html>
