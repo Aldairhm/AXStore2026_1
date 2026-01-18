@@ -1424,3 +1424,53 @@ footer .container {
 ::-webkit-scrollbar-thumb:hover {
     background: #c9a227;
 }
+
+/* === 1. Centrado perfecto en la columna Acciones === */
+
+/* Asegura que todas las celdas estén centradas verticalmente */
+#tablaCategorias td {
+    vertical-align: middle !important;
+}
+
+/* Fuerza a la ÚLTIMA columna (Acciones) a centrarse horizontalmente */
+#tablaCategorias td:last-child .dropdown {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+/* === 2. Estilos del Botón Kebab y Efecto Dorado === */
+
+/* Estilo base del botón: transparente (fondo blanco) y sin bordes */
+.btn-kebab-luxury {
+    background-color: transparent !important;
+    border: none !important;
+    /* Color inicial del icono (gris oscuro para contraste) */
+    color: #495057;
+    transition: all 0.3s ease; /* Suaviza el cambio de color */
+    /* Asegura que sea un círculo perfecto */
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Quita la flecha triangular que Bootstrap pone por defecto */
+.btn-kebab-luxury::after {
+    display: none !important;
+}
+
+/* EFECTO HOVER: Al pasar el mouse, el icono se pone dorado */
+.btn-kebab-luxury:hover i {
+    /* Puedes ajustar este código de color dorado si prefieres otro tono */
+    color: #DAA520 !important; /* Goldenrod */
+    transform: scale(1.1); /* Un pequeño efecto de zoom para que se vea mejor */
+}
+
+/* Opcional: un fondo muy sutil al hacer hover para que se note el área clickable */
+.btn-kebab-luxury:hover {
+     background-color: rgba(218, 165, 32, 0.1) !important; /* Dorado muy transparente */
+}
