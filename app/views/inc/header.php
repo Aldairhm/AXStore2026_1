@@ -6,8 +6,8 @@
             <nav class="main-nav">
                 <ul>
                     <li><a href="#inicio">Inicio</a></li>
-                    <li><a href="#categorias">Categorias</a></li>
-                    <li><a href="categorias">Categorias 2</a></li>
+                    <li><a href="productos">Productos</a></li>
+                    <li><a href="categorias">Categorias</a></li>
                     <li><a href="#contacto">Contacto</a></li>
                 </ul>
             </nav>
