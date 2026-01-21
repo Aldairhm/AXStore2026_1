@@ -8,6 +8,7 @@
                     <li><a href="#inicio">Inicio</a></li>
                     <li><a href="productos">Productos</a></li>
                     <li><a href="categorias">Categorias</a></li>
+                    <li><a href="usuario">Usuarios</a></li>
                     <li><a href="#contacto">Contacto</a></li>
                 </ul>
             </nav>

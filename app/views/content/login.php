@@ -294,6 +294,7 @@
                         <input
                             type="text"
                             id="username"
+                            name="username"
                             placeholder="Ingrese su usuario"
                             required
                             autocomplete="off"
@@ -304,6 +305,7 @@
                         <input
                             type="password"
                             id="password"
+                            name="password"
                             placeholder="Ingrese su contraseña"
                             required
                             autocomplete="off"
