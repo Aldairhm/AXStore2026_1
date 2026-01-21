@@ -7,13 +7,13 @@
     --secondary-color: #2196f3; /* Plata clara */
     --dark-color: #0a0a0a; /* Negro profundo */
     --light-color: #f8f8f8; /* Blanco roto */
-    --accent-color: #8b7355; /* Bronce */
+    --accent-color: #0b5ee1; /* Bronce */
     --text-color: #333333; /* Texto principal */
     --text-light: #777777; /* Texto secundario */
     --overlay-color: rgba(10, 10, 10, 0.8); /* Overlay oscuro */
     --transition: all 0.4s cubic-bezier(0.645, 0.045, 0.355, 1);
     --container-width: 1200px;
-       --white: #ffffff;
+       --white: #0b5ee1;
 }
 
 * {
@@ -55,7 +55,7 @@ h1, h2, h3, h4, h5, h6 {
     padding: 14px 32px;
     background-color: #0a0a0a; /* Fondo negro inicial */
     color: #ffffff !important;   /* Letra blanca SIEMPRE visible */
-    border: 1px solid #d4af37; /* Borde dorado luxury */
+    border: 1px solid #0b5ee1; /* Borde dorado luxury */
     text-transform: uppercase;
     font-weight: 600;
     letter-spacing: 1.2px;
@@ -72,7 +72,7 @@ h1, h2, h3, h4, h5, h6 {
     left: -100%;               /* Empieza fuera de la vista */
     width: 100%;
     height: 100%;
-    background-color: #d4af37; /* Cambiamos el azul por el Dorado Luxury */
+    background-color: #0b5ee1; /* Cambiamos el azul por el Dorado Luxury */
     transition: all 0.4s cubic-bezier(0.6, 0.1, 0.3, 1);
     z-index: -1;               /* ¡IMPORTANTE! Envía el color detrás de la letra */
 }
@@ -227,7 +227,7 @@ header .container {
 
 .luxury-table td {
     padding: 15px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #0b5ee1;
     transition: var(--transition);
 }
 
@@ -295,7 +295,7 @@ header .container {
     width: 90%;
     max-width: 600px;
     max-height: 90vh;
-    background-color: white;
+    background-color:#0b5ee1 ;
     border-radius: 20px;
     overflow-y: auto;
     animation: modalFadeIn 0.3s ease-out;
@@ -418,12 +418,12 @@ border-radius: 20px 20px 0 0;
 }
 
 .btn-secondary {
-    background-color: #6c757d;
+    background-color: #0b5ee1;
     color: white;
 }
 
 .btn-secondary:hover {
-    background-color: #5a6268;
+    background-color: #0b5ee1;
     color: white;
 }
 
@@ -770,7 +770,7 @@ border-radius: 20px 20px 0 0;
     width: 50px;
     margin-left: 10px;
     background-color: var(--light-color);
-    border: 1px solid #e0e0e0;
+    border: 1px solid #0b5ee1;
     border-radius: 0;
     cursor: pointer;
     transition: var(--transition);
@@ -818,7 +818,7 @@ border-radius: 20px 20px 0 0;
     margin-bottom: 25px;
     line-height: 1.8;
     font-weight: 300;
-    color: rgba(255, 255, 255, 0.8);
+    color:#0b5ee1;
 }
 
 .about-image {
@@ -862,7 +862,7 @@ border-radius: 20px 20px 0 0;
     text-align: center;
     padding: 50px 30px;
     border-radius: 0;
-    background-color: white;
+    background-color: #0b5ee1;
     transition: var(--transition);
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.03);
     position: relative;
@@ -1299,7 +1299,7 @@ footer .container {
     }
 
     .main-nav ul li a {
-        color: white;
+        color: #669aef;
         font-size: 1.2rem;
     }
 
@@ -1414,7 +1414,7 @@ footer .container {
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: #669aef;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -1422,7 +1422,7 @@ footer .container {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #c9a227;
+    background: #669aef;
 }
 
 /* === 1. Centrado perfecto en la columna Acciones === */
@@ -1447,7 +1447,7 @@ footer .container {
     background-color: transparent !important;
     border: none !important;
     /* Color inicial del icono (gris oscuro para contraste) */
-    color: #495057;
+    color: #669aef;
     transition: all 0.3s ease; /* Suaviza el cambio de color */
     /* Asegura que sea un círculo perfecto */
     border-radius: 50%;
@@ -1466,11 +1466,11 @@ footer .container {
 /* EFECTO HOVER: Al pasar el mouse, el icono se pone dorado */
 .btn-kebab-luxury:hover i {
     /* Puedes ajustar este código de color dorado si prefieres otro tono */
-    color: #DAA520 !important; /* Goldenrod */
+    color: #0b5ee1 !important; /* Goldenrod */
     transform: scale(1.1); /* Un pequeño efecto de zoom para que se vea mejor */
 }
 
 /* Opcional: un fondo muy sutil al hacer hover para que se note el área clickable */
 .btn-kebab-luxury:hover {
-     background-color: rgba(218, 165, 32, 0.1) !important; /* Dorado muy transparente */
+     background-color: #669aef !important; /* Dorado muy transparente */
 }
