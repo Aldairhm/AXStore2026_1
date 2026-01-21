@@ -1,8 +1,12 @@
 RewriteEngine On
+Options All -Indexes
 
-# Si el archivo o carpeta existe físicamente, que se abra normal
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
+# 1. Convertir /assets/... -> /app/views/assets/...
+RewriteRule ^assets/(.*)$ app/views/assets/$1 [L]
 
-# Si NO existe, envía todo al index.php a través del parámetro 'views'
-RewriteRule ^(.*)$ index.php?views=$1 [L,QSA]
+# 2. Ignorar archivos reales (CSS, JS, imágenes)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# 3. MVC (vistas amigables)
+RewriteRule ^([a-zA-Z0-9/ñÑ-]+)$ index.php?views=$1
