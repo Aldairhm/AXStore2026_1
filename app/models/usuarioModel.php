@@ -1,27 +1,31 @@
 <?php
+
 declare(strict_types=1);
 require_once __DIR__ . "/../../config/conexion.php";
 require_once __DIR__ . "/encriptarModel.php";
 
-class Usuario{
+class Usuario
+{
 
     private PDO $conexion;
-    public function __construct(){
+    public function __construct()
+    {
         $this->conexion = Conexion::conectar();
     }
 
     public function agregar(
-    string $nombre_real, 
-    string $username,
-    string $password,
-    string $rol,
-    int    $estado): bool{
+        string $nombre_real,
+        string $username,
+        string $password,
+        string $rol,
+        int    $estado
+    ): bool {
 
-        try{
+        try {
             $this->conexion->beginTransaction();
 
-            $usernameEncriptado = Encriptar::openCypher('encrypt',$username);
-            $passwordEncriptado = Encriptar::openCypher('encrypt',$password);
+            $usernameEncriptado = Encriptar::openCypher('encrypt', $username);
+            $passwordEncriptado = Encriptar::openCypher('encrypt', $password);
 
             $sql = "INSERT INTO usuario(nombre_real,username,password,rol,estado) 
                     VALUES (:nombre_real, :username, :password, :rol, :estado)";
@@ -36,26 +40,27 @@ class Usuario{
 
             $this->conexion->commit();
             return true;
-        }catch (Throwable $e) {
+        } catch (Throwable $e) {
             $this->conexion->rollBack();
             error_log("Error registrar usuario: " . $e->getMessage());
-            
+
             throw $e;
         }
-}
+    }
 
 
-    public function getUsuarios(): array{
-        try{
+    public function getUsuarios(): array
+    {
+        try {
             $sql = "SELECT id,nombre_real,username,password,rol,estado
                     FROM usuario";
 
             $stmt = $this->conexion->query($sql);
             $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            foreach ($usuarios as &$usuario){
-                $usuario['username'] = Encriptar::openCypher('decrypt',$usuario['username']);
-                $usuario['password'] = Encriptar::openCypher('decrypt',$usuario['password']);
+            foreach ($usuarios as &$usuario) {
+                $usuario['username'] = Encriptar::openCypher('decrypt', $usuario['username']);
+                $usuario['password'] = Encriptar::openCypher('decrypt', $usuario['password']);
             }
             return $usuarios;
         } catch (Throwable $e) {
@@ -65,20 +70,22 @@ class Usuario{
     }
 
 
-    public function getUsuariosSelect(): array{
-        try{
+    public function getUsuariosSelect(): array
+    {
+        try {
             $sql = "SELECT id,nombre_real FROM usuario WHERE estado = 1";
             $stmt = $this->conexion->query($sql);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        }catch (Throwable $e) {
-        error_log("Error getUsuariosSelect: " . $e->getMessage());
-        return [];
+        } catch (Throwable $e) {
+            error_log("Error getUsuariosSelect: " . $e->getMessage());
+            return [];
         }
     }
 
 
-    public function getUsuarioById(int $id): ? array{
-        try{
+    public function getUsuarioById(int $id): ?array
+    {
+        try {
             $sql = "SELECT id,nombre_real,username,password,rol,estado
                     FROM usuario
                     WHERE id = :id
@@ -90,8 +97,8 @@ class Usuario{
 
             $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($usuario) {
-                $usuario['username'] = Encriptar::openCypher('decrypt',$usuario['username']);
-                $usuario['password'] = Encriptar::openCypher('decrypt',$usuario['password']);
+                $usuario['username'] = Encriptar::openCypher('decrypt', $usuario['username']);
+                $usuario['password'] = Encriptar::openCypher('decrypt', $usuario['password']);
                 return $usuario;
             } else {
                 return null;
@@ -108,20 +115,21 @@ class Usuario{
         string $username,
         string $password,
         string $rol,
-        int   $estado): bool{
+        int   $estado
+    ): bool {
 
-            try{
-                $this->conexion->beginTransaction();
+        try {
+            $this->conexion->beginTransaction();
 
-                $usernameEncriptado = Encriptar::openCypher('encrypt',$username);
-                $passwordEncriptado = Encriptar::openCypher('encrypt',$password);
+            $usernameEncriptado = Encriptar::openCypher('encrypt', $username);
+            $passwordEncriptado = Encriptar::openCypher('encrypt', $password);
 
-                $passwordEncriptado = null;
-                if($password !== '' && $password !== null){
-                    $passwordEncriptado = Encriptar::openCypher('encrypt',$password);
-                }
+            $passwordEncriptado = null;
+            if ($password !== '' && $password !== null) {
+                $passwordEncriptado = Encriptar::openCypher('encrypt', $password);
+            }
 
-                $sql = "UPDATE usuario 
+            $sql = "UPDATE usuario 
                         SET nombre_real = :nombre_real,
                             username = :username,
                             password = COALESCE(:password, password),
@@ -129,29 +137,29 @@ class Usuario{
                             estado = :estado
                         WHERE id = :id";
 
-                        $stmt = $this->conexion->prepare($sql);
-                        $stmt->bindParam(':nombre_real', $nombre_real, PDO::PARAM_STR); 
-                        $stmt->bindParam(':username', $usernameEncriptado, PDO::PARAM_STR);
-                        $stmt->bindParam(':password', $passwordEncriptado, PDO::PARAM_STR);
-                        $stmt->bindParam(':rol', $rol, PDO::PARAM_STR);     
-                        $stmt->bindParam(':estado', $estado, PDO::PARAM_INT);
-                        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-                        $stmt->execute();
-                        $this->conexion->commit();
-                        return true;
-            }catch (Throwable $e) {
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->bindParam(':nombre_real', $nombre_real, PDO::PARAM_STR);
+            $stmt->bindParam(':username', $usernameEncriptado, PDO::PARAM_STR);
+            $stmt->bindParam(':password', $passwordEncriptado, PDO::PARAM_STR);
+            $stmt->bindParam(':rol', $rol, PDO::PARAM_STR);
+            $stmt->bindParam(':estado', $estado, PDO::PARAM_INT);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $this->conexion->commit();
+            return true;
+        } catch (Throwable $e) {
             $this->conexion->rollBack();
             error_log("Error actualizar usuario: " . $e->getMessage());
-            
+
             throw $e;
         }
+    }
 
-        }
 
-    
-    public function actualizarContrasenia(int $id, string $password): bool{
-        try{
-            $passwordEncriptado = Encriptar::openCypher('encrypt',$password);
+    public function actualizarContrasenia(int $id, string $password): bool
+    {
+        try {
+            $passwordEncriptado = Encriptar::openCypher('encrypt', $password);
 
             $sql = "UPDATE usuario 
                     SET password = :password
@@ -171,8 +179,9 @@ class Usuario{
 
 
 
-    public function eliminar(int $id): bool{
-        try{
+    public function eliminar(int $id): bool
+    {
+        try {
             $this->conexion->beginTransaction();
             $sql = "DELETE FROM usuario WHERE id = :id";
             $stmt = $this->conexion->prepare($sql);
@@ -183,16 +192,17 @@ class Usuario{
         } catch (Throwable $e) {
             $this->conexion->rollBack();
             error_log("Error eliminar usuario: " . $e->getMessage());
-         
+
             throw $e;
         }
     }
 
 
-    public function validarCredenciales(string $username, string $password): ? array{
-        try{
-            $usernameEncriptado = Encriptar::openCypher('encrypt',$username);
-            $passwordEncriptado = Encriptar::openCypher('encrypt',$password);
+    public function validarCredenciales(string $username, string $password): ?array
+    {
+        try {
+            $usernameEncriptado = Encriptar::openCypher('encrypt', $username);
+            $passwordEncriptado = Encriptar::openCypher('encrypt', $password);
 
             $sql = "SELECT id,nombre_real,username,rol,estado
                     FROM usuario
@@ -207,9 +217,9 @@ class Usuario{
             $stmt->execute();
 
             $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
-            if($usuario){
-                $usuario['username'] = Encriptar::openCypher('decrypt',$usuario['username']);
-                $usuario['password'] = Encriptar::openCypher('decrypt',$usuario['password']);
+            if ($usuario) {
+                $usuario['username'] = Encriptar::openCypher('decrypt', $usuario['username']);
+                $usuario['password'] = Encriptar::openCypher('decrypt', $usuario['password']);
                 return $usuario;
             }
             return null;
@@ -221,9 +231,10 @@ class Usuario{
 
 
 
-    public function existeCorreo(string $username):bool{
-        try{
-            $usernameEncriptado = Encriptar::openCypher('encrypt',$username);
+    public function existeCorreo(string $username): bool
+    {
+        try {
+            $usernameEncriptado = Encriptar::openCypher('encrypt', $username);
 
             $sql = "SELECT COUNT(*) as count
                     FROM usuario
@@ -243,8 +254,9 @@ class Usuario{
 
 
 
-    public function cambiarEstado(int $id, int $estado): bool{
-        try{
+    public function cambiarEstado(int $id, int $estado): bool
+    {
+        try {
             $sql = "UPDATE usuario 
                     SET estado = :estado
                     WHERE id = :id";
@@ -259,5 +271,5 @@ class Usuario{
             return false;
         }
     }
-    
+
 }

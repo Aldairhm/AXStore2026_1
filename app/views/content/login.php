@@ -313,7 +313,7 @@
                     </div>
                     <button type="submit" class="login-btn">Iniciar Sesión</button>
                     <div class="form-footer">
-                        <a href="#" class="forgot-link">¿Olvidó su contraseña?</a>
+                        <a href="<?php echo APP_URL; ?>recuperar" class="forgot-link">¿Olvidó su contraseña?</a>
                     </div>
                 </form>
             </div>

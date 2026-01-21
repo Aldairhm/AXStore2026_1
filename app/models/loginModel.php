@@ -34,4 +34,105 @@ class Login{
             return null;
         }
     }
+
+
+    public function obtenerDatosPorUsername(string $username): ?array
+    {
+        try {
+            $usernameEncriptado = Encriptar::openCypher('encrypt', $username);
+
+            $sql = "SELECT id, nombre_real, username FROM usuario WHERE username = :username LIMIT 1";
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->bindParam(':username', $usernameEncriptado, PDO::PARAM_STR);
+            $stmt->execute();
+
+            $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($usuario) {
+                $usuario['username'] = Encriptar::openCypher('decrypt', $usuario['username']);
+                return $usuario;
+            }
+            return null;
+        } catch (Throwable $e) {
+            error_log("Error obtenerDatosPorUsername: " . $e->getMessage());
+            return null;
+        }
+    }
+
+
+    public function actualizarContrasenia(int $id, string $password): bool
+    {
+        try {
+            $passwordEncriptado = Encriptar::openCypher('encrypt', $password);
+
+            $sql = "UPDATE usuario 
+                    SET password = :password
+                    WHERE id = :id";
+
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->bindParam(':password', $passwordEncriptado, PDO::PARAM_STR);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $this->conexion->commit();
+            return true;
+        } catch (Throwable $e) {
+            error_log("Error actualizarContrasenia: " . $e->getMessage());
+            return false;
+        }
+    }
+
+
+
+    //guardar token 
+    public function guardarToken(int $id, string $token): bool
+    {
+        try {
+            $sql = "UPDATE usuario SET token = :token WHERE id = :id";
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->bindParam(':token', $token);
+            $stmt->bindParam(':id', $id);
+            return $stmt->execute();
+        } catch (Throwable $e) {
+            error_log("Error guardarToken: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // Buscar usuario por token válido
+    public function obtenerIdPorToken(string $token): ?int
+    {
+        try {
+            $sql = "SELECT id FROM usuario WHERE token = :token LIMIT 1";
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->bindParam(':token', $token);
+            $stmt->execute();
+            $res = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $res ? (int)$res['id'] : null;
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
+    // Actualizar clave y borrar el token (para que no se use dos veces)
+    public function actualizarPasswordYLimpiarToken(int $id, string $password): bool
+    {
+        try {
+            $this->conexion->beginTransaction();
+
+            $passwordEncriptado = Encriptar::openCypher('encrypt', $password);
+
+            // Actualizamos pass y ponemos token en NULL
+            $sql = "UPDATE usuario SET password = :password, token = NULL WHERE id = :id";
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->bindParam(':password', $passwordEncriptado);
+            $stmt->bindParam(':id', $id);
+            $stmt->execute();
+
+            $this->conexion->commit();
+            return true;
+        } catch (Throwable $e) {
+            $this->conexion->rollBack();
+            return false;
+        }
+    }
 }
