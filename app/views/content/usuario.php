@@ -74,7 +74,7 @@
                                 <label class="form-label small fw-bold">Rol</label>
                                 <select class="form-select" id="rol" name="rol" required>
                                     <option value="" selected disabled>Seleccione...</option>
-                                    <option value="administrador">Administrador</option>
+                                    <option value="admin">Administrador</option>
                                     <option value="vendedor">Vendedor</option>
                                 </select>
                             </div>
@@ -100,6 +100,6 @@
     <?php require_once "./app/views/inc/script.php"; ?>
     <?php require_once "./app/views/inc/footer.php"; ?>
     
-    <script src="<?php echo APP_URL; ?>app/ajax/js/usuario.js"></script>
+    <script src="<?php echo APP_URL; ?>app/ajax/usuario.js"></script>
 </body>
 </html>
