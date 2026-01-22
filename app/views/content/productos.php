@@ -144,37 +144,45 @@
                                         </div>
                                         <div class="mb-0">
                                             <label class="form-label small">Descripción</label>
-                                            <textarea name="description" id="descripcion" class="form-control" rows="2"></textarea>
+                                            <textarea name="descripcion" id="descripcion" class="form-control" rows="2" required></textarea>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="col-md-5">
-                                <div class="card-form shadow-sm">
-                                    <div class="card-header-custom d-flex justify-content-between align-items-center p-3">
+                                <div class="card-form shadow-sm d-flex flex-column h-100">
+
+                                    <div class="card-header-custom d-flex justify-content-between align-items-center p-3 bg-white border-bottom">
                                         <span class="small fw-bold text-dark"><i class="fas fa-list me-2"></i>ATRIBUTOS</span>
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-primary" id="btnAgregarFilaAtributo"
-                                                data-bs-toggle="tooltip" title="Añadir atributo al producto">
-                                                <i class="fas fa-plus"></i>
-                                            </button>
-                                            <button type="button"
-                                                class="btn btn-sm btn-outline-dark"
-                                                id="btnNuevoAtributo"
-                                                title="Añadir atributo nuevo al SELECT">
+
+                                        <div class="btn-group shadow-sm">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnNuevoAtributo"
+                                                data-bs-toggle="tooltip" title="Configurar nuevos tipos de atributo">
                                                 <i class="fas fa-cog"></i>
                                             </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAgregarFilaAtributo"
+                                                data-bs-toggle="tooltip" title="Añadir nueva fila de valor">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="card-body bg-light-subtle">
-                                        <div id="contenedorAtributos" style="min-height: 150px;">
-                                            <p class="text-muted small text-center pt-4">Asigne atributos (ej: Marca, Medida) para generar variantes.</p>
+
+                                    <div class="card-body bg-light-subtle flex-grow-1" style="max-height: 350px; overflow-y: auto;">
+                                        <div id="contenedorAtributos">
+                                            <p class="text-muted small text-center pt-4">Define los atributos para habilitar la matriz.</p>
                                         </div>
                                     </div>
+
+                                    <div class="card-footer bg-white border-top p-3">
+                                        <button type="button" class="btn btn-dark w-100 fw-bold shadow-sm" id="btnGenerarMatriz"
+                                            data-bs-toggle="tooltip" title="Actualizar matriz de variantes">
+                                            <i class="fas fa-sync-alt me-2"></i> GENERAR MATRIZ
+                                        </button>
+                                    </div>
+
                                 </div>
                             </div>
-
                         </div>
                         <div class="row mt-4">
                             <div class="col-12">
