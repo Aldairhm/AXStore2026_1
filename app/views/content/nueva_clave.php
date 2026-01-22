@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="container" style="justify-content: center;">
-        <div class="login-form">
+        <div class="login-form active">
             <h2>Crear Nueva Contraseña</h2>
             
             <form method="post" id="formNuevaClave">

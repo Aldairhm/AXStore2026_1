@@ -12,7 +12,7 @@
 </head>
 <body>
     <div class="container" style="justify-content: center;">
-        <div class="login-form">
+        <div class="login-form active">
             <h2>Recuperar Cuenta</h2>
             <p style="text-align: center; color: #666; margin-bottom: 20px;">
                 Ingrese su correo electrónico y le enviaremos una nueva contraseña temporal.

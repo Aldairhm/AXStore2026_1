@@ -73,7 +73,7 @@ class Login{
             $stmt->bindParam(':password', $passwordEncriptado, PDO::PARAM_STR);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
-            $this->conexion->commit();
+            
             return true;
         } catch (Throwable $e) {
             error_log("Error actualizarContrasenia: " . $e->getMessage());

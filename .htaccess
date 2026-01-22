@@ -1,12 +1,10 @@
 RewriteEngine On
 Options All -Indexes
 
-# 1. Convertir /assets/... -> /app/views/assets/...
 RewriteRule ^assets/(.*)$ app/views/assets/$1 [L]
 
-# 2. Ignorar archivos reales (CSS, JS, imágenes)
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]
 
-# 3. MVC (vistas amigables)
-RewriteRule ^([a-zA-Z0-9/ñÑ-]+)$ index.php?views=$1
+# Fíjate que al final tenga [QSA,L]
+RewriteRule ^([a-zA-Z0-9/ñÑ-]+)$ index.php?views=$1 [QSA,L]
