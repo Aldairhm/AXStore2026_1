@@ -8,9 +8,7 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 require __DIR__ . '/../../vendor/autoload.php';
-// IMPORTANTE: Incluir la configuración para poder usar APP_URL en el correo
 require_once __DIR__ . "/../../config/app.php";
-
 require_once __DIR__ . "/../models/loginModel.php";
 require_once __DIR__ . "/../models/encriptarModel.php";
 
