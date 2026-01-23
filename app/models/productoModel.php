@@ -13,6 +13,48 @@ class Producto
         $this->conexion = Conexion::conectar();
     }
 
+    public function getProductoPorId(int $id_producto): ?array
+    {
+        $sql = "SELECT p.id,p.nombre, p.descripcion,p.estado, c.nombre AS categoria, c.id AS id_categoria FROM producto p INNER JOIN categoria c  ON p.id_categoria=c.id WHERE p.id = :id";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bindParam(':id', $id_producto, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $resultado ? $resultado : null;
+    }
+
+    public function actualizarProducto(int $id, string $nombre, string $descripcion, int $categoria, int $estado): ?int
+    {
+        $sql = "UPDATE producto SET id_categoria=:categoria, nombre=:nombre, descripcion=:descripcion, estado=:estado WHERE id=:id";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bindParam(':categoria', $categoria, PDO::PARAM_INT);
+        $stmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
+        $stmt->bindParam(':descripcion', $descripcion, PDO::PARAM_STR);
+        $stmt->bindParam(':estado', $estado, PDO::PARAM_INT);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+
+        $stmt->execute();
+        return $stmt->rowCount();
+    }
+
+    public function getVariantesPorProducto(int $id_producto): array
+    {
+        $sql = "SELECT p.descripcion, v.nombre_variante as nombre, v.precio, v.stock, v.imagen, c.nombre as categoria FROM producto p INNER JOIN variante v ON p.id=v.id_producto INNER JOIN categoria c ON p.id_categoria= c.id WHERE p.id= :id";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bindParam(':id', $id_producto, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getProductosFull(): array
+    {
+        $sql = "SELECT p.id,p.nombre,p.estado, c.nombre as categoria FROM producto p INNER JOIN categoria c ON p.id_categoria = c.id";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function registrarAtributo(string $nombre): ?int
     {
         $sql = "INSERT INTO atributo (nombre) VALUES (:nombre)";

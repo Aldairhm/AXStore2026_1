@@ -16,6 +16,74 @@ $response = ["status" => "error", "message" => "Opción inválida"];
 
 try {
     switch ($opcion) {
+        case 'variantes':
+            $id_producto = isset($_POST["id"]) ? (int)$_POST["id"] : null;
+            $datos = $productoModel->getVariantesPorProducto($id_producto);
+            $response = ["status" => "success", "data" => $datos];
+            break;
+        case 'obtener_uno':
+            $id_producto = isset($_POST["id"]) ? (int)$_POST["id"] : null;
+            $dato = $productoModel->getProductoPorId($id_producto);
+            if ($dato) {
+                $response = ["status" => "success", "data" => $dato];
+            } else {
+                $response = ["status" => "error", "message" => "Producto no encontrado"];
+            }
+            break;
+        case 'editarProducto':
+            $id_producto = isset($_POST["id_producto2"]) ? (int)$_POST["id_producto2"] : null;
+            $nombre = isset($_POST["nombre2"]) ? trim($_POST["nombre2"]) : null;
+            $descripcion = isset($_POST["descripcion2"]) ? trim($_POST["descripcion2"]) : "";
+            $id_categoria = isset($_POST["id_categoria2"]) ? (int)$_POST["id_categoria2"] : null;
+            $estado = isset($_POST["estado2"]) ? (int)$_POST["estado2"] : 1;
+
+            $resultado = $productoModel->actualizarProducto($id_producto, $nombre, $descripcion, $id_categoria, $estado);
+            if ($resultado) {
+                $response = ["status" => "success", "message" => "Producto actualizado exitosamente"];
+            } else {
+                $response = ["status" => "error", "message" => "Error al actualizar el producto"];
+            }
+            break;
+        case 'cargarProductos':
+            $datos = $productoModel->getProductosFull(); // Asegúrate de traer el nombre de la categoría con un JOIN
+            $data = array();
+            foreach ($datos as $row) {
+                $sub_array = array();
+                $sub_array[] = htmlspecialchars($row["nombre"]);
+                $sub_array[] = '<span class="badge bg-light text-dark border">' . htmlspecialchars($row["categoria"] ?? "S/C") . '</span>';
+
+                // Estado con colores
+                $sub_array[] = ($row["estado"] == 1)
+                    ? '<span class="badge bg-success rounded-pill">Activo</span>'
+                    : '<span class="badge bg-secondary rounded-pill">Inactivo</span>';
+
+                $id = $row["id"];
+                // ... dentro de tu foreach
+                $sub_array[] = '
+                            <div class="d-flex justify-content-center align-items-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-kebab-luxury shadow-none border-0" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots-vertical text-dark"></i>
+                                    </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 animate__animated animate__fadeIn">
+                                            <li>
+                                                <a class="dropdown-item py-2" onclick="editarProducto('.$id.')">
+                                                    <i class="bi bi-pencil-fill me-2 text-warning"></i> Editar Producto
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item py-2" href="variantes?id=' . $id . '">
+                                                    <i class="bi bi-eye-fill me-2 text-info"></i> Ver Variantes
+                                                </a>
+                                            </li>
+                                        </ul>
+                                </div>
+                            </div>';
+
+                $data[] = $sub_array;
+            }
+            $response = ["status" => "success", "data" => $data];
+            break;
         case 'crearAtributo':
             $nombre = isset($_POST["nombre"]) ? trim($_POST["nombre"]) : null;
 

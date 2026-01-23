@@ -43,10 +43,10 @@ const products = [
     },
     {
         id: 6,
-        name: "Collar de Perlas",
-        description: "Collar de perlas cultivadas con cierre de oro de 14k.",
+        name: "Camisas Polo",
+        description: "Camisas de vestir para diferentes ocasiones",
         price: 350.00,
         category: "collares",
-        image: ruta+"images/perla.png"
+        image: ruta+"images/prod_8_v1_1769104900.jpg"
     } ]
     

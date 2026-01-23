@@ -17,7 +17,4 @@
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
 
-<script src="<?php echo APP_URL; ?>app/views/assets/js/db.js"></script>
-<script src="<?php echo APP_URL; ?>app/views/assets/js/cart.js"></script>
-<script src="<?php echo APP_URL; ?>app/views/assets/js/checkout.js"></script>
-<script src="<?php echo APP_URL; ?>app/views/assets/js/script.js"></script>
+

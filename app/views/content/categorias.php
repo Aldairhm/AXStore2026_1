@@ -18,6 +18,44 @@
         display: inline-block;
     }
 
+    /* --- ESTILOS LUXURY PARA ACCIONES --- */
+.btn-kebab-luxury {
+    color: #333 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin: 0 auto;
+    transition: all 0.2s ease;
+}
+
+/* Eliminamos el fondo azul y el aro de enfoque de Bootstrap */
+.btn-kebab-luxury:focus, 
+.btn-kebab-luxury:active,
+.dropdown-toggle:focus {
+    outline: none !important;
+    box-shadow: none !important; 
+    background-color: transparent !important;
+}
+
+.btn-kebab-luxury:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Alineación vertical perfecta para todas las celdas */
+.luxury-table td {
+    vertical-align: middle !important;
+}
+
+/* Color Luxury para la selección en el dropdown */
+.dropdown-item:active {
+    background-color: #d4af37 !important; /* Dorado AXStore */
+    color: white !important;
+}
+
     /* Alinea el buscador a la derecha y lo hace más estético */
     .dataTables_filter {
         text-align: right;

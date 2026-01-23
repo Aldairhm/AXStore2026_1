@@ -5,7 +5,46 @@ document.addEventListener("focusin", (e) => {
   }
 });
 
+var tabla;
+
 $(document).ready(function () {
+  //cargamos los productos
+  tabla = $("#tablaProductos").DataTable({
+    ajax: {
+      url: "app/controllers/productoController.php",
+      type: "POST",
+      data: { accion: "cargarProductos" },
+    },
+    responsive: true,
+    language: {
+      url: "app/ajax/idioma.json", // Idioma español
+    },
+    columns: [
+      { width: "40%" }, // Producto
+      { width: "20%" }, // Categoría
+      { width: "20%" }, // Estado
+      { width: "20%", className: "text-center" }, // Acciones
+    ],
+    order: [[0, "asc"]],
+  });
+
+  // Filtros personalizados (Búsqueda en columnas específicas)
+  $("#filtro_categoria").on("change", function () {
+    tablaProductos.column(1).search(this.value).draw();
+  });
+
+  $("#filtro_estado").on("change", function () {
+    // Buscamos el texto exacto del badge
+    let estado =
+      this.value === "1" ? "Activo" : this.value === "0" ? "Inactivo" : "";
+    tablaProductos.column(2).search(estado).draw();
+  });
+
+  function limpiarFiltros() {
+    $("#filtro_categoria, #filtro_estado").val("");
+    $("#tablaProductos").DataTable().search("").columns().search("").draw();
+  }
+
   // Botón para agregar nueva fila de atributo
   $("#btnAgregarFilaAtributo").click(function () {
     $("#contenedorAtributos p").remove();
@@ -33,7 +72,7 @@ $(document).ready(function () {
     const $nuevaFila = $(htmlFila);
     $("#contenedorAtributos").append($nuevaFila);
     cargarAtributos($nuevaFila.find(".select-atributo-base"));
-});
+  });
 
   // Delegación de eventos para quitar filas
   $(document).on("click", ".btn-quitar-atributo", function () {
@@ -60,6 +99,7 @@ $(document).ready(function () {
           options += `<option value="${item.id}">${item.nombre}</option>`;
         });
         $("#id_categoria").html(options);
+        $("#id_categoria2").html(options);
       }
     },
   });
@@ -117,19 +157,19 @@ $(document).ready(function () {
   //logica: desabilitar el boton de los atributos mientras los datos del producto estan vacios
 
   // Generar matriz de variantes cuando cambie algún valor
- $("#btnGenerarMatriz").on("click", function () {
-        // Validamos primero que haya datos base
-        const nombre = $("#nombre").val().trim();
-        const categoria = $("#id_categoria").val();
+  $("#btnGenerarMatriz").on("click", function () {
+    // Validamos primero que haya datos base
+    const nombre = $("#nombre").val().trim();
+    const categoria = $("#id_categoria").val();
 
-        if (nombre === "" || categoria === "") {
-            mostrarError("Primero completa el nombre y la categoría del producto.");
-            return;
-        }
+    if (nombre === "" || categoria === "") {
+      mostrarError("Primero completa el nombre y la categoría del producto.");
+      return;
+    }
 
-        generarMatriz();
-        mostrarExito("Matriz generada según los atributos actuales.");
-    });
+    generarMatriz();
+    mostrarExito("Matriz generada según los atributos actuales.");
+  });
 
   //funcion para generar la matriz de variantes
   function generarMatriz() {
@@ -140,40 +180,50 @@ $(document).ready(function () {
     let atributosData = [];
 
     $(".fila-atributo").each(function () {
-        const nombreAttr = $(this).find(".select-atributo-base option:selected").text();
-        const valorInput = $(this).find(".input-valor-variante").val().trim();
+      const nombreAttr = $(this)
+        .find(".select-atributo-base option:selected")
+        .text();
+      const valorInput = $(this).find(".input-valor-variante").val().trim();
 
-        if (valorInput !== "" && nombreAttr !== "Seleccione...") {
-            // "Explota" los valores por coma: "Rojo, Azul" -> ["Rojo", "Azul"]
-            const valoresArray = valorInput.split(",").map((v) => v.trim()).filter((v) => v !== "");
+      if (valorInput !== "" && nombreAttr !== "Seleccione...") {
+        // "Explota" los valores por coma: "Rojo, Azul" -> ["Rojo", "Azul"]
+        const valoresArray = valorInput
+          .split(",")
+          .map((v) => v.trim())
+          .filter((v) => v !== "");
 
-            if (valoresArray.length > 0) {
-                atributosData.push({
-                    nombre: nombreAttr,
-                    valores: valoresArray,
-                });
-            }
+        if (valoresArray.length > 0) {
+          atributosData.push({
+            nombre: nombreAttr,
+            valores: valoresArray,
+          });
         }
+      }
     });
 
     if (atributosData.length === 0) {
-        cuerpo.html('<tr><td colspan="5" class="text-center text-muted py-3">Agregue atributos válidos.</td></tr>');
-        return;
+      cuerpo.html(
+        '<tr><td colspan="5" class="text-center text-muted py-3">Agregue atributos válidos.</td></tr>',
+      );
+      return;
     }
 
     const valoresParaCombinar = atributosData.map((attr) => attr.valores);
 
     // Calculamos el producto cartesiano
-    let combinaciones = valoresParaCombinar.length > 1
+    let combinaciones =
+      valoresParaCombinar.length > 1
         ? obtenerCombinaciones(valoresParaCombinar)
         : valoresParaCombinar[0].map((v) => [v]);
 
     // Renderizamos la tabla
     combinaciones.forEach((combo) => {
-        const arrayCombo = Array.isArray(combo) ? combo : [combo];
-        const labelVariante = arrayCombo.map((val, idx) => `${atributosData[idx].nombre}: ${val}`).join(" / ");
+      const arrayCombo = Array.isArray(combo) ? combo : [combo];
+      const labelVariante = arrayCombo
+        .map((val, idx) => `${atributosData[idx].nombre}: ${val}`)
+        .join(" / ");
 
-        const nuevaFila = `
+      const nuevaFila = `
             <tr class="animate__animated animate__fadeIn">
                 <td class="ps-3">
                     <small class="text-muted d-block" style="font-size: 0.7rem;">${nombre}</small>
@@ -194,46 +244,72 @@ $(document).ready(function () {
                     </button>
                 </td>
             </tr>`;
-        cuerpo.append(nuevaFila);
+      cuerpo.append(nuevaFila);
     });
-}
+  }
 
   //Manejo de la informacion para registrar los datos
-  $("#formProducto").on("submit",function(e){
+  $("#formProducto").on("submit", function (e) {
     e.preventDefault();
 
     Swal.fire({
-        title: 'Procesando...',
-        text: 'Guardando producto y variantes',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
+      title: "Procesando...",
+      text: "Guardando producto y variantes",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
     });
 
     const formData = new FormData(this);
     formData.append("accion", "registrarProductoCompleto");
 
     $.ajax({
-        url: "app/controllers/productoController.php",
-        type: "POST",
-        data: formData,
-        dataType: "json",
-        processData: false, // Vital para enviar archivos
-        contentType: false, // Vital para enviar archivos
-        success: function (response) {
-            if (response.status === "success") {
-                mostrarExito("Producto registrado correctamente");
-                $("#modalProducto").modal("hide");
-                $("#formProducto")[0].reset();
-                $("#cuerpoVariantes").empty();
-                // Aquí recargarías tu DataTable de productos
-            } else {
-                mostrarError(response.message);
-            }
-        },
-        error: function () {
-            mostrarError("Error crítico en el servidor");
+      url: "app/controllers/productoController.php",
+      type: "POST",
+      data: formData,
+      dataType: "json",
+      processData: false, // Vital para enviar archivos
+      contentType: false, // Vital para enviar archivos
+      success: function (response) {
+        if (response.status === "success") {
+          mostrarExito("Producto registrado correctamente");
+          $("#modalProducto").modal("hide");
+          $("#formProducto")[0].reset();
+          $("#cuerpoVariantes").empty();
+          // Aquí recargarías tu DataTable de productos
+        } else {
+          mostrarError(response.message);
         }
+      },
+      error: function () {
+        mostrarError("Error crítico en el servidor");
+      },
     });
+  });
+
+  //Manejo de la info para editar el producto
+  $("#formProductoEdicion").on("submit", function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    formData.append("accion", "editarProducto");
+    $.ajax({
+      url: "app/controllers/productoController.php",
+      type: "POST",
+      data: formData,
+      dataType: "json",
+      success: function (response) {
+        if (response.status === "success") {
+          $("#modalProductoEdicion").modal("hide");
+          $("#formProductoEdicion")[0].reset();
+          tabla.ajax.reload();
+          mostrarExito("Producto editado correctamente");
+        }else{
+          mostrarError(response.message);
+        }
+      }
+    })
   });
 });
 
@@ -241,6 +317,28 @@ $(document).ready(function () {
 function obtenerCombinaciones(arrays) {
   return arrays.reduce((a, b) => a.flatMap((d) => b.map((e) => [d, e].flat())));
 }
+
+//funcion de editar producto
+  function editarProducto(id){
+    $.ajax({
+      url: "app/controllers/productoController.php",
+      type: "POST",
+      data: { accion: "obtener_uno", id: id },
+      dataType: "json",
+      success: function(response){
+        if(response.status === "success"){
+          const producto = response.data;
+          // Rellenar los campos del formulario con los datos del producto
+          $("#id_producto2").val(producto.id);
+          $("#nombre2").val(producto.nombre);
+          $("#id_categoria2").val(producto.id_categoria);
+          $("#estado2").val(producto.estado);
+          $("#descripcion2").val(producto.descripcion);
+          $("#modalProductoEdicion").modal("show");
+        }
+      }
+    });
+  }
 
 function mostrarExito(mensaje) {
   return Swal.fire({
@@ -262,7 +360,6 @@ function mostrarError(mensaje) {
     confirmButtonText: "Aceptar",
   });
 }
-
 
 function cargarAtributos(selectElement) {
   $.ajax({
