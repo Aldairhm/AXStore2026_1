@@ -168,7 +168,7 @@ try {
 }
 
 function crearCuerpoCorreoConCodigo($nombre, $link, $codigo) {
-    $expiracion = date('d/m/Y H:i', time() + (5 * 60));
+    $expiracion = date('d/m/Y H:i', time() + (15 * 60));
     
     return "
     <!DOCTYPE html>
@@ -409,12 +409,6 @@ function crearCuerpoCorreoConCodigo($nombre, $link, $codigo) {
                     Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en AXStore. 
                     Para continuar con el proceso de forma segura, utiliza el código de verificación que aparece a continuación:
                 </p>
-                
-                <div class='code-section'>
-                    <div class='code-label'>🔐 Tu Código de Verificación</div>
-                    <div class='code-display'>$codigo</div>
-                    <div class='expiration-badge'>⏱ Válido hasta: $expiracion</div>
-                </div>
                 
                 <div class='btn-container'>
                     <a href='$link' class='btn'>🔓 Restablecer mi Contraseña</a>

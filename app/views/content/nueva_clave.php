@@ -16,7 +16,7 @@
                 
                 <div class="form-group">
                     <label for="clave_nueva">Nueva Contraseña</label>
-                    <input type="password" id="clave_nueva" name="clave_nueva" placeholder="Mínimo 4 caracteres" required>
+                    <input type="password" id="clave_nueva" name="clave_nueva" placeholder="Mínimo 8 caracteres" required>
                 </div>
 
                 <div class="form-group">

@@ -1,10 +1,15 @@
-/* Archivo: app/ajax/login.js */
+/* ============================================================================
+   SISTEMA DE LOGIN - AUTENTICACIÓN Y RECUPERACIÓN DE CONTRASEÑA
+   ============================================================================ */
 
-$(document).ready(function() {
+const CTRL_LOGIN = 'app/controllers/loginController.php';
+
+$(document).ready(function () {
 
     // -------------------------------------------------------------------------
-    // CONFIGURACIÓN DE SWEETALERT (Igual que en usuario.js)
+    // 1. CONFIGURACIÓN DE NOTIFICACIONES TOAST
     // -------------------------------------------------------------------------
+
     const Toast = Swal.mixin({
         toast: true,
         position: 'top-end',
@@ -12,174 +17,474 @@ $(document).ready(function() {
         timer: 3000,
         timerProgressBar: true,
         didOpen: (toast) => {
-            toast.addEventListener('mouseenter', Swal.stopTimer)
-            toast.addEventListener('mouseleave', Swal.resumeTimer)
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
         }
     });
 
     // -------------------------------------------------------------------------
-    // 1. LOGIN
+    // 2. FUNCIONES DE VALIDACIÓN
     // -------------------------------------------------------------------------
-    $("#formLogin").on("submit", function (e) {
-        e.preventDefault();
-        
-        // Efecto visual de carga en el botón (opcional)
-        var btn = $(this).find("button[type='submit']");
-        var textoOriginal = btn.text();
-        btn.text("Verificando...").prop("disabled", true);
 
-        var formData = new FormData(this);
+    function limpiarErroresFormulario($form) {
+        $form.find('.is-invalid').removeClass('is-invalid');
+        $form.find('.invalid-feedback').remove();
+        $form.find('.is-valid').removeClass('is-valid');
+        $form.find('.valid-feedback').remove();
+    }
+
+    function mostrarErrorCampo($campo, mensaje) {
+        $campo.addClass('is-invalid').removeClass('is-valid');
+        if ($campo.next('.invalid-feedback').length === 0) {
+            $campo.after(`<div class="invalid-feedback">${mensaje}</div>`);
+        } else {
+            $campo.next('.invalid-feedback').text(mensaje);
+        }
+    }
+
+    function validarEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    function validarFormularioLogin() {
+        limpiarErroresFormulario($('#formLogin'));
+
+        const username = $('#username').val().trim();
+        const password = $('#password').val().trim();
+        let errores = false;
+
+        // Validar Username
+        if (username === '') {
+            mostrarErrorCampo($('#username'), 'El usuario o correo es obligatorio');
+            errores = true;
+        } else if (username.includes('@') && !validarEmail(username)) {
+            mostrarErrorCampo($('#username'), 'El formato del correo no es válido');
+            errores = true;
+        } else if (username.length < 3) {
+            mostrarErrorCampo($('#username'), 'Mínimo 3 caracteres');
+            errores = true;
+        }
+
+        // Validar Password
+        if (password === '') {
+            mostrarErrorCampo($('#password'), 'La contraseña es obligatoria');
+            errores = true;
+        } else if (password.length < 6) {
+            mostrarErrorCampo($('#password'), 'Mínimo 6 caracteres');
+            errores = true;
+        }
+
+        if (errores) {
+            Toast.fire({
+                icon: 'error',
+                title: 'Por favor, corrija los errores del formulario'
+            });
+            return false;
+        }
+
+        return true;
+    }
+
+    function validarFormularioRecuperar() {
+        limpiarErroresFormulario($('#formRecuperar'));
+
+        const username = $('#username').val().trim();
+
+        if (username === '') {
+            mostrarErrorCampo($('#username'), 'El correo es obligatorio');
+            Toast.fire({
+                icon: 'error',
+                title: 'Ingrese su correo electrónico'
+            });
+            return false;
+        }
+
+        if (!validarEmail(username)) {
+            mostrarErrorCampo($('#username'), 'Formato de correo inválido');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Correo inválido',
+                text: 'Por favor, ingrese un correo electrónico válido'
+            });
+            return false;
+        }
+
+        return true;
+    }
+
+    function validarFormularioNuevaClave() {
+        limpiarErroresFormulario($('#formNuevaClave'));
+
+        const clave1 = $('#clave_nueva').val();
+        const clave2 = $('#clave_confirmar').val();
+        let errores = false;
+
+        // Validar Contraseña Nueva
+        if (clave1 === '') {
+            mostrarErrorCampo($('#clave_nueva'), 'La contraseña es obligatoria');
+            errores = true;
+        } else if (clave1.length < 6) {
+            mostrarErrorCampo($('#clave_nueva'), 'Mínimo 6 caracteres');
+            errores = true;
+        } else if (clave1.trim().length === 0) {
+            mostrarErrorCampo($('#clave_nueva'), 'La contraseña no puede contener solo espacios');
+            errores = true;
+        }
+
+        // Validar Confirmación de Contraseña
+        if (clave2 === '') {
+            mostrarErrorCampo($('#clave_confirmar'), 'Confirme su contraseña');
+            errores = true;
+        } else if (clave1 !== clave2) {
+            mostrarErrorCampo($('#clave_confirmar'), 'Las contraseñas no coinciden');
+            errores = true;
+        }
+
+        if (errores) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Datos incompletos',
+                text: 'Por favor, corrija los errores del formulario'
+            });
+            return false;
+        }
+
+        return true;
+    }
+
+    // -------------------------------------------------------------------------
+    // 3. FORMULARIO DE INICIO DE SESIÓN
+    // -------------------------------------------------------------------------
+
+    $('#formLogin').on('submit', function (e) {
+        e.preventDefault();
+
+        // Validar antes de enviar
+        if (!validarFormularioLogin()) {
+            return;
+        }
+
+        const $btn = $(this).find('button[type="submit"]');
+        const textoOriginal = $btn.html();
+        $btn.html('<i class="fas fa-spinner fa-spin"></i> Verificando...').prop('disabled', true);
+
+        const formData = new FormData(this);
 
         $.ajax({
-            url: "app/controllers/loginController.php?opcion=login",
-            type: "POST",
+            url: `${CTRL_LOGIN}?opcion=login`,
+            type: 'POST',
             data: formData,
             contentType: false,
             processData: false,
-            dataType: "json",
+            dataType: 'json',
             success: function (response) {
-                if (response.status === "success") {
-                    // Alerta tipo Toast (menos intrusiva para login)
-                    Toast.fire({
+                if (response.status === 'success') {
+                    // Login exitoso
+                    Swal.fire({
                         icon: 'success',
                         title: '¡Bienvenido!',
-                        text: response.message || 'Inicio de sesión exitoso'
+                        text: response.message || 'Inicio de sesión exitoso',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        allowOutsideClick: false
                     });
 
-                    // Pequeña pausa para que se vea la alerta antes de redirigir
                     setTimeout(function() {
-                        if (response.url) {
-                            location.href = response.url;
-                        } else {
-                            location.href = "home"; // Ruta por defecto
-                        }
-                    }, 1500);
+                        window.location.href = response.url || 'home';
+                    }, 1600);
 
                 } else {
-                    // Error: restaurar botón y mostrar alerta
-                    btn.text(textoOriginal).prop("disabled", false);
+                    // Login fallido
+                    $btn.html(textoOriginal).prop('disabled', false);
                     Swal.fire({
                         icon: 'error',
-                        title: 'Acceso denegado',
-                        text: response.message || "Usuario o contraseña incorrectos"
+                        title: 'Acceso Denegado',
+                        text: response.message || 'Usuario o contraseña incorrectos',
+                        confirmButtonText: 'Intentar de nuevo',
+                        confirmButtonColor: '#d33'
                     });
                 }
             },
             error: function (xhr) {
-                btn.text(textoOriginal).prop("disabled", false);
-                console.error(xhr.responseText);
+                $btn.html(textoOriginal).prop('disabled', false);
+                console.error('Error de conexión:', xhr.responseText);
+                
                 Swal.fire({
                     icon: 'error',
                     title: 'Error del Servidor',
-                    text: 'Ocurrió un problema al intentar conectar. Intente más tarde.'
+                    text: 'No se pudo conectar. Intente más tarde.',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#d33'
                 });
             }
         });
     });
 
-    // -------------------------------------------------------------------------
-    // 2. RECUPERAR CONTRASEÑA
-    // -------------------------------------------------------------------------
-    $("#formRecuperar").on("submit", function (e) {
-        e.preventDefault();
-        
-        var btn = $(this).find("button[type='submit']");
-        var textoOriginal = btn.text();
-        btn.text("Enviando...").prop("disabled", true);
+    // Limpiar errores al escribir en los campos
+    $('#username, #password').on('input', function() {
+        $(this).removeClass('is-invalid is-valid');
+        $(this).next('.invalid-feedback, .valid-feedback').remove();
+    });
 
-        var formData = new FormData(this);
+    // -------------------------------------------------------------------------
+    // 4. FORMULARIO DE RECUPERAR CONTRASEÑA
+    // -------------------------------------------------------------------------
+
+    $('#formRecuperar').on('submit', function (e) {
+        e.preventDefault();
+
+        // Validar antes de enviar
+        if (!validarFormularioRecuperar()) {
+            return;
+        }
+
+        const $btn = $(this).find('button[type="submit"]');
+        const textoOriginal = $btn.html();
+        $btn.html('<i class="fas fa-spinner fa-spin"></i> Enviando...').prop('disabled', true);
+
+        const formData = new FormData(this);
 
         $.ajax({
-            url: "app/controllers/loginController.php?opcion=recuperar",
-            type: "POST",
+            url: `${CTRL_LOGIN}?opcion=recuperar`,
+            type: 'POST',
             data: formData,
             contentType: false,
             processData: false,
-            dataType: "json",
+            dataType: 'json',
             success: function (response) {
-                btn.text(textoOriginal).prop("disabled", false);
-                
-                if (response.status === "success") {
+                $btn.html(textoOriginal).prop('disabled', false);
+
+                if (response.status === 'success') {
                     Swal.fire({
                         icon: 'success',
                         title: '¡Correo Enviado!',
-                        text: response.message,
+                        html: `
+                            <p class="mb-2">${response.message}</p>
+                            <p class="text-muted mb-0">
+                                <small><i class="fas fa-info-circle"></i> Revisa tu bandeja de entrada y carpeta de spam</small>
+                            </p>
+                        `,
                         confirmButtonText: 'Aceptar',
-                        confirmButtonColor: '#3085d6'
-                    }).then((result) => {
-                        if (result.isConfirmed || result.isDismissed) {
-                            window.location.href = "login"; // Redirigir al login
-                        }
+                        confirmButtonColor: '#3085d6',
+                        allowOutsideClick: false
+                    }).then(() => {
+                        window.location.href = 'login';
                     });
                 } else {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: response.message || "No se pudo procesar la solicitud."
+                        text: response.message || 'No se pudo procesar la solicitud',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#d33'
                     });
                 }
             },
             error: function (xhr) {
-                btn.text(textoOriginal).prop("disabled", false);
-                console.error(xhr.responseText);
+                $btn.html(textoOriginal).prop('disabled', false);
+                console.error('Error de conexión:', xhr.responseText);
+                
                 Swal.fire({
                     icon: 'error',
-                    title: 'Error de conexión',
-                    text: 'No se pudo conectar con el servidor.'
+                    title: 'Error de Conexión',
+                    text: 'No se pudo conectar con el servidor',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#d33'
                 });
             }
         });
     });
 
-    // -------------------------------------------------------------------------
-    // 3. CAMBIAR CONTRASEÑA (NUEVA CLAVE)
-    // -------------------------------------------------------------------------
-    $("#formNuevaClave").on("submit", function (e) {
-        e.preventDefault();
-        
-        var btn = $(this).find("button[type='submit']");
-        var textoOriginal = btn.text();
-        btn.text("Guardando...").prop("disabled", true);
+    // Limpiar errores al escribir
+    $('#username_recuperar').on('input', function() {
+        $(this).removeClass('is-invalid is-valid');
+        $(this).next('.invalid-feedback, .valid-feedback').remove();
+    });
 
-        var formData = new FormData(this);
+    // -------------------------------------------------------------------------
+    // 5. FORMULARIO DE CAMBIAR CONTRASEÑA
+    // -------------------------------------------------------------------------
+
+    $('#formNuevaClave').on('submit', function (e) {
+        e.preventDefault();
+
+        // Validar antes de enviar
+        if (!validarFormularioNuevaClave()) {
+            return;
+        }
+
+        const $btn = $(this).find('button[type="submit"]');
+        const textoOriginal = $btn.html();
+        $btn.html('<i class="fas fa-spinner fa-spin"></i> Guardando...').prop('disabled', true);
+
+        const formData = new FormData(this);
 
         $.ajax({
-            url: "app/controllers/loginController.php?opcion=cambiar_clave",
-            type: "POST",
+            url: `${CTRL_LOGIN}?opcion=cambiar_clave`,
+            type: 'POST',
             data: formData,
             contentType: false,
             processData: false,
-            dataType: "json",
+            dataType: 'json',
             success: function (response) {
-                btn.text(textoOriginal).prop("disabled", false);
+                $btn.html(textoOriginal).prop('disabled', false);
 
-                if (response.status === "success") {
+                if (response.status === 'success') {
                     Swal.fire({
                         icon: 'success',
                         title: '¡Contraseña Actualizada!',
-                        text: response.message,
+                        text: response.message || 'Tu contraseña ha sido cambiada correctamente',
                         confirmButtonText: 'Iniciar Sesión',
-                        confirmButtonColor: '#3085d6'
-                    }).then((result) => {
-                        window.location.href = "login";
+                        confirmButtonColor: '#3085d6',
+                        allowOutsideClick: false
+                    }).then(() => {
+                        window.location.href = 'login';
                     });
                 } else {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: response.message || 'Las contraseñas no coinciden o el enlace expiró.'
+                        text: response.message || 'El enlace expiró o es inválido',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#d33'
                     });
                 }
             },
-            error: function () {
-                btn.text(textoOriginal).prop("disabled", false);
+            error: function (xhr) {
+                $btn.html(textoOriginal).prop('disabled', false);
+                console.error('Error de conexión:', xhr.responseText);
+                
                 Swal.fire({
                     icon: 'error',
                     title: 'Error del Servidor',
-                    text: 'No se pudo actualizar la contraseña en este momento.'
+                    text: 'No se pudo actualizar la contraseña',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#d33'
                 });
             }
         });
     });
+
+    // Limpiar errores al escribir
+    $('#clave_nueva, #clave_confirmar').on('input', function() {
+        $(this).removeClass('is-invalid is-valid');
+        $(this).next('.invalid-feedback, .valid-feedback').remove();
+    });
+
+    // Validación en tiempo real de coincidencia de contraseñas
+    $('#clave_confirmar').on('input', function() {
+        const clave1 = $('#clave_nueva').val();
+        const clave2 = $(this).val();
+
+        if (clave2.length > 0) {
+            if (clave1 === clave2) {
+                $(this).removeClass('is-invalid').addClass('is-valid');
+                $(this).next('.invalid-feedback').remove();
+                if ($(this).next('.valid-feedback').length === 0) {
+                    $(this).after('<div class="valid-feedback"><i class="fas fa-check-circle"></i> Las contraseñas coinciden</div>');
+                }
+            } else {
+                $(this).removeClass('is-valid').addClass('is-invalid');
+                $(this).next('.valid-feedback').remove();
+                if ($(this).next('.invalid-feedback').length === 0) {
+                    $(this).after('<div class="invalid-feedback"><i class="fas fa-times-circle"></i> Las contraseñas no coinciden</div>');
+                }
+            }
+        } else {
+            $(this).removeClass('is-invalid is-valid');
+            $(this).next('.invalid-feedback, .valid-feedback').remove();
+        }
+    });
+
+    // -------------------------------------------------------------------------
+    // 6. FUNCIONALIDADES ADICIONALES
+    // -------------------------------------------------------------------------
+
+    // Toggle para mostrar/ocultar contraseñas
+    $('.toggle-password').on('click', function() {
+        const targetId = $(this).attr('data-target');
+        const $input = $(targetId);
+        const $icon = $(this).find('i');
+
+        if ($input.attr('type') === 'password') {
+            $input.attr('type', 'text');
+            $icon.removeClass('fa-eye').addClass('fa-eye-slash');
+            $(this).attr('title', 'Ocultar contraseña');
+        } else {
+            $input.attr('type', 'password');
+            $icon.removeClass('fa-eye-slash').addClass('fa-eye');
+            $(this).attr('title', 'Mostrar contraseña');
+        }
+    });
+
+    // Prevenir espacios en blanco al inicio y final
+    $('input[type="text"], input[type="email"], input[type="password"]').on('blur', function() {
+        const valorLimpio = $(this).val().trim();
+        $(this).val(valorLimpio);
+    });
+
+    // Detectar Enter en campos para enviar formulario
+    $('input').on('keypress', function(e) {
+        if (e.which === 13) {
+            $(this).closest('form').submit();
+        }
+    });
+
+    // Indicador de fortaleza de contraseña (opcional)
+    $('#clave_nueva').on('input', function() {
+        const password = $(this).val();
+        let fuerza = 0;
+        let mensaje = '';
+        let colorClass = '';
+
+        if (password.length >= 6) fuerza++;
+        if (password.length >= 8) fuerza++;
+        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) fuerza++;
+        if (/\d/.test(password)) fuerza++;
+        if (/[^a-zA-Z\d]/.test(password)) fuerza++;
+
+        switch(fuerza) {
+            case 0:
+            case 1:
+                mensaje = 'Débil';
+                colorClass = 'text-danger';
+                break;
+            case 2:
+            case 3:
+                mensaje = 'Media';
+                colorClass = 'text-warning';
+                break;
+            case 4:
+            case 5:
+                mensaje = 'Fuerte';
+                colorClass = 'text-success';
+                break;
+        }
+
+        // Mostrar indicador si existe el contenedor
+        if ($('#password-strength').length > 0 && password.length > 0) {
+            $('#password-strength')
+                .removeClass('text-danger text-warning text-success')
+                .addClass(colorClass)
+                .html(`<small><i class="fas fa-shield-alt"></i> Fortaleza: <strong>${mensaje}</strong></small>`);
+        } else if (password.length === 0) {
+            $('#password-strength').html('');
+        }
+    });
+
+    // -------------------------------------------------------------------------
+    // 7. EFECTOS VISUALES Y ANIMACIONES
+    // -------------------------------------------------------------------------
+
+    // Efecto de focus en inputs
+    $('input').on('focus', function() {
+        $(this).parent().addClass('input-focused');
+    }).on('blur', function() {
+        $(this).parent().removeClass('input-focused');
+    });
+
+    // Animación suave al cargar la página
+    $('.login-form, .recover-form, .new-password-form').hide().fadeIn(800);
 
 });

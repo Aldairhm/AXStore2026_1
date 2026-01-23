@@ -15,7 +15,7 @@
         <div class="login-form active">
             <h2>Recuperar Cuenta</h2>
             <p style="text-align: center; color: #666; margin-bottom: 20px;">
-                Ingrese su correo electrónico y le enviaremos una nueva contraseña temporal.
+                Ingrese su correo electrónico y le enviaremos un email para restablecer su contraseña.
             </p>
             <form method="post" id="formRecuperar">
                 <div class="form-group">
@@ -23,7 +23,7 @@
                     <input type="email" id="username" name="username" placeholder="ejemplo@correo.com" required>
                 </div>
                 
-                <button type="submit" class="login-btn">Enviar Nueva Contraseña</button>
+                <button type="submit" class="login-btn">Enviar Correo</button>
                 
                 <div class="form-footer">
                     <a href="<?php echo APP_URL; ?>login" class="forgot-link">Volver al Login</a>
