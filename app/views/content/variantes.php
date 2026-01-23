@@ -1,143 +1,28 @@
 <!DOCTYPE html>
-<html lang="es">
-<?php require_once "./app/views/inc/head.php"; ?>
+<html lang="en">
 
-<style>
-    /* Estilos de DataTables heredados de tu vista de categorías */
-    .dataTables_length label {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 500;
-    }
+<?php $id= isset($_GET['id']) ? (int)($_GET['id']) : 0 ?>
 
-    .dataTables_length select {
-        width: auto !important;
-        display: inline-block;
-    }
+<head>
+    <?php require_once "./app/views/inc/head.php"; ?>
+</head>
 
-    .dataTables_filter {
-        text-align: right;
-    }
-
-    .dataTables_filter label {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        font-weight: 500;
-    }
-
-    .buttons-html5 {
-        margin-right: 5px;
-    }
-
-    /* Estilos para la distribución de formularios dentro del modal */
-    .card-form {
-        border: 1px solid #e3e6f0;
-        border-radius: 0.35rem;
-        height: 100%;
-    }
-
-    .card-header-custom {
-        background-color: #f8f9fc;
-        border-bottom: 1px solid #e3e6f0;
-        padding: 0.75rem 1.25rem;
-    }
-
-    .table-variantes-container {
-        max-height: 400px;
-        overflow-y: auto;
-        border: 1px solid #e3e6f0;
-        border-radius: 0.35rem;
-    }
-
-    .card-body {
-        padding: 1.5rem !important;
-        /* Esto despega todo de los bordes internos */
-    }
-
-    /* Ajuste para que los inputs no se vean tan pegados entre sí verticalmente */
-    .mb-3 {
-        margin-bottom: 1.25rem !important;
-    }
-
-    /* Espaciado para el contenedor de atributos a la derecha */
-    #contenedorAtributos {
-        min-height: 150px;
-        padding: 10px;
-        /* Espacio interno para los selectores que inyectará jQuery */
-        border-radius: 8px;
-    }
-
-    /* Margen para la tabla de variantes para que no toque los bordes del modal */
-    .table-variantes-container {
-        margin: 0 10px;
-        /* Pequeño margen lateral */
-        padding: 5px;
-    }
-
-    /* Corrección global para botones Kebab */
-    .btn-kebab-luxury {
-        color: #333 !important;
-        /* Color oscuro para que se vea sobre fondo blanco */
-        padding: 0 !important;
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        transition: background-color 0.2s;
-        margin: 0 auto;
-        /* Centra el botón en la celda */
-    }
-
-    .btn-kebab-luxury:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-        /* Efecto sutil al pasar el cursor */
-        color: #000 !important;
-    }
-
-    .btn-kebab-luxury i {
-        line-height: 1;
-        font-size: 1.2rem !important;
-        /* Ajusta el tamaño del icono */
-    }
-
-    /* Alineación vertical para todas las celdas de la tabla */
-    .luxury-table td {
-        vertical-align: middle !important;
-    }
-</style>
-
-<body>
+<body class="bg-light">
     <?php require_once "./app/views/inc/header.php"; ?>
+    <main class="py-5 mt-5" id="variantes-container" data-id="<?php echo $id; ?>">
+        <section class="container fade-in">
+            <div class="d-flex" style="justify-content: space-between; align-items: center; margin-bottom: 40px;">
+                <h2 class="section-title">Variantes Registradas</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProducto">
+                    <i class="fas fa-plus"></i> Nueva Variante
+                </button>
+            </div>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4" id="product-grid">
+                
+            </div>
+        </section>
 
-    <section class="container fade-in" style="margin-top: 120px;">
-        <div class="d-flex" style="justify-content: space-between; align-items: center; margin-bottom: 40px;">
-            <h2 class="section-title">Gestión de Productos</h2>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProducto">
-                <i class="fas fa-plus"></i> Registrar Producto
-            </button>
-        </div>
-
-        <div class="luxury-table-container">
-            <table class="luxury-table table" id="tablaProductos" style="width: 100%;">
-                <thead>
-                    <tr>
-                        <th>Producto</th>
-                        <th>Categoría</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <div class="modal fade" id="modalProducto" aria-labelledby="modalProductoLabel" aria-hidden="true">
+        <div class="modal fade" id="modalProducto" aria-labelledby="modalProductoLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content shadow-lg">
                 <div class="modal-header bg-white">
@@ -149,6 +34,7 @@
                         <input type="hidden" id="id_producto" name="id_producto" value="0">
 
                         <div class="row g-4">
+
                             <div class="col-md-7">
                                 <div class="card-form shadow-sm">
                                     <div class="card-header-custom">
@@ -248,70 +134,11 @@
             </div>
         </div>
     </div>
-
-    <div class="modal fade" id="modalProductoEdicion" tabindex="-1" aria-labelledby="modalProductoLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content shadow-lg border-0">
-            <div class="modal-header bg-white border-bottom-0">
-                <h5 class="modal-title fw-bold" id="modalProductoLabel">
-                    <i class="fas fa-edit text-primary me-2"></i>Editar Información del Producto
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            
-            <div class="modal-body">
-                <form id="formProducto" enctype="multipart/form-data">
-                    <input type="hidden" id="id_producto2" name="id_producto2" value="0">
-
-                    <div class="card border-0 bg-light-subtle shadow-sm">
-                        <div class="card-body p-4">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label small fw-bold text-muted">Nombre del Producto</label>
-                                    <input type="text" name="nombre2" id="nombre2" class="form-control form-control-lg border-0 shadow-sm" placeholder="Ej: Amortiguador Kit" required>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-bold text-muted">Categoría</label>
-                                    <div id="wrapper-categoria">
-                                        <select name="id_categoria2" id="id_categoria2" class="form-select border-0 shadow-sm" required>
-                                            <option value="">Cargando...</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-bold text-muted">Estado del Sistema</label>
-                                    <select name="estado2" id="estado2" class="form-select border-0 shadow-sm">
-                                        <option value="1">Activo</option>
-                                        <option value="0">Inactivo</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-12">
-                                    <label class="form-label small fw-bold text-muted">Descripción General</label>
-                                    <textarea name="descripcion2" id="descripcion2" class="form-control border-0 shadow-sm" rows="3" placeholder="Detalles técnicos del producto..." required></textarea>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <button type="button" class="btn btn-light px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm" id="btnEnviar">
-                            <i class="fas fa-save me-2"></i>Actualizar Datos
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
+    </main>
     <?php require_once "./app/views/inc/script.php"; ?>
     <?php require_once "./app/views/inc/footer.php"; ?>
-    <script src="app/views/assets/js/producto.js?v=3"></script>
-
+    <script src="app/views/assets/js/producto.js?v=9"></script>
+    <script src="app/views/assets/js/variantes.js?v=3"></script>
 </body>
 
 </html>

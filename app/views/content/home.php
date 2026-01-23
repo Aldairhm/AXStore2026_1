@@ -35,7 +35,7 @@
             <div class="container">
                 <h2 class="section-title text-center mb-5">Nuestros Productos</h2>
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="product-grid">
-                    </div>
+                </div>
             </div>
         </section>
 
