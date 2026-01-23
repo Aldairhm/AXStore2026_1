@@ -322,7 +322,7 @@
         <script src="https://unpkg.co/gsap@3/dist/gsap.min.js"></script>
         <script src="https://unpkg.com/gsap@3/dist/Draggable.min.js"></script>
         <script src="https://assets.codepen.io/16327/MorphSVGPlugin3.min.js"></script>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <?php require_once "./app/views/inc/script.php"; ?>
         <script src="<?php echo APP_URL; ?>app/views/assets/js/login.js"></script>
         <script src="<?php echo APP_URL; ?>app/ajax/login.js"></script>
     </body>

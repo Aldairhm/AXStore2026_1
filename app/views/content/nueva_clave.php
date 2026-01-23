@@ -29,7 +29,7 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <?php require_once "./app/views/inc/script.php"; ?>
     <script src="<?php echo APP_URL; ?>app/ajax/login.js"></script>
 </body>
 </html>
