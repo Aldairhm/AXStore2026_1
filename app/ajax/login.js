@@ -180,36 +180,41 @@ $(document).ready(function () {
             dataType: 'json',
             success: function (response) {
                 if (response.status === 'success') {
-                    // Login exitoso
                     Swal.fire({
                         icon: 'success',
                         title: '¡Bienvenido!',
-                        text: response.message || 'Inicio de sesión exitoso',
+                        text: response.message,
                         timer: 1500,
-                        showConfirmButton: false,
-                        allowOutsideClick: false
+                        showConfirmButton: false
+                    });
+                    setTimeout(function () { window.location.href = 'home'; }, 1600);
+
+                } else if (response.status === 'inactive') {
+                    // --- ESTA ES LA ALERTA DE WARNING ---
+                    $btn.html(textoOriginal).prop('disabled', false);
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Usuario Inactivo',
+                        text: response.message,
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#f8bb86' // Color naranja warning
                     });
 
-                    setTimeout(function() {
-                        window.location.href = response.url || 'home';
-                    }, 1600);
-
                 } else {
-                    // Login fallido
+                    // Error normal (credenciales incorrectas)
                     $btn.html(textoOriginal).prop('disabled', false);
                     Swal.fire({
                         icon: 'error',
                         title: 'Acceso Denegado',
-                        text: response.message || 'Usuario o contraseña incorrectos',
-                        confirmButtonText: 'Intentar de nuevo',
-                        confirmButtonColor: '#d33'
+                        text: response.message,
+                        confirmButtonText: 'Intentar de nuevo'
                     });
                 }
             },
             error: function (xhr) {
                 $btn.html(textoOriginal).prop('disabled', false);
                 console.error('Error de conexión:', xhr.responseText);
-                
+
                 Swal.fire({
                     icon: 'error',
                     title: 'Error del Servidor',
@@ -222,7 +227,7 @@ $(document).ready(function () {
     });
 
     // Limpiar errores al escribir en los campos
-    $('#username, #password').on('input', function() {
+    $('#username, #password').on('input', function () {
         $(this).removeClass('is-invalid is-valid');
         $(this).next('.invalid-feedback, .valid-feedback').remove();
     });
@@ -284,7 +289,7 @@ $(document).ready(function () {
             error: function (xhr) {
                 $btn.html(textoOriginal).prop('disabled', false);
                 console.error('Error de conexión:', xhr.responseText);
-                
+
                 Swal.fire({
                     icon: 'error',
                     title: 'Error de Conexión',
@@ -297,7 +302,7 @@ $(document).ready(function () {
     });
 
     // Limpiar errores al escribir
-    $('#username_recuperar').on('input', function() {
+    $('#username_recuperar').on('input', function () {
         $(this).removeClass('is-invalid is-valid');
         $(this).next('.invalid-feedback, .valid-feedback').remove();
     });
@@ -354,7 +359,7 @@ $(document).ready(function () {
             error: function (xhr) {
                 $btn.html(textoOriginal).prop('disabled', false);
                 console.error('Error de conexión:', xhr.responseText);
-                
+
                 Swal.fire({
                     icon: 'error',
                     title: 'Error del Servidor',
@@ -367,13 +372,13 @@ $(document).ready(function () {
     });
 
     // Limpiar errores al escribir
-    $('#clave_nueva, #clave_confirmar').on('input', function() {
+    $('#clave_nueva, #clave_confirmar').on('input', function () {
         $(this).removeClass('is-invalid is-valid');
         $(this).next('.invalid-feedback, .valid-feedback').remove();
     });
 
     // Validación en tiempo real de coincidencia de contraseñas
-    $('#clave_confirmar').on('input', function() {
+    $('#clave_confirmar').on('input', function () {
         const clave1 = $('#clave_nueva').val();
         const clave2 = $(this).val();
 
@@ -402,7 +407,7 @@ $(document).ready(function () {
     // -------------------------------------------------------------------------
 
     // Toggle para mostrar/ocultar contraseñas
-    $('.toggle-password').on('click', function() {
+    $('.toggle-password').on('click', function () {
         const targetId = $(this).attr('data-target');
         const $input = $(targetId);
         const $icon = $(this).find('i');
@@ -419,20 +424,20 @@ $(document).ready(function () {
     });
 
     // Prevenir espacios en blanco al inicio y final
-    $('input[type="text"], input[type="email"], input[type="password"]').on('blur', function() {
+    $('input[type="text"], input[type="email"], input[type="password"]').on('blur', function () {
         const valorLimpio = $(this).val().trim();
         $(this).val(valorLimpio);
     });
 
     // Detectar Enter en campos para enviar formulario
-    $('input').on('keypress', function(e) {
+    $('input').on('keypress', function (e) {
         if (e.which === 13) {
             $(this).closest('form').submit();
         }
     });
 
     // Indicador de fortaleza de contraseña (opcional)
-    $('#clave_nueva').on('input', function() {
+    $('#clave_nueva').on('input', function () {
         const password = $(this).val();
         let fuerza = 0;
         let mensaje = '';
@@ -444,7 +449,7 @@ $(document).ready(function () {
         if (/\d/.test(password)) fuerza++;
         if (/[^a-zA-Z\d]/.test(password)) fuerza++;
 
-        switch(fuerza) {
+        switch (fuerza) {
             case 0:
             case 1:
                 mensaje = 'Débil';
@@ -478,9 +483,9 @@ $(document).ready(function () {
     // -------------------------------------------------------------------------
 
     // Efecto de focus en inputs
-    $('input').on('focus', function() {
+    $('input').on('focus', function () {
         $(this).parent().addClass('input-focused');
-    }).on('blur', function() {
+    }).on('blur', function () {
         $(this).parent().removeClass('input-focused');
     });
 

@@ -21,7 +21,7 @@ $response = ["status" => "error", "message" => "Opción inválida"];
 try {
     switch ($opcion) {
         case "login":
-            $username = trim($_POST["username"] ?? "");
+            $username = strtolower(trim($_POST["username"] ?? "")); // Aplicamos minúsculas para consistencia
             $password = trim($_POST["password"] ?? "");
 
             if (!$username || !$password) {
@@ -32,6 +32,7 @@ try {
             $usernameEncriptado = Encriptar::openCypher('encrypt', $username);
             $passwordEncriptado = Encriptar::openCypher('encrypt', $password);
 
+            // 1. Intentar login normal (solo usuarios activos)
             $usuario = $loginModel->getLogin($usernameEncriptado, $passwordEncriptado);
 
             if ($usuario) {
@@ -39,12 +40,25 @@ try {
                 $_SESSION['usuario'] = $usuario;
                 $response = ["status" => "success", "message" => "Inicio de sesión exitoso", "usuario" => $usuario];
             } else {
-                $response = ["status" => "error", "message" => "Usuario o contraseña incorrectos"];
+                // 2. Si falló, verificamos si es por contraseña incorrecta o por cuenta inactiva
+                // Buscamos al usuario sin filtrar por estado
+                $datosUsuario = $loginModel->obtenerDatosPorUsername($username);
+
+                if ($datosUsuario) {
+                    // El usuario existe. Si no entró arriba, es porque su estado != 1 o clave mal.
+                    // Para ser precisos con el "Inactivo", aquí enviamos el warning:
+                    $response = [
+                        "status" => "inactive",
+                        "message" => "Su cuenta se encuentra inactiva. Por favor, contacte a soporte para reactivarla."
+                    ];
+                } else {
+                    $response = ["status" => "error", "message" => "Usuario o contraseña incorrectos"];
+                }
             }
             break;
 
         case "recuperar":
-            $username = trim($_POST["username"] ?? "");
+            $username = strtolower($_POST["username"] ?? "");
 
             if (!$username) {
                 $response = ["status" => "error", "message" => "Ingrese su correo electrónico"];
@@ -58,7 +72,7 @@ try {
                 // 2. Generar TOKEN con expiración (Formato: randomHex.timestamp)
                 // Usamos 24 bytes (48 hex chars) + separador + 10 digitos tiempo = ~60 chars (seguro para varchar 64/100)
                 $caducidad = time() + (5 * 60); // 5 minutos a partir de ahora
-                $tokenAleatorio = bin2hex(random_bytes(24)); 
+                $tokenAleatorio = bin2hex(random_bytes(24));
                 $token = $tokenAleatorio . '.' . $caducidad;
 
                 // 3. Guardar el token en la BD
@@ -67,7 +81,7 @@ try {
                     // 4. Crear el enlace de recuperación y el código visual
                     $urlRecuperacion = APP_URL . "nueva_clave?token=" . $token;
                     // Usamos los primeros 6 caracteres del token aleatorio como "código visual" para el correo
-                    $codigoVisual = strtoupper(substr($tokenAleatorio, 0, 6)); 
+                    $codigoVisual = strtoupper(substr($tokenAleatorio, 0, 6));
 
                     // 5. Enviar Correo con el diseño solicitado
                     $mail = new PHPMailer(true);
@@ -87,7 +101,7 @@ try {
                         $mail->isHTML(true);
                         $mail->CharSet = 'UTF-8';
                         $mail->Subject = 'Recuperar acceso - AXStore';
-                        
+
                         // Usamos la nueva función para generar el cuerpo del correo
                         $mail->Body = crearCuerpoCorreoConCodigo($datosUsuario['nombre_real'], $urlRecuperacion, $codigoVisual);
 
@@ -167,9 +181,10 @@ try {
     echo json_encode($response);
 }
 
-function crearCuerpoCorreoConCodigo($nombre, $link, $codigo) {
+function crearCuerpoCorreoConCodigo($nombre, $link, $codigo)
+{
     $expiracion = date('d/m/Y H:i', time() + (15 * 60));
-    
+
     return "
     <!DOCTYPE html>
     <html lang='es'>

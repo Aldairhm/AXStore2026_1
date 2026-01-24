@@ -39,7 +39,7 @@ class Login{
     public function obtenerDatosPorUsername(string $username): ?array
     {
         try {
-            $usernameEncriptado = Encriptar::openCypher('encrypt', $username);
+            $usernameEncriptado = Encriptar::openCypher('encrypt', strtolower($username));
 
             $sql = "SELECT id, nombre_real, username FROM usuario WHERE username = :username LIMIT 1";
             $stmt = $this->conexion->prepare($sql);
