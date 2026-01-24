@@ -3,16 +3,19 @@
 declare(strict_types=1);
 require_once __DIR__ . "/../../config/conexion.php";
 
-class Login{
+class Login
+{
 
     private PDO $conexion;
-    public function __construct(){
+    public function __construct()
+    {
         $this->conexion = Conexion::conectar();
     }
 
-    public function getLogin(string $username, string $password): ? array{
-        try{
-            $sql= "SELECT nombre_real,
+    public function getLogin(string $username, string $password): ?array
+    {
+        try {
+            $sql = "SELECT nombre_real,
             username,
             password,
             estado
@@ -26,7 +29,7 @@ class Login{
             $stmt->bindParam(':username', $username, PDO::PARAM_STR);
             $stmt->bindParam(':password', $password, PDO::PARAM_STR);
             $stmt->execute();
-            
+
             $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
             return $usuario ?: null;
         } catch (PDOException $e) {
@@ -39,9 +42,10 @@ class Login{
     public function obtenerDatosPorUsername(string $username): ?array
     {
         try {
-            $usernameEncriptado = Encriptar::openCypher('encrypt', strtolower($username));
+            $usernameEncriptado = Encriptar::openCypher('encrypt', strtolower(trim($username)));
 
-            $sql = "SELECT id, nombre_real, username FROM usuario WHERE username = :username LIMIT 1";
+            // Traemos password y estado para validar en el controlador
+            $sql = "SELECT id, nombre_real, username, password, estado FROM usuario WHERE username = :username LIMIT 1";
             $stmt = $this->conexion->prepare($sql);
             $stmt->bindParam(':username', $usernameEncriptado, PDO::PARAM_STR);
             $stmt->execute();
@@ -73,7 +77,7 @@ class Login{
             $stmt->bindParam(':password', $passwordEncriptado, PDO::PARAM_STR);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
-            
+
             return true;
         } catch (Throwable $e) {
             error_log("Error actualizarContrasenia: " . $e->getMessage());

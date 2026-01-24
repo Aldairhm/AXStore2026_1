@@ -21,7 +21,7 @@ $response = ["status" => "error", "message" => "Opción inválida"];
 try {
     switch ($opcion) {
         case "login":
-            $username = strtolower(trim($_POST["username"] ?? "")); // Aplicamos minúsculas para consistencia
+            $username = strtolower(trim($_POST["username"] ?? ""));
             $password = trim($_POST["password"] ?? "");
 
             if (!$username || !$password) {
@@ -32,7 +32,7 @@ try {
             $usernameEncriptado = Encriptar::openCypher('encrypt', $username);
             $passwordEncriptado = Encriptar::openCypher('encrypt', $password);
 
-            // 1. Intentar login normal (solo usuarios activos)
+            // 1. Intentar login normal (Credenciales correctas + Estado activo)
             $usuario = $loginModel->getLogin($usernameEncriptado, $passwordEncriptado);
 
             if ($usuario) {
@@ -40,18 +40,27 @@ try {
                 $_SESSION['usuario'] = $usuario;
                 $response = ["status" => "success", "message" => "Inicio de sesión exitoso", "usuario" => $usuario];
             } else {
-                // 2. Si falló, verificamos si es por contraseña incorrecta o por cuenta inactiva
-                // Buscamos al usuario sin filtrar por estado
+                // 2. Si falló, buscamos los datos del usuario para diagnosticar el motivo
                 $datosUsuario = $loginModel->obtenerDatosPorUsername($username);
 
                 if ($datosUsuario) {
-                    // El usuario existe. Si no entró arriba, es porque su estado != 1 o clave mal.
-                    // Para ser precisos con el "Inactivo", aquí enviamos el warning:
-                    $response = [
-                        "status" => "inactive",
-                        "message" => "Su cuenta se encuentra inactiva. Por favor, contacte a soporte para reactivarla."
-                    ];
+                    // Caso A: La contraseña es incorrecta
+                    if ($datosUsuario['password'] !== $passwordEncriptado) {
+                        $response = ["status" => "error", "message" => "Usuario o contraseña incorrectos"];
+                    }
+                    // Caso B: Contraseña correcta pero cuenta inactiva
+                    elseif ((int)$datosUsuario['estado'] !== 1) {
+                        $response = [
+                            "status" => "inactive",
+                            "message" => "Su cuenta se encuentra inactiva. Por favor, contacte a soporte para reactivarla."
+                        ];
+                    }
+                    // Caso C: Cualquier otro error de coincidencia
+                    else {
+                        $response = ["status" => "error", "message" => "Usuario o contraseña incorrectos"];
+                    }
                 } else {
+                    // El usuario ni siquiera existe
                     $response = ["status" => "error", "message" => "Usuario o contraseña incorrectos"];
                 }
             }
@@ -66,7 +75,7 @@ try {
             }
 
             // 1. Verificar si el usuario existe
-            $datosUsuario = $loginModel->obtenerDatosPorUsername($username);
+            $datosUsuario = $loginModel->obtenerDatosPorUsername($username, $password);
 
             if ($datosUsuario) {
                 // 2. Generar TOKEN con expiración (Formato: randomHex.timestamp)
