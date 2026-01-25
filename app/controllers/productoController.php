@@ -31,11 +31,16 @@ try {
             }
             break;
         case 'editarProducto':
-            $id_producto = isset($_POST["id_producto2"]) ? (int)$_POST["id_producto2"] : null;
-            $nombre = isset($_POST["nombre2"]) ? trim($_POST["nombre2"]) : null;
-            $descripcion = isset($_POST["descripcion2"]) ? trim($_POST["descripcion2"]) : "";
-            $id_categoria = isset($_POST["id_categoria2"]) ? (int)$_POST["id_categoria2"] : null;
-            $estado = isset($_POST["estado2"]) ? (int)$_POST["estado2"] : 1;
+            $id_producto = isset($_POST["id_producto"]) ? (int)$_POST["id_producto"] : null;
+            $nombre = isset($_POST["nombre"]) ? trim($_POST["nombre"]) : null;
+            $descripcion = isset($_POST["descripcion"]) ? trim($_POST["descripcion"]) : "";
+            $id_categoria = isset($_POST["id_categoria"]) ? (int)$_POST["id_categoria"] : null;
+            $estado = isset($_POST["estado"]) ? (int)$_POST["estado"] : 1;
+
+            if( $productoModel->isExisteProducto(strtolower($nombre), $id_producto)) {
+                $response = ["status" => "error", "message" => "El nombre del producto ya existe"];
+                break;
+            }
 
             $resultado = $productoModel->actualizarProducto($id_producto, $nombre, $descripcion, $id_categoria, $estado);
             if ($resultado) {
@@ -51,7 +56,7 @@ try {
                 $sub_array = array();
                 $sub_array[] = htmlspecialchars($row["nombre"]);
                 $sub_array[] = '<span class="badge bg-light text-dark border">' . htmlspecialchars($row["categoria"] ?? "S/C") . '</span>';
-
+                $sub_array[] = htmlspecialchars($row["descripcion"]);
                 // Estado con colores
                 $sub_array[] = ($row["estado"] == 1)
                     ? '<span class="badge bg-success rounded-pill">Activo</span>'
@@ -67,7 +72,7 @@ try {
                                     </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 animate__animated animate__fadeIn">
                                             <li>
-                                                <a class="dropdown-item py-2" onclick="editarProducto('.$id.')">
+                                                <a class="dropdown-item py-2" onclick="editarProducto(' . $id . ')">
                                                     <i class="bi bi-pencil-fill me-2 text-warning"></i> Editar Producto
                                                 </a>
                                             </li>
@@ -86,6 +91,10 @@ try {
             break;
         case 'crearAtributo':
             $nombre = isset($_POST["nombre"]) ? trim($_POST["nombre"]) : null;
+            if ($productoModel->isExisteAtributo(strtolower($nombre))) {
+                $response = ["status" => "error", "message" => "El atributo ya existe"];
+                break;
+            }
 
             $id = $productoModel->registrarAtributo($nombre);
             $response = $id ? ["status" => "success", "message" => "Atributo creado exitosamente", "id" => $id] : ["status" => "error", "message" => "Error al crear el atributo"];
@@ -104,65 +113,80 @@ try {
                 $db = Conexion::conectar();
                 $db->beginTransaction();
 
-                // 1. CAPTURA DE DATOS BASE (Sin el wrapper $data)
+                // 1. CAPTURA DE DATOS BASE (Producto Padre)
                 $nombreProducto = isset($_POST['nombre']) ? trim($_POST['nombre']) : null;
                 $descripcion    = isset($_POST['descripcion']) ? trim($_POST['descripcion']) : "";
                 $id_categoria   = isset($_POST['id_categoria']) ? (int)$_POST['id_categoria'] : null;
                 $estado         = isset($_POST['estado']) ? (int)$_POST['estado'] : 1;
 
+                if ($productoModel->isExisteProducto(strtolower($nombreProducto), 0)) {
+                    $response = ["status" => "error", "message" => "Nombre de producto ya existe."];
+                    exit;
+                }
                 // 2. REGISTRO EN TABLA: producto (Llamada al modelo)
                 $idProducto = $productoModel->registrarProducto($nombreProducto, $descripcion, $id_categoria, $estado);
 
-                if (!$idProducto) throw new Exception("Error al registrar el producto base.");
+                if (!$idProducto) {
+                    $response = ["status" => "error", "message" => "Error en la insercion del producto."];
+                    exit;
+                }
 
-                // 3. REGISTRO EN TABLA: productoatributo
-                // Estos son los atributos que el usuario eligió en los selectores de arriba
-                if (isset($_POST['atributo_id'])) {
-                    foreach ($_POST['atributo_id'] as $id_at) {
-                        $productoModel->registrarProductoAtributo($idProducto, (int)$id_at);
+                // 4. REGISTRO DE ATRIBUTOS (Limpiando duplicados)
+                if (isset($_POST['atributo_id']) && is_array($_POST['atributo_id'])) {
+                    // array_unique elimina IDs repetidos por si el JS falló
+                    $atributosUnicos = array_unique($_POST['atributo_id']);
+                    foreach ($atributosUnicos as $id_at) {
+                        if (!empty($id_at)) {
+                            $productoModel->registrarProductoAtributo($idProducto, (int)$id_at);
+                        }
                     }
                 }
 
-                // 4. REGISTRO DE VARIANTES (Matriz dinámica)
-                if (isset($_POST['v_descripcion'])) {
-                    foreach ($_POST['v_descripcion'] as $i => $descAtributos) {
+                // 3. PROCESAMIENTO DE LA MATRIZ DE VARIANTES
+                if (isset($_POST['v_sku'])) {
+                    foreach ($_POST['v_sku'] as $i => $sku) {
 
-                        // Generamos el nombre descriptivo completo
-                        $nombreCompleto = $nombreProducto . " - " . $descAtributos;
-                        $precio = (float)$_POST['v_precio'][$i];
-                        $stock  = (int)$_POST['v_stock'][$i];
+                        // Captura de datos de la variante i
+                        $nombreVariante = $_POST['v_nombre'][$i];
+                        $precioCompra   = (float)$_POST['v_precio_compra'][$i];
+                        $precioVenta    = (float)$_POST['v_precio_venta'][$i];
+                        $stockActual    = (int)$_POST['v_stock_actual'][$i];
+                        $stockMinimo    = (int)$_POST['v_stock_minimo'][$i];
+                        $jsonAtributos  = $_POST['v_valores_json'][$i]; // El JSON que armamos en JS
 
-                        // --- MANEJO DE IMÁGENES LOCALES ---
+                        // --- MANEJO DE IMAGEN ---
                         $nombreImagen = "default.png";
-
                         if (isset($_FILES['v_foto']['name'][$i]) && $_FILES['v_foto']['error'][$i] === UPLOAD_ERR_OK) {
-                            // El punto "." une los textos correctamente
-                            // Solo un "../" para salir de controllers y quedar en app/
                             $rutaDestino = __DIR__ . "/../views/assets/images/";
                             $ext = strtolower(pathinfo($_FILES['v_foto']['name'][$i], PATHINFO_EXTENSION));
-
-                            // Nombre único para evitar colisiones
-                            $nuevoNombre = "prod_" . $idProducto . "_v" . $i . "_" . time() . "." . $ext;
+                            $nuevoNombre = "var_" . $sku . "_" . time() . "." . $ext;
 
                             if (move_uploaded_file($_FILES['v_foto']['tmp_name'][$i], $rutaDestino . $nuevoNombre)) {
                                 $nombreImagen = $nuevoNombre;
                             }
                         }
 
-                        // 5. REGISTRO EN TABLA: variante
-                        $idVariante = $productoModel->registrarVariante($idProducto, $nombreCompleto, $precio, $stock, $nombreImagen);
+                        // 4. REGISTRO EN TABLA: variante (Asegúrate de que tu modelo reciba estos nuevos campos)
+                        $idVariante = $productoModel->registrarVariante(
+                            $idProducto,
+                            $sku,
+                            $nombreVariante,
+                            $precioCompra,
+                            $precioVenta,
+                            $stockActual,
+                            $stockMinimo,
+                            $nombreImagen
+                        );
 
-                        // 6. REGISTRO EN TABLA: variantevalor (Desglose atómico)
-                        // Aquí rompemos la cadena "Color: Rojo / Talla: L" para cumplir tu ERD
-                        $pares = explode(" / ", $descAtributos);
-                        foreach ($pares as $par) {
-                            $partes = explode(": ", $par);
-                            if (count($partes) == 2) {
-                                $idAttrBase = $productoModel->obtenerIdAtributoPorNombre(trim($partes[0]));
-                                if ($idAttrBase) {
-                                    $productoModel->registrarVarianteValor($idVariante, $idAttrBase, trim($partes[1]));
-                                }
-                            }
+                        if (!$idVariante) {
+                            $response = ["status" => "error", "message" => "Error en la insercion de alguna variante."];
+                            exit;
+                        }
+
+                        // 5. REGISTRO EN TABLA: variantevalor (Usando el JSON)
+                        $atributosObj = json_decode($jsonAtributos, true); // Convierte {"1":"Rojo"} en array
+                        foreach ($atributosObj as $idAtributo => $valor) {
+                            $productoModel->registrarVarianteValor($idVariante, (int)$idAtributo, trim($valor));
                         }
                     }
                 }

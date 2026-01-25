@@ -2,181 +2,71 @@
 <html lang="es">
 <?php require_once "./app/views/inc/head.php"; ?>
 
-<style>
-    /* Estilos de DataTables heredados de tu vista de categorías */
-    .dataTables_length label {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 500;
-    }
-
-    .dataTables_length select {
-        width: auto !important;
-        display: inline-block;
-    }
-
-    .dataTables_filter {
-        text-align: right;
-    }
-
-    .dataTables_filter label {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        font-weight: 500;
-    }
-
-    .buttons-html5 {
-        margin-right: 5px;
-    }
-
-    /* Estilos para la distribución de formularios dentro del modal */
-    .card-form {
-        border: 1px solid #e3e6f0;
-        border-radius: 0.35rem;
-        height: 100%;
-    }
-
-    .card-header-custom {
-        background-color: #f8f9fc;
-        border-bottom: 1px solid #e3e6f0;
-        padding: 0.75rem 1.25rem;
-    }
-
-    .table-variantes-container {
-        max-height: 400px;
-        overflow-y: auto;
-        border: 1px solid #e3e6f0;
-        border-radius: 0.35rem;
-    }
-
-    .card-body {
-        padding: 1.5rem !important;
-        /* Esto despega todo de los bordes internos */
-    }
-
-    /* Ajuste para que los inputs no se vean tan pegados entre sí verticalmente */
-    .mb-3 {
-        margin-bottom: 1.25rem !important;
-    }
-
-    /* Espaciado para el contenedor de atributos a la derecha */
-    #contenedorAtributos {
-        min-height: 150px;
-        padding: 10px;
-        /* Espacio interno para los selectores que inyectará jQuery */
-        border-radius: 8px;
-    }
-
-    /* Margen para la tabla de variantes para que no toque los bordes del modal */
-    .table-variantes-container {
-        margin: 0 10px;
-        /* Pequeño margen lateral */
-        padding: 5px;
-    }
-
-    /* Corrección global para botones Kebab */
-    .btn-kebab-luxury {
-        color: #333 !important;
-        /* Color oscuro para que se vea sobre fondo blanco */
-        padding: 0 !important;
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        transition: background-color 0.2s;
-        margin: 0 auto;
-        /* Centra el botón en la celda */
-    }
-
-    .btn-kebab-luxury:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-        /* Efecto sutil al pasar el cursor */
-        color: #000 !important;
-    }
-
-    .btn-kebab-luxury i {
-        line-height: 1;
-        font-size: 1.2rem !important;
-        /* Ajusta el tamaño del icono */
-    }
-
-    /* Alineación vertical para todas las celdas de la tabla */
-    .luxury-table td {
-        vertical-align: middle !important;
-    }
-</style>
-
 <body>
     <?php require_once "./app/views/inc/header.php"; ?>
 
     <section class="container fade-in" style="margin-top: 120px;">
-        <div class="d-flex" style="justify-content: space-between; align-items: center; margin-bottom: 40px;">
-            <h2 class="section-title">Gestión de Productos</h2>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProducto">
-                <i class="fas fa-plus"></i> Registrar Producto
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title"><i class="fas fa-boxes me-2"></i>Gestión de Productos</h2>
+            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalProducto">
+                <i class="fas fa-plus-circle me-1"></i> Registrar Producto
             </button>
         </div>
-
-        <div class="luxury-table-container">
-            <table class="luxury-table table" id="tablaProductos" style="width: 100%;">
-                <thead>
+        <div class="luxury-table-container shadow-sm p-3 bg-white rounded">
+            <table class="luxury-table table w-100" id="tablaProductos">
+                <thead class="table-light">
                     <tr>
                         <th>Producto</th>
                         <th>Categoría</th>
+                        <th>Descipcion</th>
                         <th>Estado</th>
-                        <th>Acciones</th>
+                        <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
-                </tbody>
+                <tbody></tbody>
             </table>
         </div>
     </section>
 
-    <div class="modal fade" id="modalProducto" aria-labelledby="modalProductoLabel" aria-hidden="true">
+    <div class="modal fade" id="modalProducto" tabindex="-1" aria-labelledby="modalProductoLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content shadow-lg">
-                <div class="modal-header bg-white">
-                    <h5 class="modal-title fw-bold" id="modalProductoLabel">Configuración de Producto</h5>
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-white border-bottom-0">
+                    <h5 class="modal-title fw-bold" id="modalProductoLabel">
+                        <i class="fas fa-cart-plus text-primary me-2"></i>Configuración de Nuevo Producto
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body pt-0">
                     <form id="formProducto" enctype="multipart/form-data">
-                        <input type="hidden" id="id_producto" name="id_producto" value="0">
-
-                        <div class="row g-4">
+                        <input type="hidden" name="id_producto" value="0">
+                        <div class="row g-3">
                             <div class="col-md-7">
-                                <div class="card-form shadow-sm">
-                                    <div class="card-header-custom">
-                                        <span class="small fw-bold text-primary"><i class="fas fa-edit me-2"></i>DATOS GENERALES</span>
+                                <div class="card-form shadow-sm h-100">
+                                    <div class="card-header-custom py-2">
+                                        <span class="small fw-bold text-primary"><i class="fas fa-info-circle me-2"></i>DATOS GENERALES</span>
                                     </div>
-                                    <div class="card-body">
+                                    <div class="card-body py-3">
                                         <div class="mb-3">
-                                            <label class="form-label small">Nombre del Producto</label>
-                                            <input type="text" name="nombre" id="nombre" class="form-control" placeholder="Ej: Amortiguador Kit" required>
+                                            <label class="form-label small fw-bold">Nombre del Producto</label>
+                                            <input type="text" name="nombre" id="nombre" class="form-control form-control-sm" style="width: 80%;" required>
                                         </div>
-                                        <div class="row">
+                                        <div class="row g-2">
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label small">Categoría</label>
-                                                <select name="id_categoria" id="id_categoria" class="form-select" required>
-                                                    <option value="">Seleccione...</option>
-                                                </select>
+                                                <label class="form-label small fw-bold">Categoría</label>
+                                                <select name="id_categoria" id="id_categoria" class="form-select form-select-sm select-categoria" required></select>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label small">Estado</label>
-                                                <select name="estado" id="estado" class="form-select">
+                                                <label class="form-label small fw-bold">Estado</label>
+                                                <select name="estado" id="estado" class="form-select form-select-sm">
                                                     <option value="1">Activo</option>
                                                     <option value="0">Inactivo</option>
                                                 </select>
                                             </div>
                                         </div>
                                         <div class="mb-0">
-                                            <label class="form-label small">Descripción</label>
-                                            <textarea name="descripcion" id="descripcion" class="form-control" rows="2" required></textarea>
+                                            <label class="form-label small fw-bold">Descripción</label>
+                                            <textarea name="descripcion" id="descripcion" class="form-control form-control-sm" rows="2" required></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -184,64 +74,59 @@
 
                             <div class="col-md-5">
                                 <div class="card-form shadow-sm d-flex flex-column h-100">
-
-                                    <div class="card-header-custom d-flex justify-content-between align-items-center p-3 bg-white border-bottom">
-                                        <span class="small fw-bold text-dark"><i class="fas fa-list me-2"></i>ATRIBUTOS</span>
-
-                                        <div class="btn-group shadow-sm">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnNuevoAtributo"
-                                                data-bs-toggle="tooltip" title="Configurar nuevos tipos de atributo">
-                                                <i class="fas fa-cog"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAgregarFilaAtributo"
-                                                data-bs-toggle="tooltip" title="Añadir nueva fila de valor">
-                                                <i class="fas fa-plus"></i>
+                                    <div class="card-header-custom d-flex justify-content-between align-items-center py-1">
+                                        <span class="small fw-bold text-dark"><i class="fas fa-tags me-2"></i>ATRIBUTOS</span>
+                                        <div class="d-flex gap-1">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnNuevoAtributo"><i class="fas fa-cog"></i></button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAgregarFilaAtributo"><i class="fas fa-plus"></i></button>
+                                            <button type="button" class="btn btn-sm btn-dark" id="btnGenerarMatriz">
+                                                <i class="fas fa-sync-alt"></i> Generar
                                             </button>
                                         </div>
                                     </div>
-
-                                    <div class="card-body bg-light-subtle flex-grow-1" style="max-height: 350px; overflow-y: auto;">
+                                    <div class="card-body bg-light-subtle p-2"
+                                        style="min-height: 100px; max-height: 220px; overflow-y: auto; overflow-x: hidden;">
                                         <div id="contenedorAtributos">
-                                            <p class="text-muted small text-center pt-4">Define los atributos para habilitar la matriz.</p>
+                                            <p class="text-muted small text-center pt-2 mb-0" id="msgSinAtributos">Define atributos para la matriz.</p>
                                         </div>
                                     </div>
-
-                                    <div class="card-footer bg-white border-top p-3">
-                                        <button type="button" class="btn btn-dark w-100 fw-bold shadow-sm" id="btnGenerarMatriz"
-                                            data-bs-toggle="tooltip" title="Actualizar matriz de variantes">
-                                            <i class="fas fa-sync-alt me-2"></i> GENERAR MATRIZ
-                                        </button>
-                                    </div>
-
                                 </div>
                             </div>
                         </div>
-                        <div class="row mt-4">
+
+                        <div class="row mt-3">
                             <div class="col-12">
-                                <div class="table-variantes-container shadow-sm">
-                                    <div class="card-header-custom bg-dark text-white border-0 py-2">
-                                        <span class="small fw-bold"><i class="fas fa-boxes me-2"></i>MATRIZ DE VARIANTES</span>
+                                <div class="table-variantes-container shadow-sm bg-white border rounded">
+                                    <div class="card-header-custom bg-dark text-white border-0 py-1">
+                                        <span class="small fw-bold"><i class="fas fa-th-list me-2"></i>MATRIZ DE VARIANTES</span>
                                     </div>
-                                    <table class="table table-sm table-hover align-middle mb-0" id="tablaVariantes">
-                                        <thead class="table-light">
-                                            <tr style="font-size: 0.8rem;">
-                                                <th class="ps-3">Variante</th>
-                                                <th width="140px">Imagen</th>
-                                                <th width="110px">Precio</th>
-                                                <th width="90px">Stock</th>
-                                                <th width="40px"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="cuerpoVariantes">
-                                        </tbody>
-                                    </table>
+                                    <div class="table-responsive" style="max-height: 300px;">
+                                        <table class="table table-sm table-hover align-middle mb-0" id="tablaVariantes">
+                                            <thead class="table-light sticky-top">
+                                                <tr style="font-size: 0.75rem; text-transform: uppercase;">
+                                                    <th class="ps-3">Variante</th>
+                                                    <th width="120px">SKU</th>
+                                                    <th width="120px">Imagen</th>
+                                                    <th width="100px">P. Compra</th>
+                                                    <th width="100px">P. Venta</th>
+                                                    <th width="80px">Stock</th>
+                                                    <th width="80px">Reserva</th>
+                                                    <th width="40px"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="cuerpoVariantes" style="font-size: 0.85rem;">
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
-                            <button type="submit" class="btn btn-primary px-4" id="btnEnviar">Guardar Todo</button>
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button type="button" class="btn btn-light px-4 border" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="submit" class="btn btn-primary px-4 shadow-sm" id="btnGuardarRegistro">
+                                <i class="fas fa-save me-1"></i> Guardar Producto
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -249,69 +134,58 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalProductoEdicion" tabindex="-1" aria-labelledby="modalProductoLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content shadow-lg border-0">
-            <div class="modal-header bg-white border-bottom-0">
-                <h5 class="modal-title fw-bold" id="modalProductoLabel">
-                    <i class="fas fa-edit text-primary me-2"></i>Editar Información del Producto
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            
-            <div class="modal-body">
-                <form id="formProducto" enctype="multipart/form-data">
-                    <input type="hidden" id="id_producto2" name="id_producto2" value="0">
-
-                    <div class="card border-0 bg-light-subtle shadow-sm">
-                        <div class="card-body p-4">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label small fw-bold text-muted">Nombre del Producto</label>
-                                    <input type="text" name="nombre2" id="nombre2" class="form-control form-control-lg border-0 shadow-sm" placeholder="Ej: Amortiguador Kit" required>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-bold text-muted">Categoría</label>
-                                    <div id="wrapper-categoria">
-                                        <select name="id_categoria2" id="id_categoria2" class="form-select border-0 shadow-sm" required>
-                                            <option value="">Cargando...</option>
+    <div class="modal fade" id="modalProductoEdicion" tabindex="-1" aria-labelledby="modalProductoEdicionLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-white">
+                    <h5 class="modal-title fw-bold" id="modalProductoEdicionLabel">
+                        <i class="fas fa-edit text-primary me-2"></i>Editar Información
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formProductoEdicion" method="POST">
+                        <input type="hidden" id="id_producto_edit" name="id_producto">
+                        <div class="card border-0 bg-light-subtle shadow-sm">
+                            <div class="card-body p-4">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label small fw-bold text-muted"><i class="fas fa-tag me-1"></i>Nombre del Producto</label>
+                                        <input type="text" name="nombre" id="nombre_edit" class="form-control border-0 shadow-sm" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-muted"><i class="fas fa-list me-1"></i>Categoría</label>
+                                        <select name="id_categoria" id="id_categoria_edit" class="form-select border-0 shadow-sm select-categoria" required></select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-muted"><i class="fas fa-toggle-on me-1"></i>Estado</label>
+                                        <select name="estado" id="estado_edit" class="form-select border-0 shadow-sm">
+                                            <option value="1">Activo</option>
+                                            <option value="0">Inactivo</option>
                                         </select>
                                     </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-bold text-muted">Estado del Sistema</label>
-                                    <select name="estado2" id="estado2" class="form-select border-0 shadow-sm">
-                                        <option value="1">Activo</option>
-                                        <option value="0">Inactivo</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-12">
-                                    <label class="form-label small fw-bold text-muted">Descripción General</label>
-                                    <textarea name="descripcion2" id="descripcion2" class="form-control border-0 shadow-sm" rows="3" placeholder="Detalles técnicos del producto..." required></textarea>
+                                    <div class="col-12">
+                                        <label class="form-label small fw-bold text-muted"><i class="fas fa-align-left me-1"></i>Descripción General</label>
+                                        <textarea name="descripcion" id="descripcion_edit" class="form-control border-0 shadow-sm" rows="3" required></textarea>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <button type="button" class="btn btn-light px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm" id="btnEnviar">
-                            <i class="fas fa-save me-2"></i>Actualizar Datos
-                        </button>
-                    </div>
-                </form>
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="button" class="btn btn-light px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm" id="btnActualizar">
+                                <i class="fas fa-save me-2"></i>Actualizar Datos
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
     <?php require_once "./app/views/inc/script.php"; ?>
     <?php require_once "./app/views/inc/footer.php"; ?>
-    <script src="app/views/assets/js/producto.js?v=3"></script>
-
+    <script src="app/views/assets/js/producto.js?v=90"></script>
 </body>
 
 </html>

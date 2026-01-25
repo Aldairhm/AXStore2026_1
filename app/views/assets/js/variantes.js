@@ -8,7 +8,7 @@ $(document).ready(function () {
 
   // 2. INICIALIZACIÓN
   init();
-
+  
   function init() {
     fetchProducts();
     setupEvents();
@@ -71,6 +71,8 @@ $(document).ready(function () {
 
     $.each(productsList, function (i, product) {
       // Lógica para el color del stock (Poniéndonos serios con la UX)
+      let precioVenta= Number(product.precio_venta);
+      let precioFormateado= precioVenta.toFixed(2);
       let stockClass = product.stock > 5 ? "bg-success" : "bg-danger";
       let stockText =
         product.stock > 0 ? `${product.stock} disponibles` : "Agotado";
@@ -96,7 +98,7 @@ $(document).ready(function () {
                     <div class="mt-auto">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <span class="h5 mb-0 fw-bold text-primary">$${parseFloat(product.precio).toFixed(2)}</span>
+                                <span class="h5 mb-0 fw-bold text-primary">$${precioFormateado}</span>
                                 <br>
                                 <small class="text-muted">Stock: ${product.stock} un.</small>
                             </div>

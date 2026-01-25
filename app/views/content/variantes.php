@@ -2,7 +2,6 @@
 <html lang="en">
 
 <?php $id= isset($_GET['id']) ? (int)($_GET['id']) : 0 ?>
-
 <head>
     <?php require_once "./app/views/inc/head.php"; ?>
 </head>
@@ -138,7 +137,7 @@
     <?php require_once "./app/views/inc/script.php"; ?>
     <?php require_once "./app/views/inc/footer.php"; ?>
     <script src="app/views/assets/js/producto.js?v=9"></script>
-    <script src="app/views/assets/js/variantes.js?v=3"></script>
+    <script src="app/views/assets/js/variantes.js?v=89"></script>
 </body>
 
 </html>

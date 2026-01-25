@@ -1,6 +1,7 @@
 var tabla;
 
 $(document).ready(function () {
+  //llenado de la tabla
   tabla = $("#tablaCategorias").DataTable({
     ajax: {
       url: "app/controllers/categoriaController.php",
@@ -70,6 +71,7 @@ $(document).ready(function () {
       "<'row mt-4'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
   });
 
+  //manejo del formulario
   $("#formCategoria").on("submit", function (e) {
     e.preventDefault();
 
@@ -77,13 +79,7 @@ $(document).ready(function () {
     let descripcion = $("#descripcion").val().trim();
     let idActual = $("#id_categoria").val();
 
-    //ponemos las validaciones basicas
-    if (nombre.length < 5) {
-      mostrarError("El nombre de la categoría es muy corto.");
-      return;
-    }
-
-    if (nombre.length > 200) {
+    if (nombre.length > 100) {
       mostrarError("El nombre de la categoría es muy largo.");
       return;
     }
@@ -124,6 +120,39 @@ function editar(id) {
   });
 }
 
+// Función para eliminar categoría
+function eliminar(id) {
+    Swal.fire({
+        title: "¿Estás seguro?",
+        text: "No podrás revertir esto...",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33", // Rojo para peligro
+        cancelButtonColor: "#3085d6", // Azul para cancelar
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar",
+        reverseButtons: true // Pone el botón de cancelar a la izquierda
+    }).then((result) => {
+        // Si el usuario hizo clic en "Sí, eliminar"
+        if (result.isConfirmed) {
+            $.ajax({
+              url: "app/controllers/categoriaController.php",
+              type: "POST",
+              data: { accion: "eliminarCategoria", id: id },
+              dataType: "json",
+              success: function(response){
+                  if(response.status==="success"){
+                    mostrarExito(response.message);
+                    tabla.ajax.reload(null, false);
+                  }else{
+                    mostrarError(response.message)
+                  }
+              }
+            });
+        }
+    });
+}
+
 function editar_Y_registrarCategoria(formData, id) {
   // 1. Usamos una URL limpia (sin parámetros ?)
   let url = "app/controllers/categoriaController.php";
@@ -157,7 +186,6 @@ function editar_Y_registrarCategoria(formData, id) {
   });
 }
 
-//funciones para mostrar errores
 // MÉTODO: Solo muestra el mensaje de éxito
 function mostrarExito(mensaje) {
   return Swal.fire({
