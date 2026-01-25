@@ -16,7 +16,7 @@
                 
                 <div class="form-group">
                     <label for="clave_nueva">Nueva Contraseña</label>
-                    <input type="password" id="clave_nueva" name="clave_nueva" placeholder="Mínimo 4 caracteres" required>
+                    <input type="password" id="clave_nueva" name="clave_nueva" placeholder="Mínimo 8 caracteres" required>
                 </div>
 
                 <div class="form-group">
@@ -29,7 +29,7 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <?php require_once "./app/views/inc/script.php"; ?>
     <script src="<?php echo APP_URL; ?>app/ajax/login.js"></script>
 </body>
 </html>
