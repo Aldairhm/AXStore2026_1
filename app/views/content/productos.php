@@ -39,7 +39,7 @@
                 </div>
                 <div class="modal-body pt-0">
                     <form id="formProducto" enctype="multipart/form-data">
-                        <input type="hidden" name="id_producto" value="0">
+                        <input type="hidden" name="id_producto" id="id_producto" value="0">
                         <div class="row g-3">
                             <div class="col-md-7">
                                 <div class="card-form shadow-sm h-100">
@@ -111,6 +111,7 @@
                                                     <th width="100px">P. Venta</th>
                                                     <th width="80px">Stock</th>
                                                     <th width="80px">Reserva</th>
+                                                    <th width="80px">Comision</th>
                                                     <th width="40px"></th>
                                                 </tr>
                                             </thead>
@@ -185,7 +186,7 @@
 
     <?php require_once "./app/views/inc/script.php"; ?>
     <?php require_once "./app/views/inc/footer.php"; ?>
-    <script src="app/views/assets/js/producto.js?v=90"></script>
+    <script src="app/views/assets/js/producto.js?v=97"></script>
 </body>
 
 </html>

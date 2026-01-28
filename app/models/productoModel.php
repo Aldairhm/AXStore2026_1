@@ -13,171 +13,270 @@ class Producto
         $this->conexion = Conexion::conectar();
     }
 
-    public function getProductoPorId(int $id_producto): ?array
+    /* ============================================================
+       1. PRODUCTO PADRE
+    ============================================================ */
+
+    public function obtenerProductoPorId(int $id): ?array
     {
-        $sql = "SELECT p.id,p.nombre, p.descripcion,p.estado, c.nombre AS categoria, c.id AS id_categoria FROM producto p INNER JOIN categoria c  ON p.id_categoria=c.id WHERE p.id = :id";
+        $sql = "SELECT p.id, p.nombre, p.descripcion, p.estado, c.nombre AS categoria, c.id AS id_categoria 
+                FROM producto p INNER JOIN categoria c ON p.id_categoria = c.id WHERE p.id = :id";
         $stmt = $this->conexion->prepare($sql);
-        $stmt->bindParam(':id', $id_producto, PDO::PARAM_INT);
-        $stmt->execute();
-
-        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $resultado ? $resultado : null;
-    }
-
-    public function actualizarProducto(int $id, string $nombre, string $descripcion, int $categoria, int $estado): ?int
-    {
-        $sql = "UPDATE producto SET id_categoria=:categoria, nombre=:nombre, descripcion=:descripcion, estado=:estado WHERE id=:id";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->bindParam(':categoria', $categoria, PDO::PARAM_INT);
-        $stmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
-        $stmt->bindParam(':descripcion', $descripcion, PDO::PARAM_STR);
-        $stmt->bindParam(':estado', $estado, PDO::PARAM_INT);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-
-        $stmt->execute();
-        return $stmt->rowCount();
-    }
-
-    public function isExisteAtributo(string $nombre): bool
-    {
-        $sql = "SELECT COUNT(*) FROM atributo WHERE LOWER(nombre) = :nombre";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
-        $stmt->execute();
-
-        return $stmt->fetchColumn() > 0;
-    }
-
-    public function isExisteProducto(string $nombre, int $id): bool
-    {
-        $sql = "SELECT COUNT(*) FROM producto WHERE LOWER(nombre) = :nombre AND id != :id";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-
-        return $stmt->fetchColumn() > 0;
-    }
-
-    public function getVariantesPorProducto(int $id_producto): array
-    {
-        $sql = "SELECT p.descripcion, v.nombre_variante as nombre, v.precio_venta, v.stock, v.imagen, c.nombre as categoria FROM producto p INNER JOIN variante v ON p.id=v.id_producto INNER JOIN categoria c ON p.id_categoria= c.id WHERE p.id= :id";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->bindParam(':id', $id_producto, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->execute([':id' => $id]);
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $res ?: null;
     }
 
     public function getProductosFull(): array
     {
-        $sql = "SELECT p.id,p.nombre,p.estado,p.descripcion, c.nombre as categoria FROM producto p INNER JOIN categoria c ON p.id_categoria = c.id";
+        $sql = "SELECT p.id, p.nombre, p.estado, p.descripcion, c.nombre as categoria 
+                FROM producto p INNER JOIN categoria c ON p.id_categoria = c.id";
         $stmt = $this->conexion->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function registrarAtributo(string $nombre): ?int
-    {
-        $sql = "INSERT INTO atributo (nombre) VALUES (:nombre)";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->bindParam(':nombre', $nombre);
-
-        return $stmt->execute() ? (int)$this->conexion->lastInsertId() : null;
-    }
-
-    // Corrección del typo en el BindParam
     public function registrarProducto(string $nombre, string $descripcion, int $categoria, int $estado): ?int
     {
         $sql = "INSERT INTO producto (id_categoria, nombre, descripcion, estado) VALUES (:categoria, :nombre, :descripcion, :estado)";
         $stmt = $this->conexion->prepare($sql);
-        $stmt->bindParam(':categoria', $categoria, PDO::PARAM_INT);
-        $stmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
-        $stmt->bindParam(':descripcion', $descripcion, PDO::PARAM_STR);
-        $stmt->bindParam(':estado', $estado, PDO::PARAM_INT); // CORREGIDO: :estado en lugar de :estadp
-
-        return $stmt->execute() ? (int)$this->conexion->lastInsertId() : null;
+        return $stmt->execute([':categoria' => $categoria, ':nombre' => $nombre, ':descripcion' => $descripcion, ':estado' => $estado])
+            ? (int)$this->conexion->lastInsertId() : null;
     }
 
-    //INSERT DE ProductoAtributo
-    public function registrarProductoAtributo(int $id_producto, int $id_atributo): ?int
+    public function actualizarProducto(int $id, string $nombre, string $descripcion, int $categoria, int $estado): bool
     {
-        $sql = "INSERT INTO productoatributo (id_producto, id_atributo) VALUES (:id_producto, :id_atributo)";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->bindParam(':id_producto', $id_producto, PDO::PARAM_INT);
-        $stmt->bindParam(':id_atributo', $id_atributo, PDO::PARAM_INT);
-
-        return $stmt->execute() ? (int)$this->conexion->lastInsertId() : null;
+        $sql = "UPDATE producto SET id_categoria = :categoria, nombre = :nombre, descripcion = :descripcion, estado = :estado WHERE id = :id";
+        return $this->conexion->prepare($sql)->execute([':categoria' => $categoria, ':nombre' => $nombre, ':descripcion' => $descripcion, ':estado' => $estado, ':id' => $id]);
     }
 
-    public function registrarVariante(int $idProducto,string $sku,string $nombreVariante,float $precioCompra,float $precioVenta,int $stockActual,int $reserva,string $nombreImagen): ?int {
-        $sql = "INSERT INTO variante (id_producto, nombre_variante, precio_compra,precio_venta, stock,reserva, imagen, sku) VALUES (:id_producto, :nombre_variante, :precio_compra,:precio_venta, :stock,:reserva, :imagen, :sku)";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->bindParam(':id_producto', $idProducto, PDO::PARAM_INT);
-        $stmt->bindParam(':nombre_variante', $nombreVariante, PDO::PARAM_STR);
-        $stmt->bindParam(':precio_compra', $precioCompra);
-        $stmt->bindParam(':precio_venta', $precioVenta);
-        $stmt->bindParam(':stock', $stockActual, PDO::PARAM_INT);
-        $stmt->bindParam(':reserva', $reserva, PDO::PARAM_INT);
-        $stmt->bindParam(':imagen', $nombreImagen, PDO::PARAM_STR);
-        $stmt->bindParam(':sku', $sku, PDO::PARAM_STR);
-
-        return $stmt->execute() ? (int)$this->conexion->lastInsertId() : null;
-    }
-
-    public function obtenerIdAtributoPorNombre(string $nombre): ?int
+    public function isExisteProducto(string $nombre, int $idExcluir = 0): bool
     {
-        $sql = "SELECT id FROM atributo WHERE nombre = :nombre";
+        $sql = "SELECT COUNT(*) FROM producto WHERE LOWER(nombre) = :nombre AND id != :id";
         $stmt = $this->conexion->prepare($sql);
-        $stmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
-        $stmt->execute();
-
-        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $resultado ? (int)$resultado['id'] : null;
+        $stmt->execute([':nombre' => strtolower($nombre), ':id' => $idExcluir]);
+        return $stmt->fetchColumn() > 0;
     }
 
-    public function registrarVarianteValor(int $id_variante, int $id_atributo, string $valor): bool
-    {
-        $sql = "INSERT INTO variantevalor (id_variante, id_atributo, valor) 
-            VALUES (:id_variante, :id_atributo, :valor)";
-        $stmt = $this->conexion->prepare($sql);
+    /* ============================================================
+       2. VARIANTES Y EAV
+    ============================================================ */
 
-        // Al pasar el array aquí, PDO se encarga de la limpieza automáticamente
-        return $stmt->execute([
-            ':id_variante' => $id_variante,
-            ':id_atributo' => $id_atributo,
-            ':valor'       => $valor
-        ]);
+    public function getVariantesPorProducto(int $id): array
+    {
+        $sql = "SELECT 
+                v.id, 
+                v.nombre_variante AS nombre, 
+                v.precio_venta, 
+                v.stock, 
+                v.imagen, 
+                v.sku, 
+                v.comision,
+                v.reserva,
+                p.nombre AS nombre_producto_padre,
+                c.nombre AS nombre_categoria
+            FROM variante v
+            INNER JOIN producto p ON v.id_producto = p.id
+            INNER JOIN categoria c ON p.id_categoria = c.id
+            WHERE v.id_producto = :id";
+
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute([':id' => $id]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getVariantePorId(int $id): ?array
+    {
+        $sql = "SELECT * FROM variante WHERE id = :id";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+
+
+    public function registrarVarianteValor(int $idV, int $idA, string $valor): bool
+    {
+        $sql = "INSERT INTO variantevalor (id_variante, id_atributo, valor) VALUES (?, ?, ?)";
+        return $this->conexion->prepare($sql)->execute([$idV, $idA, trim($valor)]);
+    }
+
+    public function actualizarValorAtributo(int $idV, int $idA, string $valor): bool
+    {
+        $sql = "UPDATE variantevalor SET valor = :val WHERE id_variante = :idV AND id_atributo = :idA";
+        return $this->conexion->prepare($sql)->execute([':val' => trim($valor), ':idV' => $idV, ':idA' => $idA]);
+    }
+
+    public function obtenerValorAtributosVariante(int $id): array
+    {
+        $sql = "SELECT va.id AS id_atributo, va.nombre AS nombre_atributo, vv.valor 
+                FROM variantevalor vv INNER JOIN atributo va ON vv.id_atributo = va.id WHERE vv.id_variante = :id";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // 1. En el método registrarVariante
+    public function registrarVariante(int $idP, string $sku, string $hash, string $nom, float $pC, float $pV, int $sA, int $sM, string $img, float $com): ?int
+    {
+        // Cambiamos hash_combination -> hash_combinacion
+        $sql = "INSERT INTO variante (id_producto, sku, hash_combinacion, nombre_variante, precio_compra, precio_venta, stock, reserva, imagen, comision) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $this->conexion->prepare($sql);
+        return $stmt->execute([$idP, $sku, $hash, $nom, $pC, $pV, $sA, $sM, $img, $com]) ? (int)$this->conexion->lastInsertId() : null;
+    }
+
+    // 2. En el método actualizarDatosVariante
+    public function actualizarDatosVariante(int $id, string $sku, string $hash, int $stock ,float $pV, int $sM, float $com): bool
+    {
+        // Cambiamos hash_combination -> hash_combinacion
+        $sql = "UPDATE variante SET sku = :sku, hash_combinacion = :hash,stock=:stock, precio_venta = :pv, reserva = :sm, comision = :com WHERE id = :id";
+        return $this->conexion->prepare($sql)->execute([':sku' => $sku, ':hash' => $hash,':stock'=>$stock, ':pv' => $pV, ':sm' => $sM, ':com' => $com, ':id' => $id]);
+    }
+
+    /* ============================================================
+       3. IDENTIDAD (HASH Y SKU)
+    ============================================================ */
+
+    public function generarHashVariante(array $attr): string
+    {
+        $p = [];
+        foreach ($attr as $id => $v) {
+            $p[] = $id . ":" . mb_strtolower(trim((string)$v), 'UTF-8');
+        }
+        sort($p);
+        return md5(implode("|", $p));
+    }
+
+    public function generarSkuAleatorio(int $len = 8): string
+    {
+        $chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        do {
+            $sku = substr(str_shuffle($chars), 0, $len);
+        } while ($this->isExisteSku($sku));
+        return $sku;
+    }
+
+    public function isExisteSku(string $sku): bool
+    {
+        $sql = "SELECT COUNT(*) FROM variante WHERE sku = :sku";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute([':sku' => $sku]);
+        return $stmt->fetchColumn() > 0;
+    }
+
+    public function existeHashEnProducto(int $idP, string $h): bool
+    {
+        $sql = "SELECT COUNT(*) FROM variante WHERE id_producto = :idP AND hash_combinacion = :h";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute([':idP' => $idP, ':h' => $h]);
+        return $stmt->fetchColumn() > 0;
+    }
+
+    public function existeHashEnOtro(int $idP, string $h, int $idV): bool
+    {
+        $sql = "SELECT COUNT(*) FROM variante WHERE id_producto = :idP AND hash_combinacion = :h AND id != :idV";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute([':idP' => $idP, ':h' => $h, ':idV' => $idV]);
+        return $stmt->fetchColumn() > 0;
+    }
+
+    /* ============================================================
+       4. EXPANSIÓN Y CONTRATOS (Aquí estaba el que faltaba)
+    ============================================================ */
+
+    public function obtenerAtributosProducto(int $id): array
+    {
+        $sql = "SELECT id_atributo FROM productoatributo WHERE id_producto = :id";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function obtenerIdsAtributosDeProducto(int $id): array
+    {
+        $sql = "SELECT id_atributo FROM productoatributo WHERE id_producto = :id";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    public function verificarVentasProducto(int $id): bool
+    {
+        $sql = "SELECT COUNT(*) FROM detalleventa dv INNER JOIN variante v ON dv.id_variante = v.id WHERE v.id_producto = :id";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    public function inyectarValorNA(int $idP, int $idA): bool
+    {
+        $sqlAttr = "SELECT nombre FROM atributo WHERE id = :id";
+        $stmtA = $this->conexion->prepare($sqlAttr);
+        $stmtA->execute([':id' => $idA]);
+        $nomA = $stmtA->fetchColumn();
+
+        $sqlEAV = "INSERT INTO variantevalor (id_variante, id_atributo, valor)
+                   SELECT v.id, :idA, 'N/A' FROM variante v 
+                   WHERE v.id_producto = :idP AND v.id NOT IN (SELECT vv.id_variante FROM variantevalor vv WHERE vv.id_atributo = :idA2)";
+        $this->conexion->prepare($sqlEAV)->execute([':idA' => $idA, ':idP' => $idP, ':idA2' => $idA]);
+
+        $sqlNom = "UPDATE variante SET nombre_variante = CONCAT(nombre_variante, ' / ', :nom, ': N/A') WHERE id_producto = :idP";
+        return $this->conexion->prepare($sqlNom)->execute([':nom' => $nomA, ':idP' => $idP]);
+    }
+
+    public function eliminarAtributoDelContrato(int $idP, int $idA): void
+    {
+        $this->conexion->prepare("DELETE FROM productoatributo WHERE id_producto = ? AND id_atributo = ?")->execute([$idP, $idA]);
+        $this->conexion->prepare("DELETE FROM variantevalor WHERE id_atributo = ? AND id_variante IN (SELECT id FROM variante WHERE id_producto = ?)")->execute([$idA, $idP]);
+    }
+
+    public function registrarProductoAtributo(int $idP, int $idA): bool
+    {
+        return $this->conexion->prepare("INSERT INTO productoatributo (id_producto, id_atributo) VALUES (?, ?)")->execute([$idP, $idA]);
+    }
+
+    /* ============================================================
+       5. UTILIDADES
+    ============================================================ */
+
+    public function generarNombreVarianteDesdeAtributos(int $idV): string
+    {
+        $stmtP = $this->conexion->prepare("SELECT p.nombre FROM producto p INNER JOIN variante v ON p.id = v.id_producto WHERE v.id = ?");
+        $stmtP->execute([$idV]);
+        $base = $stmtP->fetchColumn();
+
+        $stmtA = $this->conexion->prepare("SELECT valor FROM variantevalor WHERE id_variante = ? ORDER BY id_atributo ASC");
+        $stmtA->execute([$idV]);
+        return $base . " / " . implode(" / ", $stmtA->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    public function actualizarNombreVariante(int $id, string $nombre): bool
+    {
+        return $this->conexion->prepare("UPDATE variante SET nombre_variante = ? WHERE id = ?")->execute([$nombre, $id]);
+    }
+
+    public function actualizarImagenVariante(int $id, string $img): bool
+    {
+        return $this->conexion->prepare("UPDATE variante SET imagen = ? WHERE id = ?")->execute([$img, $id]);
     }
 
     public function getAtributos(): array
     {
-        $sql = "SELECT * FROM atributo";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->conexion->query("SELECT * FROM atributo")->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function buscarCategoria(int $id): array
+    public function isExisteAtributo(string $nom): bool
     {
-        $sql = "SELECT * FROM categoria WHERE id = :id";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-
-        // fetch() devuelve solo la fila encontrada o false si no existe
-        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $resultado ? $resultado : [];
+        $stmt = $this->conexion->prepare("SELECT COUNT(*) FROM atributo WHERE LOWER(nombre) = ?");
+        $stmt->execute([strtolower($nom)]);
+        return $stmt->fetchColumn() > 0;
     }
 
-    public function actualizarCategoria(int $id, string $nombre, string $descripcion): ?int
+    public function registrarAtributo(string $nom): ?int
     {
-        $sql = "UPDATE categoria SET nombre=:nombre, descripcion=:descripcion  WHERE id=:id";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
-        $stmt->bindParam(':descripcion', $descripcion, PDO::PARAM_STR);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-
-        $stmt->execute();
-        return $stmt->rowCount();
+        $stmt = $this->conexion->prepare("INSERT INTO atributo (nombre) VALUES (?)");
+        return $stmt->execute([$nom]) ? (int)$this->conexion->lastInsertId() : null;
     }
 }
