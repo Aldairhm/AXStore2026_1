@@ -11,24 +11,22 @@
                 <ul>
                     <li><a href="<?php echo APP_URL; ?>">Inicio</a></li>
 
-                    <li class="dropdown">
+                    <li>
                         <a href="productos">
                             <span>Productos</span>
-                            <i class="fas fa-chevron-down toggle-dropdown d-xl-none"></i>
                         </a>
                         </li>
 
-                    <li class="dropdown">
+                    <li>
                         <a href="categorias">
                             <span>Categorías</span>
-                            <i class="fas fa-chevron-down toggle-dropdown d-xl-none"></i>
                         </a>
                     </li>
 
-                    <li class="dropdown">
+                    <li >
                         <a href="usuario">
                             <span>Usuarios</span>
-                            <i class="fas fa-chevron-down toggle-dropdown d-xl-none"></i>
+                            
                         </a>
                     </li>
 

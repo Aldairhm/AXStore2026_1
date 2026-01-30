@@ -225,7 +225,7 @@ a {
     top: 0;
     left: 0;
     width: 100%;
-    z-index: 1000;
+    z-index: 11000;
     background-color: white;
     box-shadow: var(--shadow-md);
     transition: all 0.3s ease;
@@ -1732,7 +1732,7 @@ footer .container {
 /* Tablets */
 @media (max-width: 991px) {
     :root {
-        --header-total-height: 80px;
+        --header-total-height: 70px;
         --branding-height: 60px;
         --topbar-height: 0;
     }
@@ -2045,9 +2045,7 @@ footer .container {
         margin-bottom: 25px;
     }
 
-    .user-icon {
-        display: none;
-    }
+    
 
     .navmenu {
         max-width: 85%;
