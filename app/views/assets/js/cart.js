@@ -14,6 +14,31 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Abrir/Cerrar carrito
     cartIcon.addEventListener('click', () => {
+        // [NUEVO] Cerrar Menú Móvil si está abierto
+        const navmenu = document.getElementById('navmenu');
+        const mobileOverlay = document.getElementById('mobile-nav-overlay');
+        const menuIcon = document.querySelector('.mobile-nav-toggle i');
+        
+        if (navmenu && navmenu.classList.contains('mobile-nav-active')) {
+            navmenu.classList.remove('mobile-nav-active');
+            if (mobileOverlay) mobileOverlay.classList.remove('active');
+            document.body.classList.remove('mobile-nav-open');
+            if (menuIcon) {
+                menuIcon.classList.remove('fa-times');
+                menuIcon.classList.add('fa-bars');
+            }
+        }
+
+        // [NUEVO] Cerrar Perfil (Dropdown Bootstrap) si está abierto
+        const userDropdown = document.querySelector('.user-icon .dropdown-menu');
+        const userToggle = document.querySelector('.user-icon [data-bs-toggle="dropdown"]');
+        if (userDropdown && userDropdown.classList.contains('show')) {
+            userDropdown.classList.remove('show');
+            if (userToggle) userToggle.classList.remove('show');
+            if (userToggle) userToggle.setAttribute('aria-expanded', 'false');
+        }
+
+        // Abrir modal del carrito
         cartModal.style.display = 'flex';
         renderCartItems();
     });
