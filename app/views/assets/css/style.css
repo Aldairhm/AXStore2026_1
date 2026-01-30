@@ -375,7 +375,7 @@ a {
     visibility: hidden;
     transform: translateY(20px);
     transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-    z-index: 99;
+    z-index: 1010;
     border-radius: 0 0 5px 5px;
     display: block;
     padding: 10px 0;
@@ -543,7 +543,7 @@ a {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.3);
-    z-index: 990;
+    z-index: 9999;
     pointer-events: auto;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -1810,7 +1810,7 @@ footer .container {
         background-color: white;
         overflow-y: auto;
         transition: left 0.4s cubic-bezier(0.645, 0.045, 0.355, 1);
-        z-index: 1005;
+        z-index: 9999 !important;
         box-shadow: 5px 0 30px rgba(0, 0, 0, 0.3);
         padding-top: 0;
         display: block;
@@ -1820,6 +1820,7 @@ footer .container {
 
     .navmenu.mobile-nav-active {
         left: 0;
+        z-index: 9999;
     }
 
     .navmenu ul {
@@ -1843,6 +1844,14 @@ footer .container {
 
     .navmenu > ul > li > a::after {
         display: none;
+    }
+
+    .navmenu .dropdown > a .toggle-dropdown {
+        transition: transform 0.3s ease;
+    }
+
+    .navmenu .dropdown.dropdown-active > a .toggle-dropdown {
+        transform: rotate(-180deg);
     }
 
     .navmenu .dropdown ul {
@@ -1872,6 +1881,10 @@ footer .container {
     .header-actions {
         margin-left: auto;
         gap: 10px;
+    }
+
+    .mobile-nav-overlay.active {
+        pointer-events: all;
     }
 }
 
@@ -2084,4 +2097,159 @@ footer .container {
 body.menu-open,
 body.mobile-nav-open {
     overflow: hidden;
+}
+
+/* ============================================
+   OVERLAY PARA MENÚ MÓVIL - FIX
+   ============================================ */
+.mobile-nav-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    pointer-events: none;
+}
+
+.mobile-nav-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+/* ============================================
+   CLASES PARA HOME - LUXURY THEME
+   ============================================ */
+.bg-luxury {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+}
+
+.text-gold {
+    color: #d4af37 !important;
+}
+
+.text-white-50 {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.font-luxury {
+    font-family: 'Playfair Display', serif;
+}
+
+.border-gold {
+    border: 2px solid #d4af37 !important;
+}
+
+.btn-luxury {
+    background-color: #d4af37;
+    color: #0a0a0a !important;
+    border: none;
+    padding: 12px 30px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-luxury:hover {
+    background-color: #c49b2e;
+    color: #0a0a0a !important;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+}
+
+.btn-luxury.active {
+    background-color: #0a0a0a;
+    color: #d4af37 !important;
+    border: 2px solid #d4af37;
+}
+
+.vh-100 {
+    min-height: 100vh;
+}
+
+/* Mejoras de responsividad para el hero */
+.hero {
+    background-image: linear-gradient(rgba(10, 10, 10, 0.6), rgba(10, 10, 10, 0.6)),
+        url('../images/hero_desktop.webp');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    position: relative;
+}
+
+/* Asegurar que el menú móvil funcione correctamente */
+@media (max-width: 1199px) {
+    .navmenu {
+        position: fixed !important;
+        top: var(--header-total-height) !important;
+        left: -100% !important;
+        width: 85vw !important;
+        max-width: 350px !important;
+        height: calc(100vh - var(--header-total-height)) !important;
+        background-color: white !important;
+        overflow-y: auto !important;
+        transition: left 0.4s cubic-bezier(0.645, 0.045, 0.355, 1) !important;
+        z-index: 9999 !important;
+        box-shadow: 5px 0 30px rgba(0, 0, 0, 0.3) !important;
+        padding-top: 0 !important;
+        display: block !important;
+        pointer-events: auto !important;
+    }
+
+    .navmenu.mobile-nav-active {
+        left: 0 !important;
+    }
+
+    .mobile-nav-toggle {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: none;
+        border: none;
+        color: var(--dark-color);
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10000;
+    }
+
+    .mobile-nav-toggle:hover {
+        color: var(--primary-color);
+    }
+
+    .mobile-nav-toggle i {
+        transition: all 0.3s ease;
+    }
+}
+
+/* Prevenir scroll cuando el menú móvil está abierto */
+body.mobile-nav-open {
+    overflow: hidden !important;
+}
+
+/* Fix para categorías responsivas */
+@media (max-width: 768px) {
+    .hero {
+        background-image: linear-gradient(rgba(10, 10, 10, 0.6), rgba(10, 10, 10, 0.6)),
+            url('../images/hero_mobile.webp');
+        background-attachment: scroll;
+    }
+    
+    .categories .d-flex {
+        flex-direction: column !important;
+    }
+    
+    .categories .btn {
+        width: 100%;
+        margin: 5px 0;
+    }
 }
