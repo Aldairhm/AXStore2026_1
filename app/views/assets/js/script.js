@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function openMenu() {
             navmenu.classList.add('mobile-nav-active');
             if (mobileOverlay) mobileOverlay.classList.add('active');
-            body.style.overflow = 'hidden';
+            body.classList.add('mobile-nav-open');
             
             if (icon) {
                 icon.classList.remove('fa-bars');
@@ -40,16 +40,23 @@ document.addEventListener('DOMContentLoaded', function() {
         function closeMenu() {
             navmenu.classList.remove('mobile-nav-active');
             if (mobileOverlay) mobileOverlay.classList.remove('active');
-            body.style.overflow = '';
+            body.classList.remove('mobile-nav-open');
             
             if (icon) {
                 icon.classList.remove('fa-times');
                 icon.classList.add('fa-bars');
             }
+            
+            console.log('✓ Menú cerrado');
         }
 
         // Toggle menu
-        function toggleMenu() {
+        function toggleMenu(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
             if (navmenu.classList.contains('mobile-nav-active')) {
                 closeMenu();
             } else {
@@ -58,30 +65,60 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Click en botón hamburguesa
-        mobileMenuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleMenu();
-        });
+        mobileMenuBtn.addEventListener('click', toggleMenu);
 
-        // Click en overlay (cierra el menú)
+        // Click en overlay (cierra el menú) - SIN stopPropagation
         if (mobileOverlay) {
-            mobileOverlay.addEventListener('click', closeMenu);
+            mobileOverlay.addEventListener('click', function(e) {
+                // Solo cerrar si el click es directamente en el overlay, no en el menú
+                if (e.target === mobileOverlay) {
+                    closeMenu();
+                }
+            });
         }
 
         // Click en enlaces del menú (cierra el menú)
         navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                if (navmenu.classList.contains('mobile-nav-active')) {
-                    closeMenu();
+            link.addEventListener('click', function(e) {
+                // Permitir que el click pase normalmente
+                // Solo cerrar el menú en móvil
+                if (window.innerWidth <= 1199 && navmenu.classList.contains('mobile-nav-active')) {
+                    setTimeout(() => closeMenu(), 100); // Pequeño delay para que la navegación funcione
+                }
+            });
+        });
+
+        // Manejar clicks en dropdowns del menú móvil
+        const dropdowns = document.querySelectorAll('.navmenu .dropdown > a');
+        dropdowns.forEach(dropdown => {
+            dropdown.addEventListener('click', function(e) {
+                // Solo en móvil
+                if (window.innerWidth <= 1199) {
+                    e.preventDefault();
+                    const parent = this.parentElement;
+                    
+                    // Toggle dropdown
+                    parent.classList.toggle('dropdown-active');
+                    
+                    // Cerrar otros dropdowns
+                    dropdowns.forEach(other => {
+                        if (other !== dropdown) {
+                            other.parentElement.classList.remove('dropdown-active');
+                        }
+                    });
                 }
             });
         });
 
         // Cierra menú al cambiar orientación o redimensionar ventana
+        let resizeTimer;
         window.addEventListener('resize', () => {
-            if (window.innerWidth > 1199 && navmenu.classList.contains('mobile-nav-active')) {
-                closeMenu();
-            }
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (window.innerWidth > 1199 && navmenu.classList.contains('mobile-nav-active')) {
+                    closeMenu();
+                }
+            }, 250);
         });
 
         // ESC key para cerrar menú
@@ -90,6 +127,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 closeMenu();
             }
         });
+
+        // Prevenir scroll cuando el menú está abierto
+        navmenu.addEventListener('touchmove', function(e) {
+            if (navmenu.classList.contains('mobile-nav-active')) {
+                e.stopPropagation();
+            }
+        }, { passive: true });
     }
 
     // ==========================================
@@ -349,9 +393,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // 10. PERFORMANCE LOGGING (Development)
     // ==========================================
     
-    if (window.location.hostname === 'localhost') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         console.log('%c✨ Sitio cargado correctamente', 'color: #0b5ee1; font-size: 14px; font-weight: bold;');
         console.log('%c📱 Dispositivo:', window.innerWidth <= 992 ? 'Móvil' : 'Desktop', 'color: #666;');
+        console.log('%c🎯 Z-index del menú:', window.getComputedStyle(navmenu).zIndex, 'color: #0b5ee1;');
+        if (mobileOverlay) {
+            console.log('%c🎯 Z-index del overlay:', window.getComputedStyle(mobileOverlay).zIndex, 'color: #0b5ee1;');
+        }
     }
 
 });
@@ -399,7 +447,29 @@ function debounce(func, wait) {
     };
 }
 
-// Ejemplo de uso:
-// window.addEventListener('resize', debounce(() => {
-//     console.log('Ventana redimensionada');
-// }, 250));
+// Añadir estilos para animaciones de notificaciones
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
