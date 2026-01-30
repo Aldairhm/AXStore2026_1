@@ -11,9 +11,10 @@
             <div class="container">
                 <div class="row justify-content-center">
                     <div class="col-lg-8 fade-in">
-                        <h2 class="display-3 font-luxury mb-4">Joyería Exclusiva <br><span class="text-gold fw-bold">Hecha a Mano</span></h2>
-                        <p class="lead mb-5 text-white-50">Descubre piezas únicas que cuentan tu historia</p>
-                        <a href="#categorias" class="btn btn-luxury px-5 py-3 shadow">Ver Colección</a>
+                        <h2 class="display-3 font-luxury mb-1"> Todo lo que necesitas<br></h2>
+                        <p  class=" mb-4 text-white-50">Variedad, calidad y confianza</p>
+                        <a href="#categorias" class="btn btn-outline-dark rounded-0 px-4" >Ver Colección</a>
+                      
                     </div>
                 </div>
             </div>
@@ -23,7 +24,7 @@
             <div class="container text-center">
                 <h2 class="section-title mb-5">Nuestras Categorías</h2>
                 <div class="d-flex flex-wrap justify-content-center gap-3">
-                    <button class="btn btn-luxury active px-4" data-category="all">Todos</button>
+                    <button class="btn btn-outline-dark rounded-0 px-4" data-category="all">Todos</button>
                     <button class="btn btn-outline-dark rounded-0 px-4" data-category="autopartes">Autopartes</button>
                     <button class="btn btn-outline-dark rounded-0 px-4" data-category="hogar">Hogar</button>
                     <button class="btn btn-outline-dark rounded-0 px-4" data-category="">....</button>
@@ -41,17 +42,20 @@
 
         <section id="nosotros" class="about py-5 bg-luxury text-white">
             <div class="container">
-                <div class="row align-items-center g-5">
-                    <div class="col-lg-6">
-                        <h2 class="section-title text-white">Artesanía con Historia</h2>
-                        <p class="text-white-50 mb-4">En Luxury Jewels combinamos técnicas ancestrales con diseño contemporáneo para crear piezas que trascienden el tiempo. Cada joya es elaborada por maestros artesanos con los más altos estándares de calidad.</p>
-                        <p class="text-white-50">Utilizamos metales preciosos y gemas certificadas, asegurando autenticidad y durabilidad en cada creación.</p>
-                    </div>
-                    <div class="col-lg-6">
-                        <img src="<?php echo APP_URL?>app/views/assets/images/about.png" class="img-fluid border-gold shadow-lg" alt="Artesano trabajando">
-                    </div>
-                </div>
-            </div>
+  <div class="row align-items-center g-5">
+
+    <div class="col-12">
+      <h2 class="section-title text-white">
+        Calidad que Marca la Diferencia
+      </h2><p class="text-white-50 mb-4">
+        En nuestra tienda seleccionamos cuidadosamente productos para el hogar, ropa y repuestos de auto que combinan funcionalidad, durabilidad y buen diseño. </p>
+      <p class="text-white-50">
+        Trabajamos con proveedores confiables para garantizar artículos de calidad que se adapten a tus necesidades del dia a dia.</p>
+    </div>
+    
+    
+</div>
+
         </section>
 
         <section class="features py-5">
@@ -59,23 +63,23 @@
                 <div class="row g-4 text-center">
                     <div class="col-md-4">
                         <div class="p-4 bg-white border h-100 shadow-sm">
-                            <i class="fas fa-gem fa-3x text-gold mb-3"></i>
+                            <i class="fas fa-gem fa-3x text-black mb-3"></i>
                             <h3 class="h5 font-luxury">Materiales Premium</h3>
-                            <p class="text-muted small">Oro 18k, plata esterlina y gemas naturales</p>
+                            <p class="text-muted small">Solo materiales de la más alta calidad</p>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="p-4 bg-white border h-100 shadow-sm">
-                            <i class="fas fa-award fa-3x text-gold mb-3"></i>
+                            <i class="fas fa-award fa-3x text-black mb-3"></i>
                             <h3 class="h5 font-luxury">Garantía de Calidad</h3>
-                            <p class="text-muted small">Certificados de autenticidad incluidos</p>
+                            <p class="text-muted small">Contamos con los mejores proveedores</p>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="p-4 bg-white border h-100 shadow-sm">
-                            <i class="fas fa-heart fa-3x text-gold mb-3"></i>
+                            <i class="fas fa-heart fa-3x text-black mb-3"></i>
                             <h3 class="h5 font-luxury">Hecho con Amor</h3>
-                            <p class="text-muted small">Cada pieza es única y elaborada a mano</p>
+                            <p class="text-muted small">Cada pieza es única</p>
                         </div>
                     </div>
                 </div>

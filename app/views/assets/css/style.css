@@ -559,7 +559,7 @@ a {
    ============================================ */
 .hero {
     background: linear-gradient(rgba(10, 10, 10, 0.5), rgba(10, 10, 10, 0.5)),
-        url('http://localhost/AXStore2026_1/app/views/assets/images/hero_desktop.webp') no-repeat center center;
+        url('http://localhost/AXStore2026_1/app/views/assets/images/logo.png') no-repeat center center;
     background-size: cover;
     background-position: center;
     min-height: 100vh;
@@ -1925,7 +1925,7 @@ footer .container {
 
     .hero {
         background-image: linear-gradient(rgba(10, 10, 10, 0.6), rgba(10, 10, 10, 0.6)),
-            url('http://localhost/AXStore2026_1/app/views/assets/images/hero_mobile.webp');
+            url('http://localhost/AXStore2026_1/app/views/assets/images/logo.png');
         background-size: cover;
         background-position: center top;
         min-height: 70vh;
@@ -2175,7 +2175,7 @@ body.mobile-nav-open {
 /* Mejoras de responsividad para el hero */
 .hero {
     background-image: linear-gradient(rgba(10, 10, 10, 0.6), rgba(10, 10, 10, 0.6)),
-        url('../images/hero_desktop.webp');
+        url('../images/logo.png');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -2238,7 +2238,7 @@ body.mobile-nav-open {
 @media (max-width: 768px) {
     .hero {
         background-image: linear-gradient(rgba(10, 10, 10, 0.6), rgba(10, 10, 10, 0.6)),
-            url('../images/hero_mobile.webp');
+            url('../images/logo.png');
         background-attachment: scroll;
     }
     
