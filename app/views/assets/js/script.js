@@ -246,6 +246,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
+
+
+// ==========================================
+    // BLOQUEO DE INSPECTOR Y CLIC DERECHO
+    // ==========================================
+    
+    // Deshabilitar clic derecho
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    }, false);
+
+    // Deshabilitar teclas de acceso rápido comunes (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U)
+    document.addEventListener('keydown', function(e) {
+        // F12
+        if (e.key === 'F12' || e.keyCode === 123) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Combinaciones con Ctrl+Shift (I, J, C)
+        if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C' || e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Ctrl+U (Ver código fuente)
+        if (e.ctrlKey && (e.key === 'U' || e.keyCode === 85)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    
+
 // Estilos para notificaciones
 const style = document.createElement('style');
 style.textContent = `

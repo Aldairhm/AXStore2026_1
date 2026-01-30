@@ -75,7 +75,7 @@ try {
             }
 
             // 1. Verificar si el usuario existe
-            $datosUsuario = $loginModel->obtenerDatosPorUsername($username, $password);
+            $datosUsuario = $loginModel->obtenerDatosPorUsername($username);
 
             if ($datosUsuario) {
                 // 2. Generar TOKEN con expiración (Formato: randomHex.timestamp)

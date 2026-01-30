@@ -9,7 +9,7 @@
 
             <nav id="navmenu" class="navmenu">
                 <ul>
-                    <li><a href="<?php echo APP_URL; ?>">Inicio</a></li>
+                    <li><a href="<?php echo APP_URL; ?>home">Inicio</a></li>
 
                     <li>
                         <a href="productos">
@@ -53,10 +53,10 @@
                             <i class="fas fa-user me-2"></i>Mi Perfil
                         </a></li>
                         <li><a class="dropdown-item" href="<?php echo APP_URL; ?>pedidos">
-                            <i class="fas fa-box me-2"></i>Mis Pedidos
+                            <i class="fas fa-box me-2"></i>Mis Ventas
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="<?php echo APP_URL; ?>logout">
+                        <li><a class="dropdown-item" href="<?php echo APP_URL; ?>">
                             <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
                         </a></li>
                     </ul>

@@ -2251,3 +2251,9 @@ body.mobile-nav-open {
         margin: 5px 0;
     }
 }
+/* ============================================
+   CORRECCIÓN Z-INDEX ALERTAS
+   ============================================ */
+.swal2-container {
+    z-index: 20000 !important; /* Debe ser mayor que el 11000 del header */
+}
