@@ -1,34 +1,46 @@
 document.addEventListener('DOMContentLoaded', function() {
     
+    console.log('✓ Script.js cargado correctamente');
+    
     // ==========================================
     // 1. LÓGICA DEL MENÚ MÓVIL MEJORADA
     // ==========================================
     
-    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-    const mainNav = document.querySelector('.main-nav');
-    const navLinks = document.querySelectorAll('.main-nav a');
+    const mobileMenuBtn = document.querySelector('.mobile-nav-toggle');
+    const navmenu = document.getElementById('navmenu');
+    const navLinks = document.querySelectorAll('.navmenu a');
+    const mobileOverlay = document.getElementById('mobile-nav-overlay');
     const body = document.body;
     
-    if (mobileMenuBtn && mainNav) {
+    console.log('Elementos encontrados:', {
+        mobileMenuBtn: !!mobileMenuBtn,
+        navmenu: !!navmenu,
+        navLinks: navLinks.length,
+        mobileOverlay: !!mobileOverlay
+    });
+    
+    if (mobileMenuBtn && navmenu) {
         const icon = mobileMenuBtn.querySelector('i');
 
         // Función para abrir menú
         function openMenu() {
-            mainNav.classList.add('active');
-            body.classList.add('menu-open');
-            body.style.overflow = 'hidden'; // Bloquea scroll
+            navmenu.classList.add('mobile-nav-active');
+            if (mobileOverlay) mobileOverlay.classList.add('active');
+            body.style.overflow = 'hidden';
             
             if (icon) {
                 icon.classList.remove('fa-bars');
                 icon.classList.add('fa-times');
             }
+            
+            console.log('✓ Menú abierto - mobile-nav-active agregado');
         }
 
         // Función para cerrar menú
         function closeMenu() {
-            mainNav.classList.remove('active');
-            body.classList.remove('menu-open');
-            body.style.overflow = ''; // Restaura scroll
+            navmenu.classList.remove('mobile-nav-active');
+            if (mobileOverlay) mobileOverlay.classList.remove('active');
+            body.style.overflow = '';
             
             if (icon) {
                 icon.classList.remove('fa-times');
@@ -38,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Toggle menu
         function toggleMenu() {
-            if (mainNav.classList.contains('active')) {
+            if (navmenu.classList.contains('mobile-nav-active')) {
                 closeMenu();
             } else {
                 openMenu();
@@ -51,35 +63,30 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleMenu();
         });
 
+        // Click en overlay (cierra el menú)
+        if (mobileOverlay) {
+            mobileOverlay.addEventListener('click', closeMenu);
+        }
+
         // Click en enlaces del menú (cierra el menú)
         navLinks.forEach(link => {
             link.addEventListener('click', () => {
-                if (mainNav.classList.contains('active')) {
+                if (navmenu.classList.contains('mobile-nav-active')) {
                     closeMenu();
                 }
             });
         });
 
-        // Click fuera del menú (cierra si está abierto)
-        document.addEventListener('click', (e) => {
-            const isClickInsideNav = mainNav.contains(e.target);
-            const isClickOnButton = mobileMenuBtn.contains(e.target);
-            
-            if (!isClickInsideNav && !isClickOnButton && mainNav.classList.contains('active')) {
-                closeMenu();
-            }
-        });
-
         // Cierra menú al cambiar orientación o redimensionar ventana
         window.addEventListener('resize', () => {
-            if (window.innerWidth > 992 && mainNav.classList.contains('active')) {
+            if (window.innerWidth > 1199 && navmenu.classList.contains('mobile-nav-active')) {
                 closeMenu();
             }
         });
 
         // ESC key para cerrar menú
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && mainNav.classList.contains('active')) {
+            if (e.key === 'Escape' && navmenu.classList.contains('mobile-nav-active')) {
                 closeMenu();
             }
         });

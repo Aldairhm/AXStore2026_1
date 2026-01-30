@@ -17,4 +17,6 @@
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
 
+<!-- Script para responsividad del navbar -->
+<script src="<?php echo APP_URL; ?>app/views/assets/js/script.js"></script>
 

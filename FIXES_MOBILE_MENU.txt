@@ -1,0 +1,58 @@
+✅ CORRECCIONES REALIZADAS PARA MENÚ MÓVIL
+
+════════════════════════════════════════════════════════════════
+
+1. ESTRUCTURA HTML (header.php)
+   ✓ Botón hamburger movido a dentro de header-actions
+   ✓ Overlay posicionado fuera del header (mejor z-index)
+   ✓ Clases y IDs coinciden con CSS y JS
+
+2. CSS (style.css)
+   ✓ .mobile-nav-toggle { z-index: 10000; }
+   ✓ .mobile-nav-overlay { z-index: 9990; }
+   ✓ .navmenu { z-index: 9995; }
+   ✓ .header-actions { margin-left: auto; }
+   ✓ Transiciones suaves agregadas
+
+3. JAVASCRIPT (script.js)
+   ✓ Console.log para debugging
+   ✓ Verificación de elementos encontrados
+   ✓ Eventos click, resize, keydown funcionando
+   ✓ Clases mobile-nav-active se aplican correctamente
+
+4. SCRIPT LINKAGE (script.php)
+   ✓ Script.js ahora está linkado correctamente
+
+════════════════════════════════════════════════════════════════
+
+CÓMO VERIFICAR:
+
+1. Abre tu navegador: http://localhost/AXStore2026_1
+2. Abre DevTools (F12)
+3. Ve a Consola y verifica estos mensajes:
+   - "✓ Script.js cargado correctamente"
+   - "Elementos encontrados: { mobileMenuBtn: true, ... }"
+
+4. En vista móvil (max-width: 1199px):
+   - Haz clic en el hamburger (≡)
+   - El menú debe deslizarse desde la izquierda
+   - El overlay debe aparecer
+   - Los enlaces deben funcionar
+   - ESC debe cerrar el menú
+
+════════════════════════════════════════════════════════════════
+
+Z-INDEX ACTUALIZADO:
+   10000: Mobile Nav Toggle (hamburger button)
+   9995: Navmenu (menú lateral)
+   9990: Mobile Nav Overlay (fondo oscuro)
+   1000: Header (barra de navegación)
+
+════════════════════════════════════════════════════════════════
+
+Si aún no funciona, verifica en Console (F12):
+   console.log(document.querySelector('.mobile-nav-toggle'))
+   console.log(document.getElementById('navmenu'))
+   console.log(document.getElementById('mobile-nav-overlay'))
+
+Deben devolver los elementos, no "null"
