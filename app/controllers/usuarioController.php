@@ -20,7 +20,7 @@ try{
 
         case 'agregar':
             $nombre_real = trim($_POST['nombre_real'] ?? '');
-            $username    = trim($_POST['username'] ?? '');
+            $username = strtolower(trim($_POST["username"] ?? ""));
             $password    = trim($_POST['password'] ?? '');
             $rol         = trim($_POST['rol'] ?? '');
             $estado      = intval($_POST['estado'] ?? 0);
@@ -56,7 +56,7 @@ try{
         case 'actualizar':
             $id          = intval($_POST['id'] ?? 0);
             $nombre_real = trim($_POST['nombre_real'] ?? '');
-            $username    = trim($_POST['username'] ?? '');
+            $username = strtolower(trim($_POST["username"] ?? ""));
             $password    = trim($_POST['password'] ?? '');
             $rol         = trim($_POST['rol'] ?? '');
             $estado      = intval($_POST['estado'] ?? 0);
