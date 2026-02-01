@@ -72,7 +72,7 @@
                                         </div>
 
                                         <div class="small text-muted mb-2">
-                                            @<?php echo $_SESSION['usuario']['username']; ?>
+                                            <?php echo $_SESSION['usuario']['username']; ?>
                                         </div>
                                     </div>
                                 <?php else: ?>
