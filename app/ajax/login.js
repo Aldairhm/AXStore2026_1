@@ -70,8 +70,8 @@ $(document).ready(function () {
         if (password === '') {
             mostrarErrorCampo($('#password'), 'La contraseña es obligatoria');
             errores = true;
-        } else if (password.length < 6) {
-            mostrarErrorCampo($('#password'), 'Mínimo 6 caracteres');
+        } else if (password.length < 8) {
+            mostrarErrorCampo($('#password'), 'Mínimo 8 caracteres');
             errores = true;
         }
 
@@ -124,8 +124,8 @@ $(document).ready(function () {
         if (clave1 === '') {
             mostrarErrorCampo($('#clave_nueva'), 'La contraseña es obligatoria');
             errores = true;
-        } else if (clave1.length < 6) {
-            mostrarErrorCampo($('#clave_nueva'), 'Mínimo 6 caracteres');
+        } else if (clave1.length < 8) {
+            mostrarErrorCampo($('#clave_nueva'), 'Mínimo 8 caracteres');
             errores = true;
         } else if (clave1.trim().length === 0) {
             mostrarErrorCampo($('#clave_nueva'), 'La contraseña no puede contener solo espacios');

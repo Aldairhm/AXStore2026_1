@@ -36,6 +36,8 @@ try {
             $usuario = $loginModel->getLogin($usernameEncriptado, $passwordEncriptado);
 
             if ($usuario) {
+
+            $usuario['username'] = $username;
                 session_start();
                 $_SESSION['usuario'] = $usuario;
                 $response = ["status" => "success", "message" => "Inicio de sesión exitoso", "usuario" => $usuario];

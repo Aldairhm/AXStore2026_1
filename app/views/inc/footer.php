@@ -14,8 +14,8 @@
             <div class="footer-section">
                 <h3>Síguenos</h3>
                 <div class="social-icons">
-                    <a href="https://www.instagram.com/ax_storesv"><i class="fab fa-instagram"></i></a>
-                    <a href="https://www.facebook.com/kidsparadise2024?locale=es_LA"><i class="fab fa-facebook"></i></a>
+                    <a href="https://www.instagram.com/ax_storesv" target="_blank" rel="noopener noreferrer"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.facebook.com/kidsparadise2024?locale=es_LA"target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook"></i></a>
                 </div>
             </div>
         </div>

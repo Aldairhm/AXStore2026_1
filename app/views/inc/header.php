@@ -2,8 +2,8 @@
 
     <div class="branding d-flex align-items-center">
         <div class="container position-relative d-flex align-items-center justify-content-between">
-            
-            <a href="<?php echo APP_URL; ?>" class="logo d-flex align-items-center">
+
+            <a class="logo d-flex align-items-center">
                 <h1 class="mb-0">AX<span>STORE</span></h1>
             </a>
 
@@ -15,7 +15,7 @@
                         <a href="productos">
                             <span>Productos</span>
                         </a>
-                        </li>
+                    </li>
 
                     <li>
                         <a href="categorias">
@@ -23,10 +23,10 @@
                         </a>
                     </li>
 
-                    <li >
+                    <li>
                         <a href="usuario">
                             <span>Usuarios</span>
-                            
+
                         </a>
                     </li>
 
@@ -45,20 +45,57 @@
                 </div>
 
                 <div class="user-icon dropdown">
-                    <a href="#" class="d-flex align-items-center text-decoration-none" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle"></i>
+                    <a href="#" class="d-flex align-items-center text-decoration-none" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        <i class="fas fa-user-circle fa-lg"></i>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="<?php echo APP_URL; ?>perfil">
-                            <i class="fas fa-user me-2"></i>Mi Perfil
-                        </a></li>
-                        <li><a class="dropdown-item" href="<?php echo APP_URL; ?>pedidos">
-                            <i class="fas fa-box me-2"></i>Mis Ventas
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="<?php echo APP_URL; ?>">
-                            <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
-                        </a></li>
+
+                    <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width: 220px;">
+
+                        <li>
+                            <a class="dropdown-item d-flex justify-content-between align-items-center"
+                                data-bs-toggle="collapse"
+                                href="#infoPerfil"
+                                role="button"
+                                aria-expanded="false"
+                                aria-controls="infoPerfil">
+
+                                <span><i class="fas fa-user me-2"></i>Mi Perfil</span>
+                                <i class="fas fa-chevron-down" style="font-size: 0.8em;"></i>
+                            </a>
+
+                            <div class="collapse" id="infoPerfil">
+                                <?php if (isset($_SESSION['usuario'])): ?>
+                                    <div class="bg-light p-3 mx-2 rounded border mt-1 shadow-sm">
+
+                                        <div class="fw-bold text-dark text-break">
+                                            <?php echo $_SESSION['usuario']['nombre_real']; ?>
+                                        </div>
+
+                                        <div class="small text-muted mb-2">
+                                            @<?php echo $_SESSION['usuario']['username']; ?>
+                                        </div>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="p-2 text-center text-muted small">No hay sesión activa</div>
+                                <?php endif; ?>
+                            </div>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item" href="<?php echo APP_URL; ?>pedidos">
+                                <i class="fas fa-box me-2"></i>Mis Ventas
+                            </a>
+                        </li>
+
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item text-danger" href="<?php echo APP_URL; ?>login?opcion=cerrar">
+                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
