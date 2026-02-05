@@ -187,6 +187,7 @@
     <?php require_once "./app/views/inc/script.php"; ?>
     <?php require_once "./app/views/inc/footer.php"; ?>
     <script src="app/views/assets/js/producto.js?v=97"></script>
+    
 </body>
 
 </html>

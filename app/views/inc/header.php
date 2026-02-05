@@ -24,6 +24,14 @@
                     </li>
 
                     <li>
+                        <a href="disponibilidad">
+
+                         <span>Catalogo</span>
+                       </a>
+
+                    </li>
+
+                    <li>
                         <a href="usuario">
                             <span>Usuarios</span>
 

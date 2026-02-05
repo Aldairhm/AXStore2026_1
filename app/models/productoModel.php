@@ -279,4 +279,31 @@ class Producto
         $stmt = $this->conexion->prepare("INSERT INTO atributo (nombre) VALUES (?)");
         return $stmt->execute([$nom]) ? (int)$this->conexion->lastInsertId() : null;
     }
+
+    public function obtenerTodosLosProductosConVariantes(): array
+{
+    $sql = "SELECT 
+            v.id, 
+            v.nombre_variante AS nombre, 
+            v.precio_venta, 
+            v.stock, 
+            v.imagen, 
+            v.sku, 
+            v.comision,
+            v.reserva,
+            p.nombre AS nombre_producto_padre,
+            p.id AS id_producto,
+            c.nombre AS nombre_categoria,
+            c.id AS id_categoria
+        FROM variante v
+        INNER JOIN producto p ON v.id_producto = p.id
+        INNER JOIN categoria c ON p.id_categoria = c.id
+        WHERE p.estado = 1
+        ORDER BY c.nombre, p.nombre, v.nombre_variante";
+
+    $stmt = $this->conexion->prepare($sql);
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 }

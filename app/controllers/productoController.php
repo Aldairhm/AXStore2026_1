@@ -73,6 +73,11 @@ try {
             $response = $res ? ["status" => "success", "message" => "Actualizado"] : ["status" => "error", "message" => "Sin cambios"];
             break;
 
+            case 'obtenerTodosLosProductosConVariantes':
+    $datos = $productoModel->obtenerTodosLosProductosConVariantes();
+    $response = ["status" => "success", "data" => $datos];
+    break;
+
         /* ============================================================
            3. REGISTRO MAESTRO (CON HASH Y SKU ALEATORIO)
         ============================================================ */
