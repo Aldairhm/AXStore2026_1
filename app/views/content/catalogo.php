@@ -33,12 +33,12 @@
                 </div>
 
 <div class="col-md-4 mb-3">
-               <li>
-                        <a href="salidas">
-                            <span>Salidas</span>
 
-                        </a>
-                    </li>
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCategoria">
+    <a href="salidas">
+                <i class="fas "></i> Salidas
+            </button>
+               
                  </div>
             </div>
 
