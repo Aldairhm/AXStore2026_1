@@ -24,7 +24,7 @@
                     </li>
 
                     <li>
-                        <a href="disponibilidad">
+                        <a href="catalogo">
 
                          <span>Catalogo</span>
                        </a>
