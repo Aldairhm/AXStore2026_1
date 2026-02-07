@@ -101,7 +101,7 @@ try {
                     $sku = $productoModel->generarSkuAleatorio();
 
                     // --- TU LÓGICA DE IMAGEN ORIGINAL ---
-                    $nombreImagen = "default.png";
+                    $nombreImagen = "default.webp";
                     if (isset($_FILES['v_foto']['name'][$i]) && $_FILES['v_foto']['error'][$i] === UPLOAD_ERR_OK) {
                         $rutaDestino = __DIR__ . "/../views/assets/images/";
                         $ext = strtolower(pathinfo($_FILES['v_foto']['name'][$i], PATHINFO_EXTENSION));
@@ -109,11 +109,30 @@ try {
                         if (move_uploaded_file($_FILES['v_foto']['tmp_name'][$i], $rutaDestino . $nuevoNombre)) $nombreImagen = $nuevoNombre;
                     }
 
-                    $idVar = $productoModel->registrarVariante($idProducto, $sku, $hash, $_POST['v_nombre'][$i], (float)$_POST['v_precio_compra'][$i], (float)$_POST['v_precio_venta'][$i], (int)$_POST['v_stock_actual'][$i], (int)$_POST['v_stock_minimo'][$i], $nombreImagen, (float)$_POST['v_comision'][$i]);
+                    // --- DENTRO DEL FOREACH DE 'registrarProductoCompleto' ---
+                    $idVar = $productoModel->registrarVariante(
+                        $idProducto,
+                        $sku,
+                        $hash,
+                        $_POST['v_nombre'][$i],
+                        (float)$_POST['v_precio_compra'][$i],
+                        (float)$_POST['v_precio_venta'][$i],
+                        (int)$_POST['v_stock_actual'][$i],
+                        (int)$_POST['v_stock_minimo'][$i],
+                        (float)$_POST['v_comision'][$i]
+                    );
+
+                    // ¡OJO ACÁ! Esto es lo que faltaba:
+                    if ($idVar) {
+                        // Registramos la imagen en la nueva tabla de galería como principal (1)
+                        $productoModel->registrarImagenVariante($idVar, $nombreImagen, 1);
+                    }
 
                     foreach ($atributosObj as $idA => $val) {
                         $productoModel->registrarVarianteValor($idVar, (int)$idA, trim($val));
                     }
+                    $nuevoNombre = $productoModel->generarNombreVarianteDesdeAtributos($idVar);
+                    $productoModel->actualizarNombreVariante($idVar, $nuevoNombre);
                 }
             }
             $db->commit();
@@ -130,6 +149,7 @@ try {
                 "atributos" => $productoModel->obtenerValorAtributosVariante($id)
             ]];
             break;
+
         case 'editarVariante':
             $db = Conexion::conectar();
             $db->beginTransaction();
@@ -172,11 +192,18 @@ try {
                 if (isset($_FILES['foto_edit']) && $_FILES['foto_edit']['error'] === UPLOAD_ERR_OK) {
                     $ext = strtolower(pathinfo($_FILES['foto_edit']['name'], PATHINFO_EXTENSION));
                     $imgNom = "var_" . $sku . "_" . time() . "." . $ext;
+
                     if (move_uploaded_file($_FILES['foto_edit']['tmp_name'], __DIR__ . "/../views/assets/images/" . $imgNom)) {
-                        $productoModel->actualizarImagenVariante($idV, $imgNom);
+                        // 1. Insertamos la nueva imagen
+                        // USAMOS EL MÉTODO Y OBTENEMOS EL ID
+                        $idNuevaImg = $productoModel->registrarImagenVariante($idV, $imgNom, 1);
+
+                        if ($idNuevaImg) {
+                            // Ponemos a esta como jefa y a las demás como 0
+                            $productoModel->setearPrincipal($idV, $idNuevaImg);
+                        }
                     }
                 }
-
                 $db->commit();
                 $response = ["status" => "success", "message" => "¡Excelente! La variante se actualizó correctamente."];
             } catch (PDOException $e) {
@@ -246,20 +273,65 @@ try {
                         if ($productoModel->existeHashEnProducto($idP, $hash)) throw new Exception("Duplicado detectado.");
 
                         $sku = $productoModel->generarSkuAleatorio();
-                        $foto = "default.png";
+                        $foto = "default.webp";
                         if (isset($_FILES['v_foto']['name'][$i]) && $_FILES['v_foto']['error'][$i] === UPLOAD_ERR_OK) {
                             $ext = strtolower(pathinfo($_FILES['v_foto']['name'][$i], PATHINFO_EXTENSION));
                             $foto = "var_" . $sku . "_" . time() . "." . $ext;
                             move_uploaded_file($_FILES['v_foto']['tmp_name'][$i], __DIR__ . "/../views/assets/images/" . $foto);
                         }
 
-                        $idV = $productoModel->registrarVariante($idP, $sku, $hash, $_POST['v_nombre'][$i], (float)$_POST['v_precio_compra'][$i], (float)$_POST['v_precio_venta'][$i], (int)$_POST['v_stock_actual'][$i], (int)$_POST['v_stock_minimo'][$i], $foto, (float)$_POST['v_comision'][$i]);
+                        $idV = $productoModel->registrarVariante($idP, $sku, $hash, $_POST['v_nombre'][$i], (float)$_POST['v_precio_compra'][$i], (float)$_POST['v_precio_venta'][$i], (int)$_POST['v_stock_actual'][$i], (int)$_POST['v_stock_minimo'][$i], (float)$_POST['v_comision'][$i]);
+                        $productoModel->registrarImagenVariante($idV, $foto, 1);
                         foreach ($attrObj as $idA => $val) $productoModel->registrarVarianteValor($idV, (int)$idA, trim($val));
                     }
                 }
             }
             $db->commit();
             $response = ["status" => "success", "message" => "Expansión lista"];
+            break;
+
+        /* ============================================================
+                6. NUEVA GESTIÓN DE GALERÍA (MODAL)
+            ============================================================ */
+
+        case 'obtenerGaleria':
+            $idV = (int)$_POST["id"];
+            $galeria = $productoModel->getGaleriaVariante($idV);
+            $response = ["status" => "success", "data" => $galeria];
+            break;
+
+        case 'subirGaleriaVariante':
+            $idV = (int)$_POST["id_variante_galeria"];
+            if (isset($_FILES['imagenes_galeria'])) {
+                foreach ($_FILES['imagenes_galeria']['tmp_name'] as $key => $tmp_name) {
+                    $ext = strtolower(pathinfo($_FILES['imagenes_galeria']['name'][$key], PATHINFO_EXTENSION));
+                    $nombre = "gal_" . uniqid() . "." . $ext;
+                    if (move_uploaded_file($tmp_name, __DIR__ . "/../views/assets/images/" . $nombre)) {
+                        $productoModel->registrarImagenVariante($idV, $nombre, 0); // 0 = No es principal por defecto
+                    }
+                }
+                $response = ["status" => "success", "message" => "Galería actualizada", "idRefresh" => $idV];
+            }
+            break;
+
+        case 'eliminarFoto':
+            $idImg = (int)$_POST["id"];
+            $response = $productoModel->eliminarImagenBD($idImg);
+
+            if ($response["status"] === "success") {
+                // Borramos el archivo físico para no llenar el server de basura
+                $archivo = __DIR__ . "/../views/assets/images/" . $response["ruta"];
+                if (file_exists($archivo) && $response["ruta"] != 'default.png') {
+                    unlink($archivo);
+                }
+            }
+            break;
+
+        case 'cambiarPortada':
+            $idV = (int)$_POST["id_variante"];
+            $idImg = (int)$_POST["id"];
+            $res = $productoModel->setearPrincipal($idV, $idImg);
+            $response = $res ? ["status" => "success"] : ["status" => "error"];
             break;
     }
 } catch (Exception $e) {

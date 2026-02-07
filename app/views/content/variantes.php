@@ -13,7 +13,7 @@
         <section class="container fade-in">
             <div class="d-flex" style="justify-content: space-between; align-items: center; margin-bottom: 40px;">
                 <h2 class="section-title">Variantes Registradas</h2>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProducto">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProducto" data-modo="variante">
                     <i class="fas fa-plus"></i> Nueva Variante
                 </button>
             </div>
@@ -224,9 +224,50 @@
         </div>
     </div>
 
+    <div class="modal fade animate__animated animate__fadeIn" id="modalGaleriaVariante" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+
+                <div class="modal-header bg-dark text-white py-3">
+                    <h6 class="modal-title fw-bold text-uppercase mb-0">
+                        <i class="bi bi-images me-2 text-info"></i>Galería: <span id="nombreVarianteModal" class="text-info"></span>
+                    </h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body p-0">
+                    <div class="d-flex justify-content-between align-items-center p-3 border-bottom bg-light">
+                        <div class="d-flex align-items-center">
+                            <span class="small fw-bold text-muted text-uppercase me-2">Fotos Registradas</span>
+                            <span id="contadorFotos" class="badge bg-secondary rounded-pill">0</span>
+                        </div>
+
+                        <form id="formSubirGaleria">
+                            <input type="hidden" name="id_variante_galeria" id="id_variante_galeria">
+                            <input type="file" name="imagenes_galeria[]" id="inputGaleria" class="d-none" multiple accept="image/*">
+                            <button type="button" class="btn btn-dark btn-sm rounded-pill px-4 fw-bold" onclick="document.getElementById('inputGaleria').click()">
+                                <i class="bi bi-plus-circle me-1"></i> AÑADIR FOTOS
+                            </button>
+                        </form>
+                    </div>
+
+                    <div id="gridGaleria" class="row g-3 p-4 overflow-auto" style="max-height: 450px; min-height: 200px;">
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top-0 py-3">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-4 rounded-pill" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" id="btnGuardarGaleria" class="btn btn-primary btn-sm px-4 rounded-pill d-none shadow-sm">
+                        <i class="bi bi-cloud-arrow-up me-1"></i> Subir Seleccionadas
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <?php require_once "./app/views/inc/script.php"; ?>
     <?php require_once "./app/views/inc/footer.php"; ?>
-    <script src="app/views/assets/js/variantes.js?v=55"></script>
+    <script src="app/views/assets/js/variantes.js?v=31"></script>
     <script src="app/views/assets/js/producto.js?v=44"></script>
 </body>
 

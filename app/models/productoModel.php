@@ -69,12 +69,13 @@ class Producto
                 v.nombre_variante AS nombre, 
                 v.precio_venta, 
                 v.stock, 
-                v.imagen, 
                 v.sku, 
                 v.comision,
                 v.reserva,
                 p.nombre AS nombre_producto_padre,
-                c.nombre AS nombre_categoria
+                c.nombre AS nombre_categoria,
+                -- Traemos la imagen principal o la primera que encuentre
+                IFNULL((SELECT ruta_imagen FROM variante_imagen WHERE id_variante = v.id ORDER BY es_principal DESC, id ASC LIMIT 1), 'default.webp') as imagen
             FROM variante v
             INNER JOIN producto p ON v.id_producto = p.id
             INNER JOIN categoria c ON p.id_categoria = c.id
@@ -82,19 +83,32 @@ class Producto
 
         $stmt = $this->conexion->prepare($sql);
         $stmt->execute([':id' => $id]);
-
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getVariantePorId(int $id): ?array
     {
-        $sql = "SELECT * FROM variante WHERE id = :id";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->execute([':id' => $id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        // Usamos LEFT JOIN para no perder los datos de la variante si no hay fotos
+        // Usamos COALESCE para poner una imagen por defecto si la ruta viene NULL
+        $sql = "SELECT 
+                v.*, 
+                COALESCE(m.ruta_imagen, 'default.png') as imagen 
+            FROM variante v 
+            LEFT JOIN variante_imagen m ON m.id_variante = v.id AND m.es_principal = 1 
+            WHERE v.id = :id";
+
+        try {
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->execute([':id' => $id]);
+
+            // Retornamos el array o null si no se encuentra el ID
+            return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        } catch (PDOException $e) {
+            // Log de error si algo sale mal con la base de datos
+            error_log("Error en getVariantePorId: " . $e->getMessage());
+            return null;
+        }
     }
-
-
 
     public function registrarVarianteValor(int $idV, int $idA, string $valor): bool
     {
@@ -117,22 +131,20 @@ class Producto
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // 1. En el método registrarVariante
-    public function registrarVariante(int $idP, string $sku, string $hash, string $nom, float $pC, float $pV, int $sA, int $sM, string $img, float $com): ?int
+    public function registrarVariante(int $idP, string $sku, string $hash, string $nom, float $pC, float $pV, int $sA, int $sM, float $com): ?int
     {
-        // Cambiamos hash_combination -> hash_combinacion
-        $sql = "INSERT INTO variante (id_producto, sku, hash_combinacion, nombre_variante, precio_compra, precio_venta, stock, reserva, imagen, comision) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO variante (id_producto, sku, hash_combinacion, nombre_variante, precio_compra, precio_venta, stock, reserva, comision) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $this->conexion->prepare($sql);
-        return $stmt->execute([$idP, $sku, $hash, $nom, $pC, $pV, $sA, $sM, $img, $com]) ? (int)$this->conexion->lastInsertId() : null;
+        return $stmt->execute([$idP, $sku, $hash, $nom, $pC, $pV, $sA, $sM, $com]) ? (int)$this->conexion->lastInsertId() : null;
     }
 
     // 2. En el método actualizarDatosVariante
-    public function actualizarDatosVariante(int $id, string $sku, string $hash, int $stock ,float $pV, int $sM, float $com): bool
+    public function actualizarDatosVariante(int $id, string $sku, string $hash, int $stock, float $pV, int $sM, float $com): bool
     {
         // Cambiamos hash_combination -> hash_combinacion
         $sql = "UPDATE variante SET sku = :sku, hash_combinacion = :hash,stock=:stock, precio_venta = :pv, reserva = :sm, comision = :com WHERE id = :id";
-        return $this->conexion->prepare($sql)->execute([':sku' => $sku, ':hash' => $hash,':stock'=>$stock, ':pv' => $pV, ':sm' => $sM, ':com' => $com, ':id' => $id]);
+        return $this->conexion->prepare($sql)->execute([':sku' => $sku, ':hash' => $hash, ':stock' => $stock, ':pv' => $pV, ':sm' => $sM, ':com' => $com, ':id' => $id]);
     }
 
     /* ============================================================
@@ -278,5 +290,82 @@ class Producto
     {
         $stmt = $this->conexion->prepare("INSERT INTO atributo (nombre) VALUES (?)");
         return $stmt->execute([$nom]) ? (int)$this->conexion->lastInsertId() : null;
+    }
+
+    /* ============================================================
+        6. GESTIÓN DE GALERÍA DE VARIANTES
+    ============================================================ */
+
+    public function registrarImagenVariante(int $idV, string $ruta, int $principal = 0): ?int
+    {
+        $sql = "INSERT INTO variante_imagen (id_variante, ruta_imagen, es_principal) VALUES (?, ?, ?)";
+        $stmt = $this->conexion->prepare($sql);
+        // Si se ejecuta con éxito, devolvemos el ID, si no, null
+        return $stmt->execute([$idV, $ruta, $principal]) ? (int)$this->conexion->lastInsertId() : null;
+    }
+
+    public function getGaleriaVariante(int $idV): array
+    {
+        $sql = "SELECT id, ruta_imagen, es_principal, id_variante FROM variante_imagen WHERE id_variante = ? ORDER BY es_principal DESC, id ASC";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute([$idV]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function eliminarImagenBD(int $idImg): array
+    {
+        try {
+            $stmt = $this->conexion->prepare("SELECT id_variante, ruta_imagen, es_principal FROM variante_imagen WHERE id = ?");
+            $stmt->execute([$idImg]);
+            $img = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$img) return ["status" => "error", "message" => "No existe"];
+
+            $this->conexion->beginTransaction();
+
+            $this->conexion->prepare("DELETE FROM variante_imagen WHERE id = ?")->execute([$idImg]);
+
+            // Lógica de ingeniería: si borramos la portada, el grid principal TIENE que refrescarse
+            // independientemente de si queda otra imagen o no.
+            $debeRefrescarGrid = ($img['es_principal'] == 1);
+
+            if ($debeRefrescarGrid) {
+                $sqlSucesor = "UPDATE variante_imagen SET es_principal = 1 WHERE id_variante = ? ORDER BY id ASC LIMIT 1";
+                $this->conexion->prepare($sqlSucesor)->execute([$img['id_variante']]);
+            }
+
+            $this->conexion->commit();
+
+            return [
+                "status" => "success",
+                "ruta" => $img['ruta_imagen'],
+                "id_variante" => $img['id_variante'],
+                "refreshGrid" => $debeRefrescarGrid // <--- Esto asegura que el JS actúe
+            ];
+        } catch (Exception $e) {
+            if ($this->conexion->inTransaction()) $this->conexion->rollBack();
+            return ["status" => "error", "message" => $e->getMessage()];
+        }
+    }
+
+    public function setearPrincipal(int $idV, int $idImg): bool
+    {
+        // Solo abre la transacción si no hay una activa ya
+        $transaccionPropia = !$this->conexion->inTransaction();
+
+        try {
+            if ($transaccionPropia) $this->conexion->beginTransaction();
+
+            // 1. Quitamos principal a todas
+            $this->conexion->prepare("UPDATE variante_imagen SET es_principal = 0 WHERE id_variante = ?")->execute([$idV]);
+            // 2. Seteamos la nueva
+            $this->conexion->prepare("UPDATE variante_imagen SET es_principal = 1 WHERE id = ?")->execute([$idImg]);
+
+            if ($transaccionPropia) $this->conexion->commit();
+            return true;
+        } catch (Exception $e) {
+            if ($transaccionPropia) $this->conexion->rollBack();
+            return false;
+        }
     }
 }

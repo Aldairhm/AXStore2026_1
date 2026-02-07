@@ -1,0 +1,28 @@
+/* Botones circulares perfectos para AXStore */
+.btn-circulo-gal {
+    width: 32px !important;    /* Tamaño fijo pequeño */
+    height: 32px !important;   /* Igual al ancho para ser círculo */
+    padding: 0 !important;      /* CERO padding para que no se haga bloque */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important; /* Círculo total */
+    transition: all 0.2s ease;
+    border-width: 1px !important;
+}
+
+.btn-circulo-gal i {
+    font-size: 0.85rem; /* El icono manda en el tamaño */
+}
+
+.btn-circulo-gal:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Evita que el modal se rompa en móviles */
+@media (max-width: 576px) {
+    #gridGaleria {
+        padding: 1rem !important;
+    }
+}

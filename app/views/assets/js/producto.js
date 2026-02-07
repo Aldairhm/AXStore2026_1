@@ -43,12 +43,22 @@ $(document).ready(function () {
   // Disparador de Expansión Automática (vía URL ?id=X)
   const contenedor = $("#variantes-container");
   const idProductoUrl = contenedor.data("id");
-  if (idProductoUrl > 0) {
-    prepararExpansion(idProductoUrl);
-  }
+  $('#modalProducto').on('show.bs.modal', function (event) {
+    const boton = $(event.relatedTarget); // El botón que abrió el modal
+    const modo = boton.data('modo'); // 'variante' o 'nuevo'
+
+    if (modo === 'variante') {
+        // --- CASO VARIANTE: Llenamos con datos del padre ---
+        prepararExpansion(idProductoUrl);
+    } else {
+        // --- CASO PRODUCTO NUEVO: Limpieza total ---
+        $(this).find('form')[0].reset();
+        $('#id_producto').val('0'); // Importante para que PHP sepa que es INSERT
+        $('#modalProductoLabel').text('Registrar Nuevo Producto');
+    }
+});
 
   // --- BLOQUE 1: VALIDACIONES DE ENTRADA (Originales) ---
-
   $(document).on("keydown", "input[type='number']", function (e) {
     if (e.key === "-" || e.key === "e" || e.key === "E") e.preventDefault();
   });
@@ -229,28 +239,6 @@ $(document).ready(function () {
   $("#btnGenerarMatriz").on("click", function () {
     generarMatrizUnificada();
   });
-
-  /*$('#modalProducto').on('hidden.bs.modal', function () {
-    const idProd = $("#id_producto").val(); // O res.id si es nuevo
-
-    // 1. FORZAR DESENFOQUE: Quitamos el foco de cualquier botón interno
-    if (document.activeElement) {
-        document.activeElement.blur();
-    }
-
-    $("#variantes-container").removeAttr("aria-hidden").removeAttr("inert");
-    
-    console.log("Modal cerrado, refrescando grid de variantes...");
-    
-    if (typeof cargarVariantesGrid === "function") {
-        cargarVariantesGrid(idProd);
-    }
-    
-    // Si usas DataTables, también recargamos aquí
-    if (typeof tabla !== 'undefined') {
-        tabla.ajax.reload(null, false); 
-    }
-});*/
 
   // Envío del formulario
   $("#formProducto").on("submit", function (e) {
