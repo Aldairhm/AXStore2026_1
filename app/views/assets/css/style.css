@@ -37,11 +37,11 @@
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
     --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.12);
     --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.15);
-    
+
     /* Header heights */
-    --topbar-height: 40px;
+    --topbar-height: 0px;
     --branding-height: 80px;
-    --header-total-height: 120px;
+    --header-total-height: 80px;
 }
 
 /* ============================================
@@ -59,6 +59,9 @@ html {
 }
 
 body {
+    margin: 0;
+    padding: 0;
+    padding-top: 80px !important;
     background-color: var(--light-color);
     color: var(--text-color);
     line-height: 1.7;
@@ -69,7 +72,12 @@ body {
     padding-top: var(--header-total-height);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: 'Playfair Display', serif;
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -306,11 +314,11 @@ a {
     gap: 5px;
 }
 
-.navmenu > ul > li {
+.navmenu>ul>li {
     position: relative;
 }
 
-.navmenu > ul > li > a {
+.navmenu>ul>li>a {
     display: flex;
     align-items: center;
     gap: 5px;
@@ -325,7 +333,7 @@ a {
     position: relative;
 }
 
-.navmenu > ul > li > a::after {
+.navmenu>ul>li>a::after {
     content: '';
     position: absolute;
     bottom: 0;
@@ -337,12 +345,12 @@ a {
     transform: translateX(-50%);
 }
 
-.navmenu > ul > li > a:hover::after,
-.navmenu > ul > li.active > a::after {
+.navmenu>ul>li>a:hover::after,
+.navmenu>ul>li.active>a::after {
     width: 80%;
 }
 
-.navmenu > ul > li > a:hover {
+.navmenu>ul>li>a:hover {
     color: var(--primary-color);
 }
 
@@ -353,13 +361,13 @@ a {
     position: relative;
 }
 
-.navmenu .dropdown > a .toggle-dropdown {
+.navmenu .dropdown>a .toggle-dropdown {
     margin-left: 5px;
     font-size: 0.75rem;
     transition: transform 0.3s ease;
 }
 
-.navmenu .dropdown:hover > a .toggle-dropdown {
+.navmenu .dropdown:hover>a .toggle-dropdown {
     transform: rotate(-180deg);
 }
 
@@ -381,7 +389,7 @@ a {
     padding: 10px 0;
 }
 
-.navmenu .dropdown:hover > ul {
+.navmenu .dropdown:hover>ul {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
@@ -569,6 +577,8 @@ a {
     position: relative;
     overflow: hidden;
     padding: 0 0 60px;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
 }
 
 .hero-content {
@@ -614,6 +624,10 @@ a {
 
 .hero .btn:hover {
     color: var(--dark-color);
+}
+
+.hero-overlay {
+    top: 0;
 }
 
 /* ============================================
@@ -1040,6 +1054,7 @@ a {
     from {
         transform: translateX(100%);
     }
+
     to {
         transform: translateX(0);
     }
@@ -1238,6 +1253,7 @@ a {
         opacity: 0;
         transform: translateY(-50px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1659,6 +1675,7 @@ footer .container {
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1693,12 +1710,13 @@ footer .container {
 @media (max-width: 1200px) {
     :root {
         --desktop-padding: var(--tablet-padding);
-        --header-total-height: 100px;
+        --header-total-height: 60px;
         --branding-height: 60px;
     }
 
     body {
-        padding-top: var(--header-total-height);
+        /*padding-top: var(--header-total-height);*/
+        padding-top: 60px !important;
     }
 
     .container {
@@ -1709,7 +1727,7 @@ footer .container {
         grid-template-columns: 1fr;
         gap: 50px;
     }
-    
+
     .about-image {
         max-width: 500px;
         margin: 0 auto;
@@ -1719,11 +1737,11 @@ footer .container {
         gap: 30px;
     }
 
-    .navmenu > ul {
+    .navmenu>ul {
         gap: 2px;
     }
 
-    .navmenu > ul > li > a {
+    .navmenu>ul>li>a {
         padding: 10px 12px;
         font-size: 0.85rem;
     }
@@ -1732,7 +1750,7 @@ footer .container {
 /* Tablets */
 @media (max-width: 991px) {
     :root {
-        --header-total-height: 70px;
+        --header-total-height: 60px;
         --branding-height: 60px;
         --topbar-height: 0;
     }
@@ -1752,39 +1770,39 @@ footer .container {
     .topbar .d-none.d-md-flex {
         display: none !important;
     }
-    
+
     .hero {
         padding: 0 0 50px;
         min-height: 80vh;
     }
-    
+
     .product-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 20px;
     }
-    
+
     .product-img {
         height: 250px;
     }
-    
+
     .product-info {
         padding: 15px;
     }
-    
+
     .categories {
         padding: 60px 0 40px;
     }
-    
+
     .category-btn {
         padding: 10px 20px;
         font-size: 0.75rem;
     }
-    
+
     .features .container {
         grid-template-columns: 1fr;
         gap: 30px;
     }
-    
+
     .products,
     .features,
     .about {
@@ -1830,27 +1848,27 @@ footer .container {
         gap: 0;
     }
 
-    .navmenu > ul > li {
+    .navmenu>ul>li {
         width: 100%;
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     }
 
-    .navmenu > ul > li > a {
+    .navmenu>ul>li>a {
         width: 100%;
         padding: 15px 20px;
         justify-content: space-between;
         text-align: left;
     }
 
-    .navmenu > ul > li > a::after {
+    .navmenu>ul>li>a::after {
         display: none;
     }
 
-    .navmenu .dropdown > a .toggle-dropdown {
+    .navmenu .dropdown>a .toggle-dropdown {
         transition: transform 0.3s ease;
     }
 
-    .navmenu .dropdown.dropdown-active > a .toggle-dropdown {
+    .navmenu .dropdown.dropdown-active>a .toggle-dropdown {
         transform: rotate(-180deg);
     }
 
@@ -1869,7 +1887,7 @@ footer .container {
         display: block;
     }
 
-    .navmenu .dropdown.dropdown-active > ul {
+    .navmenu .dropdown.dropdown-active>ul {
         max-height: 500px;
         padding: 10px 0;
     }
@@ -2045,7 +2063,7 @@ footer .container {
         margin-bottom: 25px;
     }
 
-    
+
 
     .navmenu {
         max-width: 85%;
@@ -2076,6 +2094,7 @@ footer .container {
 
 /* Print Styles */
 @media print {
+
     .header,
     .topbar,
     .header-actions,
@@ -2241,19 +2260,21 @@ body.mobile-nav-open {
             url('../images/logo.png');
         background-attachment: scroll;
     }
-    
+
     .categories .d-flex {
         flex-direction: column !important;
     }
-    
+
     .categories .btn {
         width: 100%;
         margin: 5px 0;
     }
 }
+
 /* ============================================
    CORRECCIÓN Z-INDEX ALERTAS
    ============================================ */
 .swal2-container {
-    z-index: 20000 !important; /* Debe ser mayor que el 11000 del header */
+    z-index: 20000 !important;
+    /* Debe ser mayor que el 11000 del header */
 }
