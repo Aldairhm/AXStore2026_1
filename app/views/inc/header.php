@@ -90,7 +90,7 @@
                         </li>
 
                         <li>
-                            <a class="dropdown-item" href="<?php echo APP_URL; ?>pedidos">
+                            <a class="dropdown-item" href="<?php echo APP_URL; ?>#">
                                 <i class="fas fa-box me-2"></i>Mis Ventas
                             </a>
                         </li>

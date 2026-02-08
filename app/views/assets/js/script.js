@@ -278,6 +278,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+
+    //scrip para div de envios y preguntas frecuentes
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const accordionButtons = document.querySelectorAll('.accordion-button');
+        accordionButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                accordionButtons.forEach(btn => {
+                    btn.closest('.accordion-item').classList.remove('border-luxury');
+                });
+                
+                setTimeout(() => {
+                    if (!this.classList.contains('collapsed')) {
+                        this.closest('.accordion-item').classList.add('border-luxury');
+                    }
+                }, 100);
+            });
+        });
+    });
+
     
 
 // Estilos para notificaciones
