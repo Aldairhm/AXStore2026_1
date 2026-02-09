@@ -293,31 +293,34 @@ class Producto
     }
 
     public function obtenerTodosLosProductosConVariantes(): array
-{
-    $sql = "SELECT 
-            v.id, 
-            v.nombre_variante AS nombre, 
-            v.precio_venta, 
-            v.stock, 
-            v.imagen, 
-            v.sku, 
-            v.comision,
-            v.reserva,
-            p.nombre AS nombre_producto_padre,
-            p.id AS id_producto,
-            c.nombre AS nombre_categoria,
-            c.id AS id_categoria
-        FROM variante v
-        INNER JOIN producto p ON v.id_producto = p.id
-        INNER JOIN categoria c ON p.id_categoria = c.id
-        WHERE p.estado = 1
-        ORDER BY c.nombre, p.nombre, v.nombre_variante";
+    {
+        $sql = "SELECT 
+    v.id, 
+    v.nombre_variante AS nombre, 
+    v.precio_venta, 
+    v.stock, 
+    -- Si no hay imagen principal, ponemos una por defecto para que no truene el front
+    COALESCE(vi.ruta_imagen, 'default.png') AS imagen, 
+    v.sku, 
+    v.comision,
+    v.reserva,
+    p.nombre AS nombre_producto_padre,
+    p.id AS id_producto,
+    c.nombre AS nombre_categoria,
+    c.id AS id_categoria
+    FROM variante v
+    INNER JOIN producto p ON v.id_producto = p.id
+    INNER JOIN categoria c ON p.id_categoria = c.id
+    -- Unimos con la nueva tabla filtrando solo por la imagen de portada
+    LEFT JOIN variante_imagen vi ON vi.id_variante = v.id AND vi.es_principal = 1
+    WHERE p.estado = 1
+    ORDER BY c.nombre, p.nombre, v.nombre_variante;";
 
-    $stmt = $this->conexion->prepare($sql);
-    $stmt->execute();
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute();
 
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
     /* ============================================================
         6. GESTIÓN DE GALERÍA DE VARIANTES
