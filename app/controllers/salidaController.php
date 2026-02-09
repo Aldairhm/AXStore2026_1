@@ -69,7 +69,7 @@ try {
             break;
 
         // ============================================================
-        // NUEVOS CASOS PARA EL HISTORIAL DE SALIDAS
+        // CASOS PARA EL HISTORIAL DE SALIDAS
         // ============================================================
 
         case 'obtenerTodasLasSalidas':
@@ -174,6 +174,35 @@ try {
             ];
             break;
 
+
+         case 'cambiarEstado':
+    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+    $nuevoEstado = isset($_POST['nuevo_estado']) ? trim($_POST['nuevo_estado']) : '';
+    
+    if ($id <= 0) {
+        throw new Exception("ID de salida inválido");
+    }
+    
+    if (empty($nuevoEstado)) {
+        throw new Exception("Debe especificar el nuevo estado");
+    }
+    
+    // Validar que el estado sea válido
+    $estadosValidos = ['Pendiente', 'En camino', 'Entregado', 'Cancelado'];
+    if (!in_array($nuevoEstado, $estadosValidos)) {
+        throw new Exception("Estado no válido");
+    }
+    
+    if ($salidaModel->cambiarEstadoSalida($id, $nuevoEstado)) {
+        $response = [
+            "status" => "success",
+            "message" => "Estado actualizado correctamente a: " . $nuevoEstado
+        ];
+    } else {
+        throw new Exception("Error al actualizar el estado");
+    }
+    break;   
+
         case 'obtenerSalidasPorUsuario':
             $idUsuario = isset($_POST['id_usuario']) ? (int)$_POST['id_usuario'] : 0;
             
@@ -202,6 +231,59 @@ try {
             $response = [
                 "status" => "success",
                 "existe" => $existe
+            ];
+            break;
+
+        // ============================================================
+        // FUNCIONALIDAD MEJORADA: DEVOLUCIÓN DE SALIDAS CON VALIDACIÓN DE FECHA
+        // ============================================================
+        
+        case 'verificarPuedeDevolver':
+            $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+            
+            if ($id <= 0) {
+                throw new Exception("ID inválido");
+            }
+
+            $validacion = $salidaModel->puedeDevolver($id);
+            
+            $response = [
+                "status" => "success",
+                "puede_devolver" => $validacion['puede'],
+                "motivo" => $validacion['motivo'],
+                "dias_restantes" => $validacion['dias_restantes'] ?? null
+            ];
+            break;
+
+        case 'devolverSalida':
+            $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+            $motivo = isset($_POST['motivo']) ? trim($_POST['motivo']) : '';
+            
+            if ($id <= 0) {
+                throw new Exception("ID de salida inválido");
+            }
+            
+            // Procesar la devolución usando el método mejorado del modelo
+            $resultado = $salidaModel->procesarDevolucion($id, $motivo);
+            
+            if ($resultado['exito']) {
+                $response = [
+                    "status" => "success",
+                    "message" => $resultado['mensaje'],
+                    "cantidad_devuelta" => $resultado['cantidad_devuelta'],
+                    "stock_actualizado" => $resultado['stock_actualizado']
+                ];
+            } else {
+                throw new Exception($resultado['mensaje']);
+            }
+            break;
+
+        case 'obtenerEstadisticasDevoluciones':
+            $estadisticas = $salidaModel->obtenerEstadisticasDevoluciones();
+            
+            $response = [
+                "status" => "success",
+                "data" => $estadisticas
             ];
             break;
             

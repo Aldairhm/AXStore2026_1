@@ -40,6 +40,7 @@ function cargarTodasLasSalidas() {
         },
         error: function (xhr, status, error) {
             console.error("Error en la carga:", error);
+            console.error("Respuesta del servidor:", xhr.responseText);
             Swal.fire({
                 icon: 'error',
                 title: 'Error de Conexión',
@@ -50,15 +51,18 @@ function cargarTodasLasSalidas() {
     });
 }
 
-// Calcular estadísticas
+// Calcular estadísticas (excluyendo canceladas)
 function calcularEstadisticas() {
-    const total = allSalidas.length;
-    const montoTotal = allSalidas.reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
-    const unidadesTotales = allSalidas.reduce((sum, s) => sum + parseInt(s.cantidad || 0), 0);
+    // Filtrar salidas activas (no canceladas)
+    const salidasActivas = allSalidas.filter(s => s.estado !== 'Cancelado');
+
+    const total = salidasActivas.length;
+    const montoTotal = salidasActivas.reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+    const unidadesTotales = salidasActivas.reduce((sum, s) => sum + parseInt(s.cantidad || 0), 0);
     
-    // Salidas de hoy
+    // Salidas de hoy (también solo activas)
     const hoy = new Date().toISOString().split('T')[0];
-    const salidasHoy = allSalidas.filter(s => s.fecha_salida === hoy).length;
+    const salidasHoy = salidasActivas.filter(s => s.fecha_salida === hoy).length;
     
     $("#totalSalidas").text(total);
     $("#montoTotal").text("$" + montoTotal.toFixed(2));
@@ -72,8 +76,12 @@ function aplicarFiltros() {
     const fechaDesde = $("#fechaDesde").val();
     const fechaHasta = $("#fechaHasta").val();
     const ordenar = $("#ordenar").val();
+    let activeTab = $("#salidasTabs .nav-link.active").attr("id"); 
+    // Fallback por si la pestaña no se detecta (para evitar mostrar historial por defecto)
+    if (!activeTab) activeTab = 'pendientes-tab';
 
     filteredSalidas = allSalidas.filter(salida => {
+        const estado = salida.estado || 'Pendiente';
         const matchesSearch = searchTerm === "" || 
             salida.sku.toLowerCase().includes(searchTerm) ||
             salida.nombre_producto.toLowerCase().includes(searchTerm) ||
@@ -82,7 +90,17 @@ function aplicarFiltros() {
         const matchesFechaDesde = !fechaDesde || salida.fecha_salida >= fechaDesde;
         const matchesFechaHasta = !fechaHasta || salida.fecha_salida <= fechaHasta;
 
-        return matchesSearch && matchesFechaDesde && matchesFechaHasta;
+        // Filtro por pestaña
+        let matchesTab = false;
+        if (activeTab === 'pendientes-tab') {
+            // Mostrar Pendiente, En camino, y Vencidos (que no sean Entregado/Cancelado)
+            matchesTab = (estado !== 'Entregado' && estado !== 'Cancelado');
+        } else {
+            // Historial: Entregado y Cancelado
+            matchesTab = (estado === 'Entregado' || estado === 'Cancelado');
+        }
+
+        return matchesSearch && matchesFechaDesde && matchesFechaHasta && matchesTab;
     });
 
     // Ordenar
@@ -143,6 +161,68 @@ function renderSalidas() {
     renderPagination();
 }
 
+// Obtener badge de estado
+// Obtener badge de estado (con lógica de vencimiento)
+function getBadgeEstado(estado, fechaEntrega = null) {
+    // Verificar vencimiento visualmente
+    if (fechaEntrega && estado !== 'Entregado' && estado !== 'Cancelado') {
+        const fechaEnt = new Date(fechaEntrega);
+        const hoy = new Date();
+        hoy.setHours(0,0,0,0);
+        
+        if (hoy > fechaEnt) {
+            return '<span class="badge bg-danger">Vencido</span>';
+        }
+    }
+
+    const badges = {
+        'Pendiente': '<span class="badge bg-warning text-dark">Pendiente</span>',
+        'En camino': '<span class="badge bg-primary">En camino</span>',
+        'Entregado': '<span class="badge bg-success">Entregado</span>',
+        'Cancelado': '<span class="badge bg-secondary">Cancelado</span>'
+    };
+    return badges[estado] || '<span class="badge bg-secondary">Desconocido</span>';
+}
+
+// Verificar si puede devolver (frontend)
+function puedeDevolver(salida) {
+    const estado = salida.estado || 'Pendiente';
+    
+    // No puede devolver si ya está cancelado
+    if (estado === 'Cancelado') {
+        return {
+            puede: false,
+            motivo: 'Salida cancelada'
+        };
+    }
+
+    /* 
+    Se permite devolución en cualquier estado (Entregado, En camino, Pendiente)
+    y sin importar vencimiento de fecha.
+    */
+
+    if (salida.fecha_entrega) {
+        const fechaEntrega = new Date(salida.fecha_entrega);
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        
+        // Calcular días restantes (puede ser negativo si venció, pero permitimos)
+        const diffTime = fechaEntrega - hoy;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        return {
+            puede: true,
+            diasRestantes: diffDays
+        };
+    }
+
+    // Si no tiene fecha de entrega, puede devolver
+    return {
+        puede: true,
+        diasRestantes: null
+    };
+}
+
 // Crear card de salida
 function crearCardSalida(salida) {
     const total = parseFloat(salida.total);
@@ -159,18 +239,61 @@ function crearCardSalida(salida) {
     });
     const horaFormateada = salida.hora_salida;
 
+    // Manejar imagen
+    const imagenSrc = salida.imagen ? `${ruta}${salida.imagen}` : `${ruta}default.png`;
+    
+    // Estado de la salida
+    const estado = salida.estado || 'Pendiente';
+    const badgeEstado = getBadgeEstado(estado, salida.fecha_entrega);
+    
+    // Verificar si puede devolver
+    const validacionDevolucion = puedeDevolver(salida);
+    const puedeDevol = validacionDevolucion.puede;
+    
+    // Badge de fecha de entrega y tiempo restante
+    let badgeFechaEntrega = '';
+    if (salida.fecha_entrega) {
+        const fechaEnt = new Date(salida.fecha_entrega);
+        const fechaEntFormateada = fechaEnt.toLocaleDateString('es-ES', { 
+            day: 'numeric', 
+            month: 'short' 
+        });
+        
+        if (validacionDevolucion.diasRestantes !== null && validacionDevolucion.diasRestantes !== undefined) {
+            const dias = validacionDevolucion.diasRestantes;
+            let colorBadge = 'success';
+            if (dias <= 3) colorBadge = 'danger';
+            else if (dias <= 7) colorBadge = 'warning';
+            
+            badgeFechaEntrega = `
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-shipping-fast me-1"></i>Entrega: ${fechaEntFormateada}
+                    </small>
+                    ${puedeDevol ? `
+                        <span class="badge bg-${colorBadge} ms-2">
+                            <i class="fas fa-clock me-1"></i>${dias} día${dias !== 1 ? 's' : ''} para devolver
+                        </span>
+                    ` : ''}
+                </div>
+            `;
+        }
+    }
+
     return `
         <div class="col-md-6 col-lg-4">
             <div class="card card-salida h-100 border-0 shadow-sm">
                 <div class="card-body">
-                    <!-- Header con fecha -->
+                    <!-- Header con fecha y estado -->
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
                             <span class="badge bg-danger">ID: ${salida.id}</span>
+                            ${badgeEstado}
                             <p class="text-muted small mb-0 mt-1">
                                 <i class="far fa-calendar me-1"></i>${fechaFormateada}
                                 <i class="far fa-clock ms-2 me-1"></i>${horaFormateada}
                             </p>
+                            ${badgeFechaEntrega}
                         </div>
                         <button class="btn btn-sm btn-outline-primary btnVerDetalle" 
                                 data-id="${salida.id}">
@@ -181,7 +304,7 @@ function crearCardSalida(salida) {
                     <!-- Producto -->
                     <div class="d-flex mb-3">
                         <div class="me-3">
-                            <img src="${ruta}${salida.imagen}" 
+                            <img src="${imagenSrc}" 
                                  class="rounded border" 
                                  style="width: 60px; height: 60px; object-fit: cover;" 
                                  alt="${salida.nombre_producto}"
@@ -225,6 +348,26 @@ function crearCardSalida(salida) {
                             <i class="fas fa-map-marker-alt me-1"></i>
                             ${salida.direccion.substring(0, 50)}${salida.direccion.length > 50 ? '...' : ''}
                         </p>
+                    </div>
+                    ` : ''}
+
+                    <!-- Botón de devolución -->
+                    ${puedeDevol ? `
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-outline-danger w-100 btnDevolverSalida" 
+                                data-id="${salida.id}"
+                                data-cantidad="${salida.cantidad}"
+                                data-variante="${salida.id_variante}"
+                                data-nombre="${salida.nombre_producto}"
+                                data-fecha-entrega="${salida.fecha_entrega || ''}">
+                            <i class="fas fa-undo me-1"></i>Devolver Stock
+                        </button>
+                    </div>
+                    ` : estado !== 'Cancelado' ? `
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-secondary w-100" disabled>
+                            <i class="fas fa-ban me-1"></i>${validacionDevolucion.motivo}
+                        </button>
                     </div>
                     ` : ''}
                 </div>
@@ -333,6 +476,35 @@ function mostrarModalDetalle(salida) {
         day: 'numeric' 
     });
 
+    // Manejar imagen
+    const imagenSrc = salida.imagen ? `${ruta}${salida.imagen}` : `${ruta}default.png`;
+    
+    const estado = salida.estado || 'Pendiente';
+    const badgeEstado = getBadgeEstado(estado, salida.fecha_entrega);
+
+    // Información de devolución
+    let infoDevolucion = '';
+    if (salida.puede_devolver == 1 && salida.dias_para_devolucion !== null) {
+        const dias = parseInt(salida.dias_para_devolucion);
+        let colorAlert = 'success';
+        if (dias <= 3) colorAlert = 'danger';
+        else if (dias <= 7) colorAlert = 'warning';
+        
+        infoDevolucion = `
+            <div class="alert alert-${colorAlert} mb-3">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Devolución disponible:</strong> Tienes ${dias} día${dias !== 1 ? 's' : ''} para procesar la devolución
+            </div>
+        `;
+    } else if (salida.puede_devolver == 0 && estado !== 'Cancelado') {
+        infoDevolucion = `
+            <div class="alert alert-danger mb-3">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Plazo vencido:</strong> El tiempo para devolución ha expirado
+            </div>
+        `;
+    }
+
     const contenido = `
         <div class="row">
             <!-- Columna izquierda: Producto -->
@@ -340,7 +512,7 @@ function mostrarModalDetalle(salida) {
                 <h6 class="fw-bold text-muted mb-3">PRODUCTO</h6>
                 
                 <div class="text-center mb-3">
-                    <img src="${ruta}${salida.imagen}" 
+                    <img src="${imagenSrc}" 
                          class="img-fluid rounded border" 
                          style="max-height: 250px; object-fit: contain;" 
                          alt="${salida.nombre_producto}"
@@ -378,11 +550,17 @@ function mostrarModalDetalle(salida) {
             <div class="col-md-7">
                 <h6 class="fw-bold text-muted mb-3">DETALLES DE LA SALIDA</h6>
 
+                ${infoDevolucion}
+
                 <div class="mb-4">
                     <div class="bg-danger bg-opacity-10 p-3 rounded mb-3">
                         <p class="mb-2">
                             <i class="fas fa-hashtag me-2 text-danger"></i>
                             <strong>ID de Salida:</strong> #${salida.id}
+                        </p>
+                        <p class="mb-2">
+                            <i class="fas fa-flag me-2 text-danger"></i>
+                            <strong>Estado:</strong> ${badgeEstado}
                         </p>
                         <p class="mb-2">
                             <i class="far fa-calendar-alt me-2 text-danger"></i>
@@ -461,15 +639,154 @@ function mostrarModalDetalle(salida) {
                         <strong class="text-danger fs-4">$${total.toFixed(2)}</strong>
                     </div>
                 </div>
+
+                <!-- Acciones según estado -->
+                <div class="mt-4 pt-3 border-top">
+                    ${estado === 'Pendiente' ? `
+                    <button class="btn btn-primary w-100 btnCambiarEstado mb-2" 
+                            data-id="${salida.id}" data-nuevo-estado="En camino" data-accion="Despachar">
+                        <i class="fas fa-truck me-2"></i>Marcar como En Camino
+                    </button>
+                    ` : ''}
+
+                    ${estado === 'En camino' ? `
+                    <button class="btn btn-success w-100 btnCambiarEstado mb-2" 
+                            data-id="${salida.id}" data-nuevo-estado="Entregado" data-accion="Confirmar Entrega">
+                        <i class="fas fa-check-circle me-2"></i>Confirmar Entrega
+                    </button>
+                    ` : ''}
+
+                    ${estado !== 'Cancelado' ? `
+                    <button class="btn btn-outline-danger w-100 btnDevolverSalida" 
+                            data-id="${salida.id}"
+                            data-cantidad="${salida.cantidad}"
+                            data-variante="${salida.id_variante}"
+                            data-nombre="${salida.nombre_producto}"
+                            data-fecha-entrega="${salida.fecha_entrega || ''}">
+                        <i class="fas fa-undo me-2"></i>Devolver Stock (Cancelar)
+                    </button>
+                    ` : `
+                    <div class="alert alert-danger text-center mb-0">
+                        <i class="fas fa-ban me-2"></i>Salida Cancelada
+                    </div>
+                    `}
+                </div>
             </div>
         </div>
     `;
 
     $("#detalleContent").html(contenido);
     
+    // El footer ya no necesita inyección dinámica para acciones principales,
+    // pero podemos limpiarlo para evitar duplicados residuales.
+    $("#modalDetalleSalida .modal-footer .btnDevolverSalida, #modalDetalleSalida .modal-footer .alert-devolucion").remove();
+    
     const modalElement = document.getElementById('modalDetalleSalida');
     const modal = new bootstrap.Modal(modalElement);
     modal.show();
+}
+
+// Devolver salida (cambiar estado a Cancelado y restaurar stock)
+function devolverSalida(id, cantidad, idVariante, nombreProducto, fechaEntrega) {
+    // Verificar primero con el backend si puede devolver
+    $.ajax({
+        url: "app/controllers/salidaController.php",
+        method: "POST",
+        dataType: "json",
+        data: {
+            accion: "verificarPuedeDevolver",
+            id: id
+        },
+        success: function(validacion) {
+            if (validacion.status === "success" && validacion.puede_devolver) {
+                // Mostrar días restantes si aplica
+                let mensajeDias = '';
+                if (validacion.dias_restantes !== null) {
+                    mensajeDias = `<p class="text-info small">Plazo restante: ${validacion.dias_restantes} día(s)</p>`;
+                }
+                
+                Swal.fire({
+                    title: '¿Devolver Stock?',
+                    html: `
+                        <p>Se cancelará la salida y se devolverán <strong>${cantidad} unidades</strong> de:</p>
+                        <p class="text-primary fw-bold">${nombreProducto}</p>
+                        ${mensajeDias}
+                        <p class="text-muted small">Esta acción no se puede deshacer</p>
+                    `,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, devolver',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        procesarDevolucion(id);
+                    }
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Devolución No Permitida',
+                    text: validacion.motivo || 'No se puede procesar esta devolución',
+                    confirmButtonColor: '#dc3545'
+                });
+            }
+        },
+        error: function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No se pudo verificar la devolución',
+                confirmButtonColor: '#dc3545'
+            });
+        }
+    });
+}
+
+// Procesar la devolución
+function procesarDevolucion(id) {
+    $.ajax({
+        url: "app/controllers/salidaController.php",
+        method: "POST",
+        dataType: "json",
+        data: {
+            accion: "devolverSalida",
+            id: id,
+            motivo: "Devolución solicitada por usuario"
+        },
+        success: function (response) {
+            if (response.status === "success") {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Devolución Exitosa',
+                    html: `
+                        <p>${response.message}</p>
+                        <p class="text-muted small">Stock actualizado: ${response.stock_actualizado} unidades</p>
+                    `,
+                    confirmButtonColor: '#28a745'
+                }).then(() => {
+                    cargarTodasLasSalidas(); // Recargar datos
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: response.message,
+                    confirmButtonColor: '#dc3545'
+                });
+            }
+        },
+        error: function (xhr) {
+            console.error("Error:", xhr.responseText);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de Conexión',
+                text: 'No se pudo procesar la devolución',
+                confirmButtonColor: '#dc3545'
+            });
+        }
+    });
 }
 
 // Mostrar mensaje cuando no hay resultados
@@ -504,6 +821,53 @@ function exportarSalidas() {
     });
 }
 
+// Cambiar estado con confirmación
+function cambiarEstadoSalida(id, nuevoEstado, accionNombre) {
+    Swal.fire({
+        title: `¿${accionNombre}?`,
+        text: `La salida pasará a estado "${nuevoEstado}"`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, continuar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "app/controllers/salidaController.php",
+                method: "POST",
+                dataType: "json",
+                data: {
+                    accion: "cambiarEstado",
+                    id: id,
+                    nuevo_estado: nuevoEstado
+                },
+                success: function(response) {
+                    if (response.status === "success") {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Actualizado!',
+                            text: response.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            cargarTodasLasSalidas();
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('modalDetalleSalida'));
+                            if (modal) modal.hide();
+                        });
+                    } else {
+                        Swal.fire('Error', response.message, 'error');
+                    }
+                },
+                error: function() {
+                    Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
+                }
+            });
+        }
+    });
+}
+
 // Configurar eventos
 function setupEvents() {
     // Filtros
@@ -521,10 +885,34 @@ function setupEvents() {
     // Exportar
     $("#btnExportar").on("click", exportarSalidas);
 
+    // Cambio de pestaña
+    $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+        aplicarFiltros();
+    });
+
     // Ver detalle
     $(document).on("click", ".btnVerDetalle", function() {
         const id = $(this).data("id");
         verDetalleSalida(id);
+    });
+
+    // Acción de botones de estado (Despachar, Entregar)
+    $(document).on("click", ".btnCambiarEstado", function() {
+        const id = $(this).data("id");
+        const nuevoEstado = $(this).data("nuevo-estado");
+        const accionNombre = $(this).data("accion");
+        
+        cambiarEstadoSalida(id, nuevoEstado, accionNombre);
+    });
+
+    // Devolver salida
+    $(document).on("click", ".btnDevolverSalida", function() {
+        const id = $(this).data("id");
+        const cantidad = $(this).data("cantidad");
+        const idVariante = $(this).data("variante");
+        const nombreProducto = $(this).data("nombre");
+        const fechaEntrega = $(this).data("fecha-entrega");
+        devolverSalida(id, cantidad, idVariante, nombreProducto, fechaEntrega);
     });
 
     // Paginación
@@ -543,3 +931,4 @@ function setupEvents() {
         window.print();
     });
 }
+

@@ -194,6 +194,49 @@ function setupEvents() {
     // Calcular totales en tiempo real
     $("#cantidad_salida, #precio_envio, #costo_extra").on("input", calcularTotales);
 
+    // ============================================
+    // VALIDACIONES EN TIEMPO REAL (ON BLUR)
+    // ============================================
+    
+    // Validar cantidad cuando el usuario sale del campo
+    $("#cantidad_salida").on("blur", function() {
+        validarCantidadVsStock();
+    });
+    
+    // Validar fecha de salida
+    $("#fecha_salida").on("blur change", function() {
+        validarFechaSalida();
+        // También validar fecha de entrega si ya está llena
+        if ($("#fecha_entrega").val()) {
+            validarFechaEntrega();
+        }
+    });
+    
+    // Validar hora de salida
+    $("#hora_salida").on("blur", function() {
+        validarHoraSalida();
+    });
+    
+    // Validar fecha de entrega (AHORA OBLIGATORIO)
+    $("#fecha_entrega").on("blur change", function() {
+        validarFechaEntrega();
+    });
+    
+    // Validar dirección (AHORA OBLIGATORIO)
+    $("#direccion").on("blur", function() {
+        validarDireccion();
+    });
+    
+    // Validar precio de envío (OBLIGATORIO y > 0)
+    $("#precio_envio").on("blur", function() {
+        validarPrecioEnvio();
+    });
+    
+    // Validar costo extra (OPCIONAL)
+    $("#costo_extra").on("blur", function() {
+        validarNumeroDecimal("costo_extra", "Costo extra", false);
+    });
+
     // Enviar formulario de salida
     $("#formSalidaProducto").on("submit", function(e) {
         e.preventDefault();
@@ -249,22 +292,319 @@ function calcularTotales() {
     $("#totalSalida").text("$" + total.toFixed(2));
 }
 
-// Registrar salida
-function registrarSalida() {
+// ============================================
+// SISTEMA DE VALIDACIÓN CON FEEDBACK VISUAL
+// ============================================
+
+/**
+ * Muestra un mensaje de error bajo un campo específico
+ * @param {string} fieldId - ID del campo
+ * @param {string} message - Mensaje de error
+ */
+function mostrarError(fieldId, message) {
+    const $field = $("#" + fieldId);
+    
+    // Remover error anterior si existe
+    $field.removeClass("is-valid").addClass("is-invalid");
+    $field.siblings(".invalid-feedback").remove();
+    
+    // Agregar mensaje de error
+    $field.after(`<div class="invalid-feedback d-block">${message}</div>`);
+}
+
+/**
+ * Muestra que un campo es válido
+ * @param {string} fieldId - ID del campo
+ */
+function mostrarValido(fieldId) {
+    const $field = $("#" + fieldId);
+    $field.removeClass("is-invalid").addClass("is-valid");
+    $field.siblings(".invalid-feedback").remove();
+}
+
+/**
+ * Limpia todos los estados de validación del formulario
+ */
+function limpiarValidaciones() {
+    $("#formSalidaProducto").find(".is-invalid, .is-valid").removeClass("is-invalid is-valid");
+    $("#formSalidaProducto").find(".invalid-feedback").remove();
+}
+
+/**
+ * Valida que un campo no esté vacío
+ * @param {string} fieldId - ID del campo
+ * @param {string} fieldName - Nombre del campo para el mensaje
+ * @returns {boolean} - true si es válido
+ */
+function validarCampoRequerido(fieldId, fieldName) {
+    const valor = $("#" + fieldId).val().trim();
+    
+    if (valor === "") {
+        mostrarError(fieldId, `El campo ${fieldName} es obligatorio`);
+        return false;
+    }
+    
+    mostrarValido(fieldId);
+    return true;
+}
+
+/**
+ * Valida que un número sea mayor a cero
+ * @param {string} fieldId - ID del campo
+ * @param {string} fieldName - Nombre del campo
+ * @returns {boolean}
+ */
+function validarNumeroPositivo(fieldId, fieldName) {
+    const valor = parseFloat($("#" + fieldId).val());
+    
+    if (isNaN(valor) || valor <= 0) {
+        mostrarError(fieldId, `${fieldName} debe ser mayor a 0`);
+        return false;
+    }
+    
+    mostrarValido(fieldId);
+    return true;
+}
+
+/**
+ * Valida que la cantidad no exceda el stock disponible
+ * @returns {boolean}
+ */
+function validarCantidadVsStock() {
     const cantidad = parseInt($("#cantidad_salida").val());
     const stockDisponible = parseInt($("#stockProductoSalida").text());
     
-    // Validar cantidad
+    if (isNaN(cantidad) || cantidad <= 0) {
+        mostrarError("cantidad_salida", "Ingrese una cantidad válida");
+        return false;
+    }
+    
     if (cantidad > stockDisponible) {
+        mostrarError("cantidad_salida", `Solo hay ${stockDisponible} unidades disponibles en stock`);
+        return false;
+    }
+    
+    mostrarValido("cantidad_salida");
+    return true;
+}
+
+/**
+ * Valida que la fecha de salida no sea futura
+ * @returns {boolean}
+ */
+function validarFechaSalida() {
+    const fechaSalida = $("#fecha_salida").val();
+    
+    if (!fechaSalida) {
+        mostrarError("fecha_salida", "La fecha de salida es obligatoria");
+        return false;
+    }
+    
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fechaSeleccionada = new Date(fechaSalida + "T00:00:00");
+    
+    if (fechaSeleccionada > hoy) {
+        mostrarError("fecha_salida", "La fecha de salida no puede ser futura");
+        return false;
+    }
+    
+    mostrarValido("fecha_salida");
+    return true;
+}
+
+/**
+ * Valida que la fecha de entrega sea posterior o igual a la fecha de salida (CAMPO OBLIGATORIO)
+ * @returns {boolean}
+ */
+function validarFechaEntrega() {
+    const fechaEntrega = $("#fecha_entrega").val();
+    
+    // Ahora es OBLIGATORIO
+    if (!fechaEntrega || fechaEntrega.trim() === "") {
+        mostrarError("fecha_entrega", "La fecha de entrega es obligatoria");
+        return false;
+    }
+    
+    const fechaSalida = $("#fecha_salida").val();
+    
+    if (!fechaSalida) {
+        mostrarError("fecha_entrega", "Primero debe seleccionar una fecha de salida");
+        return false;
+    }
+    
+    const salida = new Date(fechaSalida + "T00:00:00");
+    const entrega = new Date(fechaEntrega + "T00:00:00");
+    
+    if (entrega < salida) {
+        mostrarError("fecha_entrega", "La fecha de entrega no puede ser anterior a la fecha de salida");
+        return false;
+    }
+    
+    mostrarValido("fecha_entrega");
+    return true;
+}
+
+/**
+ * Valida que la hora de salida sea válida
+ * @returns {boolean}
+ */
+function validarHoraSalida() {
+    const hora = $("#hora_salida").val();
+    
+    if (!hora) {
+        mostrarError("hora_salida", "La hora de salida es obligatoria");
+        return false;
+    }
+    
+    mostrarValido("hora_salida");
+    return true;
+}
+
+/**
+ * Valida números decimales (ACTUALIZADO: precio de envío es obligatorio)
+ * @param {string} fieldId - ID del campo
+ * @param {string} fieldName - Nombre del campo
+ * @param {boolean} esObligatorio - Si el campo es obligatorio
+ * @returns {boolean}
+ */
+function validarNumeroDecimal(fieldId, fieldName, esObligatorio = false) {
+    const valor = parseFloat($("#" + fieldId).val());
+    
+    // Si es obligatorio y está vacío o es NaN
+    if (esObligatorio && (isNaN(valor) || $("#" + fieldId).val().trim() === "")) {
+        mostrarError(fieldId, `${fieldName} es obligatorio`);
+        return false;
+    }
+    
+    // Si no es obligatorio y está vacío, es válido
+    if (!esObligatorio && (isNaN(valor) || $("#" + fieldId).val().trim() === "")) {
+        mostrarValido(fieldId);
+        return true;
+    }
+    
+    if (isNaN(valor) || valor < 0) {
+        mostrarError(fieldId, `${fieldName} debe ser un número válido mayor o igual a 0`);
+        return false;
+    }
+    
+    mostrarValido(fieldId);
+    return true;
+}
+
+/**
+ * Valida el precio de envío (CAMPO OBLIGATORIO y MAYOR A 0)
+ * @returns {boolean}
+ */
+function validarPrecioEnvio() {
+    const valor = parseFloat($("#precio_envio").val());
+    
+    // Verificar que no esté vacío
+    if (isNaN(valor) || $("#precio_envio").val().trim() === "") {
+        mostrarError("precio_envio", "El precio de envío es obligatorio");
+        return false;
+    }
+    
+    // Verificar que sea mayor a 0 (no acepta 0)
+    if (valor <= 0) {
+        mostrarError("precio_envio", "El precio de envío debe ser mayor a 0");
+        return false;
+    }
+    
+    mostrarValido("precio_envio");
+    return true;
+}
+
+/**
+ * Valida que la dirección de entrega no esté vacía (CAMPO OBLIGATORIO)
+ * @returns {boolean}
+ */
+function validarDireccion() {
+    const direccion = $("#direccion").val().trim();
+    
+    if (direccion === "") {
+        mostrarError("direccion", "La dirección de entrega es obligatoria");
+        return false;
+    }
+    
+    // Validar longitud mínima
+    if (direccion.length < 10) {
+        mostrarError("direccion", "La dirección debe tener al menos 10 caracteres");
+        return false;
+    }
+    
+    mostrarValido("direccion");
+    return true;
+}
+
+/**
+ * FUNCIÓN PRINCIPAL DE VALIDACIÓN
+ * Valida todos los campos del formulario antes de enviar
+ * @returns {boolean} - true si todo es válido
+ */
+function validarFormularioCompleto() {
+    console.log("🔍 Iniciando validación del formulario...");
+    let esValido = true;
+    
+    // Limpiar validaciones previas
+    limpiarValidaciones();
+    
+    // Validar campos obligatorios básicos
+    console.log("Validando cantidad...");
+    esValido = validarCantidadVsStock() && esValido;
+    
+    console.log("Validando fecha de salida...");
+    esValido = validarFechaSalida() && esValido;
+    
+    console.log("Validando hora de salida...");
+    esValido = validarHoraSalida() && esValido;
+    
+    // Validar campos obligatorios de entrega
+    console.log("Validando fecha de entrega...");
+    esValido = validarFechaEntrega() && esValido;
+    
+    console.log("Validando dirección...");
+    esValido = validarDireccion() && esValido;
+    
+    console.log("Validando precio de envío (OBLIGATORIO y > 0)...");
+    esValido = validarPrecioEnvio() && esValido;
+    
+    // Validar costo extra (opcional)
+    console.log("Validando costo extra...");
+    esValido = validarNumeroDecimal("costo_extra", "Costo extra", false) && esValido;
+    
+    console.log(`✅ Resultado de validación: ${esValido ? "VÁLIDO" : "INVÁLIDO"}`);
+    
+    // Si hay errores, hacer scroll al primer campo inválido
+    if (!esValido) {
+        const primerError = $("#formSalidaProducto").find(".is-invalid").first();
+        if (primerError.length) {
+            console.log("❌ Enfocando primer campo con error:", primerError.attr("id"));
+            primerError.focus();
+        }
+    }
+    
+    return esValido;
+}
+
+// Registrar salida con validaciones completas
+function registrarSalida() {
+    // VALIDAR ANTES DE ENVIAR
+    if (!validarFormularioCompleto()) {
         Swal.fire({
-            icon: 'error',
-            title: 'Stock Insuficiente',
-            text: `Solo hay ${stockDisponible} unidades disponibles`,
-            confirmButtonColor: '#dc3545'
+            icon: 'warning',
+            title: 'Formulario Incompleto',
+            text: 'Por favor, corrija los errores señalados en el formulario',
+            confirmButtonColor: '#ffc107'
         });
         return;
     }
     
+    // Deshabilitar botón para evitar doble envío
+    const $btnSubmit = $("#btnRegistrarSalida");
+    $btnSubmit.prop("disabled", true).html('<i class="fas fa-spinner fa-spin me-1"></i> Procesando...');
+    
+    const cantidad = parseInt($("#cantidad_salida").val());
     const formData = new FormData($("#formSalidaProducto")[0]);
     formData.append("accion", "registrarSalida");
     
@@ -295,6 +635,9 @@ function registrarSalida() {
                     const modal = bootstrap.Modal.getInstance(modalElement);
                     modal.hide();
                     
+                    // Limpiar validaciones
+                    limpiarValidaciones();
+                    
                     // Recargar productos para actualizar stock
                     cargarTodosLosProductos();
                 });
@@ -314,6 +657,10 @@ function registrarSalida() {
                 text: 'No se pudo conectar con el servidor',
                 confirmButtonColor: '#dc3545'
             });
+        },
+        complete: function() {
+            // Rehabilitar botón
+            $btnSubmit.prop("disabled", false).html('<i class="fas fa-check me-1"></i> Registrar Salida');
         }
     });
 }
