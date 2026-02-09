@@ -2278,3 +2278,39 @@ body.mobile-nav-open {
     z-index: 20000 !important;
     /* Debe ser mayor que el 11000 del header */
 }
+
+
+/* ============================================
+   FIX MODALES (Z-INDEX Y CENTRADO)
+   ============================================ */
+
+/* 1. Elevar los modales por encima del Header (que tiene z-index 11000) */
+.modal-backdrop {
+    z-index: 12000 !important; /* Fondo oscuro */
+}
+
+.modal {
+    z-index: 12010 !important; /* El modal en sí */
+}
+
+/* 2. Forzar centrado vertical perfecto y evitar que se peguen arriba */
+.modal-dialog {
+    display: flex !important;
+    align-items: center !important;
+    min-height: calc(100% - 3.5rem) !important;
+    margin-top: 1.75rem !important;
+    margin-bottom: 1.75rem !important;
+}
+
+/* 3. Ajuste específico para móviles */
+@media (max-width: 576px) {
+    .modal-dialog {
+        min-height: calc(100% - 1rem) !important;
+        margin: 0.5rem !important;
+    }
+}
+
+/* 4. Corrección para evitar conflictos con Animate.css si lo usas en el modal */
+.modal.animate__animated {
+    --animate-duration: 0.3s;
+}
