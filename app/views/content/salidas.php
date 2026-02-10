@@ -120,6 +120,20 @@
                 </div>
             </div>
 
+            <!-- Pestañas de Navegación -->
+            <ul class="nav nav-tabs mb-4 border-bottom-0" id="salidasTabs" role="tablist">
+                <li class="nav-item me-2" role="presentation">
+                    <button class="nav-link active fw-bold border-0 rounded-top bg-white shadow-sm" id="pendientes-tab" data-bs-toggle="tab" data-bs-target="#pendientes" type="button" role="tab" aria-controls="pendientes" aria-selected="true">
+                        <i class="fas fa-clock text-warning me-2"></i>Pendientes / En Curso
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold border-0 rounded-top bg-white text-muted shadow-sm" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial" type="button" role="tab" aria-controls="historial" aria-selected="false">
+                        <i class="fas fa-history text-secondary me-2"></i>Historial (Finalizados)
+                    </button>
+                </li>
+            </ul>
+
             <!-- Filtros -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body">

@@ -32,14 +32,11 @@
                     </select>
                 </div>
 
-<div class="col-md-4 mb-3">
-
-<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCategoria">
-    <a href="salidas">
-                <i class="fas "></i> Salidas
-            </button>
-               
-                 </div>
+                <div class="col-md-4 mb-3">
+                    <a href="salidas" class="btn btn-primary">
+                        <i class="fas fa-shipping-fast"></i> Salidas
+                    </a>
+                </div>
             </div>
 
             <!-- Contador de resultados -->
@@ -73,7 +70,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
 
-                <form id="formSalidaProducto">
+                <form id="formSalidaProducto" novalidate>
                     <div class="modal-body">
                         <input type="hidden" name="id_variante" id="id_variante_salida">
                         <input type="hidden" name="precio_unitario" id="precio_unitario_salida">
@@ -109,7 +106,7 @@
                                 <!-- Cantidad -->
                                 <div class="mb-3">
                                     <label class="form-label fw-bold small">Cantidad a Despachar <span class="text-danger">*</span></label>
-                                    <input type="number" name="cantidad" id="cantidad_salida" class="form-control" min="1" required>
+                                    <input type="number" name="cantidad" id="cantidad_salida" class="form-control" min="1">
                                     <small class="text-muted">Unidades que saldrán del inventario</small>
                                 </div>
 
@@ -117,32 +114,32 @@
                                     <!-- Fecha de salida -->
                                     <div class="col-6">
                                         <label class="form-label fw-bold small">Fecha de Salida <span class="text-danger">*</span></label>
-                                        <input type="date" name="fecha_salida" id="fecha_salida" class="form-control" required>
+                                        <input type="date" name="fecha_salida" id="fecha_salida" class="form-control">
                                     </div>
 
                                     <!-- Hora de salida -->
                                     <div class="col-6">
                                         <label class="form-label fw-bold small">Hora de Salida <span class="text-danger">*</span></label>
-                                        <input type="time" name="hora_salida" id="hora_salida" class="form-control" required>
+                                        <input type="time" name="hora_salida" id="hora_salida" class="form-control">
                                     </div>
                                 </div>
 
                                 <!-- Fecha de entrega estimada -->
                                 <div class="mb-3">
-                                    <label class="form-label fw-bold small">Fecha de Entrega Estimada</label>
+                                    <label class="form-label fw-bold small">Fecha de Entrega Estimada <span class="text-danger">*</span></label>
                                     <input type="date" name="fecha_entrega" id="fecha_entrega" class="form-control">
                                 </div>
 
                                 <!-- Dirección de entrega -->
                                 <div class="mb-3">
-                                    <label class="form-label fw-bold small">Dirección de Entrega</label>
+                                    <label class="form-label fw-bold small">Dirección de Entrega <span class="text-danger">*</span></label>
                                     <textarea name="direccion" id="direccion" class="form-control" rows="2" placeholder="Ingrese la dirección completa"></textarea>
                                 </div>
 
                                 <div class="row g-2 mb-3">
                                     <!-- Precio de envío -->
                                     <div class="col-6">
-                                        <label class="form-label fw-bold small">Precio de Envío ($)</label>
+                                        <label class="form-label fw-bold small">Precio de Envío ($) <span class="text-danger">*</span></label>
                                         <input type="number" name="precio_envio" id="precio_envio" class="form-control" step="0.01" value="0.00">
                                     </div>
 

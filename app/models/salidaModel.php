@@ -1,6 +1,7 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1)
+;
 
 require_once __DIR__ . "/../../config/conexion.php";
 
@@ -24,9 +25,9 @@ class Salida
                     :fecha_entrega, :direccion, :precio_envio, :costo_extra,
                     :precio_unitario, :subtotal, :total, :observaciones
                 )";
-        
+
         $stmt = $this->conexion->prepare($sql);
-        
+
         return $stmt->execute([
             ':id_variante' => $datos['id_variante'],
             ':id_usuario' => $datos['id_usuario'],
@@ -65,92 +66,104 @@ class Salida
                     s.*, 
                     v.nombre_variante, 
                     v.sku,
-                    v.imagen,
+                    vi.ruta_imagen as imagen,
                     u.nombre_real as usuario
                 FROM salida s
                 INNER JOIN variante v ON s.id_variante = v.id
                 INNER JOIN usuario u ON s.id_usuario = u.id
+                LEFT JOIN variante_imagen vi ON v.id = vi.id_variante AND vi.es_principal = 1
                 ORDER BY s.created_at DESC";
-        
+
         $stmt = $this->conexion->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     // ============================================================
-    // NUEVOS MÉTODOS PARA EL HISTORIAL DE SALIDAS
+    // MÉTODOS PARA EL HISTORIAL DE SALIDAS
     // ============================================================
 
-    /**
-     * Obtener todas las salidas con información completa del producto
-     */
-   
-     public function obtenerTodasLasSalidas(): array
-{
-    $sql = "SELECT 
-                s.id,
-                s.id_variante,
-                s.id_usuario,
-                s.cantidad,
-                s.precio_unitario,
-                s.subtotal,
-                s.precio_envio,
-                s.costo_extra,
-                s.total,
-                s.fecha_salida,
-                s.hora_salida,
-                s.fecha_entrega,
-                s.direccion,
-                s.observaciones,
-                s.created_at,
-                v.sku,
-                v.imagen,
-                v.nombre_variante as nombre_producto,
-                v.stock as stock_actual,
-                u.nombre_real as usuario,
-                c.nombre as nombre_categoria
-            FROM salida s
-            INNER JOIN variante v ON s.id_variante = v.id
-            INNER JOIN usuario u ON s.id_usuario = u.id
-            INNER JOIN producto p ON v.id_producto = p.id
-            LEFT JOIN categoria c ON p.id_categoria = c.id
-            ORDER BY s.fecha_salida DESC, s.hora_salida DESC";
-    
-    $stmt = $this->conexion->prepare($sql);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-    /**
-     * Obtener detalle completo de una salida específica
-     */
-    public function obtenerDetalleSalida(int $id): ?array
-{
-    $sql = "SELECT 
-                s.*,
-                v.sku,
-                v.imagen,
-                v.nombre_variante as nombre_producto,
-                v.stock as stock_actual,
-                u.nombre_real as usuario,
-                c.nombre as nombre_categoria,
-                p.nombre as nombre_producto_padre
-            FROM salida s
-            INNER JOIN variante v ON s.id_variante = v.id
-            INNER JOIN usuario u ON s.id_usuario = u.id
-            INNER JOIN producto p ON v.id_producto = p.id
-            LEFT JOIN categoria c ON p.id_categoria = c.id
-            WHERE s.id = :id";
-    
-    $stmt = $this->conexion->prepare($sql);
-    $stmt->execute([':id' => $id]);
-    $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    return $resultado ?: null;
-}
+    public function obtenerTodasLasSalidas(): array
+    {
+        $sql = "SELECT 
+                    s.id,
+                    s.id_variante,
+                    s.id_usuario,
+                    s.cantidad,
+                    s.precio_unitario,
+                    s.subtotal,
+                    s.precio_envio,
+                    s.costo_extra,
+                    s.total,
+                    s.fecha_salida,
+                    s.hora_salida,
+                    s.fecha_entrega,
+                    s.direccion,
+                    s.observaciones,
+                    s.estado,
+                    s.created_at,
+                    v.sku,
+                    vi.ruta_imagen as imagen,
+                    v.nombre_variante as nombre_producto,
+                    v.stock as stock_actual,
+                    u.nombre_real as usuario,
+                    c.nombre as nombre_categoria,
+                    -- Calcular si está dentro del plazo de devolución
+                    CASE 
+                        WHEN s.fecha_entrega IS NULL THEN 1
+                        WHEN CURDATE() <= s.fecha_entrega THEN 1
+                        ELSE 0
+                    END as puede_devolver
+                FROM salida s
+                INNER JOIN variante v ON s.id_variante = v.id
+                INNER JOIN usuario u ON s.id_usuario = u.id
+                INNER JOIN producto p ON v.id_producto = p.id
+                LEFT JOIN categoria c ON p.id_categoria = c.id
+                LEFT JOIN variante_imagen vi ON v.id = vi.id_variante AND vi.es_principal = 1
+                ORDER BY s.fecha_salida DESC, s.hora_salida DESC";
 
-    /**
-     * Obtener estadísticas de salidas por rango de fechas
-     */
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function obtenerDetalleSalida(int $id): ?array
+    {
+        $sql = "SELECT 
+                    s.*,
+                    v.sku,
+                    vi.ruta_imagen as imagen,
+                    v.nombre_variante as nombre_producto,
+                    v.stock as stock_actual,
+                    u.nombre_real as usuario,
+                    c.nombre as nombre_categoria,
+                    p.nombre as nombre_producto_padre,
+                    -- Calcular si está dentro del plazo de devolución
+                    CASE 
+                        WHEN s.fecha_entrega IS NULL THEN 1
+                        WHEN CURDATE() <= s.fecha_entrega THEN 1
+                        ELSE 0
+                    END as puede_devolver,
+                    -- Calcular días restantes para devolución
+                    CASE 
+                        WHEN s.fecha_entrega IS NULL THEN NULL
+                        ELSE DATEDIFF(s.fecha_entrega, CURDATE())
+                    END as dias_para_devolucion
+                FROM salida s
+                INNER JOIN variante v ON s.id_variante = v.id
+                INNER JOIN usuario u ON s.id_usuario = u.id
+                INNER JOIN producto p ON v.id_producto = p.id
+                LEFT JOIN categoria c ON p.id_categoria = c.id
+                LEFT JOIN variante_imagen vi ON v.id = vi.id_variante AND vi.es_principal = 1
+                WHERE s.id = :id";
+
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $resultado ?: null;
+    }
+
     public function obtenerEstadisticas(?string $fechaInicio = null, ?string $fechaFin = null): array
     {
         $sql = "SELECT 
@@ -161,36 +174,35 @@ class Salida
                     COALESCE(SUM(precio_envio), 0) as total_envios,
                     COALESCE(SUM(costo_extra), 0) as total_extras
                 FROM salida";
-        
+
         $params = [];
-        
+
         if ($fechaInicio && $fechaFin) {
             $sql .= " WHERE fecha_salida BETWEEN :fecha_inicio AND :fecha_fin";
             $params[':fecha_inicio'] = $fechaInicio;
             $params[':fecha_fin'] = $fechaFin;
-        } elseif ($fechaInicio) {
+        }
+        elseif ($fechaInicio) {
             $sql .= " WHERE fecha_salida >= :fecha_inicio";
             $params[':fecha_inicio'] = $fechaInicio;
-        } elseif ($fechaFin) {
+        }
+        elseif ($fechaFin) {
             $sql .= " WHERE fecha_salida <= :fecha_fin";
             $params[':fecha_fin'] = $fechaFin;
         }
-        
+
         $stmt = $this->conexion->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
     }
 
-    /**
-     * Obtener productos más vendidos
-     */
     public function obtenerProductosMasVendidos(int $limite = 10): array
     {
         $sql = "SELECT 
                     v.id as id_variante,
                     v.nombre_variante as nombre_producto,
                     v.sku,
-                    v.imagen,
+                    vi.ruta_imagen as imagen,
                     v.stock as stock_actual,
                     COUNT(s.id) as num_salidas,
                     SUM(s.cantidad) as total_vendido,
@@ -198,67 +210,61 @@ class Salida
                     AVG(s.precio_unitario) as precio_promedio
                 FROM variante v
                 INNER JOIN salida s ON v.id = s.id_variante
-                GROUP BY v.id, v.nombre_variante, v.sku, v.imagen, v.stock
+                LEFT JOIN variante_imagen vi ON v.id = vi.id_variante AND vi.es_principal = 1
+                GROUP BY v.id, v.nombre_variante, v.sku, vi.ruta_imagen, v.stock
                 ORDER BY total_vendido DESC
                 LIMIT :limite";
-        
+
         $stmt = $this->conexion->prepare($sql);
         $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Obtener salidas del día actual
-     */
     public function obtenerSalidasHoy(): int
     {
         $sql = "SELECT COUNT(*) 
                 FROM salida 
                 WHERE DATE(fecha_salida) = CURDATE()";
-        
+
         $stmt = $this->conexion->prepare($sql);
         $stmt->execute();
         return (int)$stmt->fetchColumn();
     }
 
-    /**
-     * Obtener salidas por usuario
-     */
     public function obtenerSalidasPorUsuario(int $idUsuario): array
     {
         $sql = "SELECT 
                     s.*,
                     v.sku,
-                    v.imagen,
+                    vi.ruta_imagen as imagen,
                     v.nombre_variante as nombre_producto
                 FROM salida s
                 INNER JOIN variante v ON s.id_variante = v.id
+                LEFT JOIN variante_imagen vi ON v.id = vi.id_variante AND vi.es_principal = 1
                 WHERE s.id_usuario = :id_usuario
                 ORDER BY s.fecha_salida DESC, s.hora_salida DESC";
-        
+
         $stmt = $this->conexion->prepare($sql);
         $stmt->execute([':id_usuario' => $idUsuario]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Obtener salidas por rango de fechas
-     */
     public function obtenerSalidasPorFecha(string $fechaInicio, string $fechaFin): array
     {
         $sql = "SELECT 
                     s.*,
                     v.sku,
-                    v.imagen,
+                    vi.ruta_imagen as imagen,
                     v.nombre_variante as nombre_producto,
                     u.nombre_real as usuario
                 FROM salida s
                 INNER JOIN variante v ON s.id_variante = v.id
                 INNER JOIN usuario u ON s.id_usuario = u.id
+                LEFT JOIN variante_imagen vi ON v.id = vi.id_variante AND vi.es_principal = 1
                 WHERE s.fecha_salida BETWEEN :fecha_inicio AND :fecha_fin
                 ORDER BY s.fecha_salida DESC, s.hora_salida DESC";
-        
+
         $stmt = $this->conexion->prepare($sql);
         $stmt->execute([
             ':fecha_inicio' => $fechaInicio,
@@ -267,59 +273,51 @@ class Salida
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Buscar salidas por término (SKU, nombre producto, observaciones)
-     */
     public function buscarSalidas(string $termino): array
     {
         $sql = "SELECT 
                     s.*,
                     v.sku,
-                    v.imagen,
+                    vi.ruta_imagen as imagen,
                     v.nombre_variante as nombre_producto,
                     u.nombre_real as usuario
                 FROM salida s
                 INNER JOIN variante v ON s.id_variante = v.id
                 INNER JOIN usuario u ON s.id_usuario = u.id
+                LEFT JOIN variante_imagen vi ON v.id = vi.id_variante AND vi.es_principal = 1
                 WHERE v.sku LIKE :termino
                    OR v.nombre_variante LIKE :termino
                    OR s.observaciones LIKE :termino
                    OR s.direccion LIKE :termino
                 ORDER BY s.fecha_salida DESC, s.hora_salida DESC";
-        
+
         $stmt = $this->conexion->prepare($sql);
         $terminoBusqueda = "%{$termino}%";
         $stmt->execute([':termino' => $terminoBusqueda]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Obtener resumen de ventas por categoría
-     */
-   public function obtenerVentasPorCategoria(): array
-{
-    $sql = "SELECT 
-                c.id,
-                c.nombre as categoria,
-                COUNT(s.id) as total_salidas,
-                SUM(s.cantidad) as unidades_vendidas,
-                SUM(s.total) as ingresos_totales
-            FROM categoria c
-            LEFT JOIN producto p ON c.id = p.id_categoria
-            LEFT JOIN variante v ON p.id = v.id_producto
-            LEFT JOIN salida s ON v.id = s.id_variante
-            GROUP BY c.id, c.nombre
-            HAVING total_salidas > 0
-            ORDER BY ingresos_totales DESC";
-    
-    $stmt = $this->conexion->prepare($sql);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+    public function obtenerVentasPorCategoria(): array
+    {
+        $sql = "SELECT 
+                    c.id,
+                    c.nombre as categoria,
+                    COUNT(s.id) as total_salidas,
+                    SUM(s.cantidad) as unidades_vendidas,
+                    SUM(s.total) as ingresos_totales
+                FROM categoria c
+                LEFT JOIN producto p ON c.id = p.id_categoria
+                LEFT JOIN variante v ON p.id = v.id_producto
+                LEFT JOIN salida s ON v.id = s.id_variante
+                GROUP BY c.id, c.nombre
+                HAVING total_salidas > 0
+                ORDER BY ingresos_totales DESC";
 
-    /**
-     * Verificar si existe una salida
-     */
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function existeSalida(int $id): bool
     {
         $sql = "SELECT COUNT(*) FROM salida WHERE id = :id";
@@ -328,9 +326,6 @@ class Salida
         return (int)$stmt->fetchColumn() > 0;
     }
 
-    /**
-     * Obtener total de ventas del mes actual
-     */
     public function obtenerVentasMesActual(): array
     {
         $sql = "SELECT 
@@ -340,7 +335,162 @@ class Salida
                 FROM salida
                 WHERE MONTH(fecha_salida) = MONTH(CURDATE())
                   AND YEAR(fecha_salida) = YEAR(CURDATE())";
-        
+
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    // ============================================================
+    // MÉTODOS MEJORADOS PARA DEVOLUCIONES CON VALIDACIÓN DE FECHA
+    // ============================================================
+
+    /**
+     * Cambiar el estado de una salida
+     */
+    public function cambiarEstadoSalida(int $id, string $nuevoEstado): bool
+    {
+        $estadosValidos = ['Pendiente', 'En camino', 'Entregado', 'Cancelado'];
+
+        if (!in_array($nuevoEstado, $estadosValidos)) {
+            return false;
+        }
+
+        $sql = "UPDATE salida SET estado = :estado WHERE id = :id";
+        $stmt = $this->conexion->prepare($sql);
+        return $stmt->execute([
+            ':estado' => $nuevoEstado,
+            ':id' => $id
+        ]);
+    }
+
+    /**
+     * Verificar si una salida puede ser devuelta
+     * Valida: estado, fecha de entrega y que no haya sido devuelta antes
+     */
+    public function puedeDevolver(int $id): array
+    {
+        $salida = $this->obtenerDetalleSalida($id);
+
+        if (!$salida) {
+            return [
+                'puede' => false,
+                'motivo' => 'Salida no encontrada'
+            ];
+        }
+
+        // Verificar si ya está cancelada
+        if ($salida['estado'] === 'Cancelado') {
+            return [
+                'puede' => false,
+                'motivo' => 'Esta salida ya fue cancelada anteriormente'
+            ];
+        }
+
+        // PERMITIR DEVOLUCIÓN EN CUALQUIER OTRO ESTADO (Incluso Entregado o Vencido)
+        /*
+         // Verificar si ya fue entregada
+         if ($salida['estado'] === 'Entregado') {
+         return [
+         'puede' => false,
+         'motivo' => 'No se puede devolver una salida ya entregada'
+         ];
+         }
+         // Verificar fecha de entrega (solo si existe)
+         if ($salida['fecha_entrega']) {
+         $fechaEntrega = new DateTime($salida['fecha_entrega']);
+         $fechaActual = new DateTime();
+         
+         if ($fechaActual > $fechaEntrega) {
+         $diasPasados = $fechaActual->diff($fechaEntrega)->days;
+         return [
+         'puede' => false,
+         'motivo' => "El plazo de devolución venció hace {$diasPasados} día(s). Fecha límite: " . $fechaEntrega->format('d/m/Y')
+         ];
+         }
+         }
+         */
+
+        // Si pasa todas las validaciones
+        $diasRestantes = null;
+        if ($salida['fecha_entrega']) {
+            $fechaEntrega = new DateTime($salida['fecha_entrega']);
+            $fechaActual = new DateTime();
+            $diasRestantes = $fechaActual->diff($fechaEntrega)->days;
+        }
+
+        return [
+            'puede' => true,
+            'motivo' => 'Devolución permitida',
+            'dias_restantes' => $diasRestantes
+        ];
+    }
+
+    /**
+     * Registrar una devolución con todas las validaciones
+     */
+    public function procesarDevolucion(int $id, string $motivo = ''): array
+    {
+        // Verificar si puede devolver
+        $validacion = $this->puedeDevolver($id);
+
+        if (!$validacion['puede']) {
+            return [
+                'exito' => false,
+                'mensaje' => $validacion['motivo']
+            ];
+        }
+
+        $salida = $this->obtenerDetalleSalida($id);
+
+        try {
+            $this->conexion->beginTransaction();
+
+            // Cambiar estado a Cancelado
+            if (!$this->cambiarEstadoSalida($id, 'Cancelado')) {
+                throw new Exception("Error al cambiar el estado de la salida");
+            }
+
+            // Restaurar stock
+            if (!$this->actualizarStock($salida['id_variante'], $salida['cantidad'])) {
+                throw new Exception("Error al restaurar el stock");
+            }
+
+            // Registrar en tabla de devoluciones (opcional - si tienes una tabla para esto)
+            // $this->registrarHistorialDevolucion($id, $motivo);
+
+            $this->conexion->commit();
+
+            return [
+                'exito' => true,
+                'mensaje' => "Devolución procesada exitosamente. Se restauraron {$salida['cantidad']} unidades al inventario",
+                'cantidad_devuelta' => $salida['cantidad'],
+                'stock_actualizado' => $salida['stock_actual'] + $salida['cantidad']
+            ];
+
+        }
+        catch (Exception $e) {
+            $this->conexion->rollBack();
+            return [
+                'exito' => false,
+                'mensaje' => "Error al procesar devolución: " . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Obtener estadísticas de devoluciones
+     */
+    public function obtenerEstadisticasDevoluciones(): array
+    {
+        $sql = "SELECT 
+                    COUNT(*) as total_devoluciones,
+                    SUM(cantidad) as unidades_devueltas,
+                    SUM(total) as monto_devuelto,
+                    DATE(MAX(created_at)) as ultima_devolucion
+                FROM salida
+                WHERE estado = 'Cancelado'";
+
         $stmt = $this->conexion->prepare($sql);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
