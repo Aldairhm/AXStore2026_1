@@ -17,7 +17,7 @@
 <body>
     <?php require_once "./app/views/inc/header.php"; ?>
 
-    <section class="container fade-in" style="margin-top: 120px;">
+    <section class="container fade-in" style="margin-top: 50px;">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
             <h2 class="section-title mb-0">Gestión de Usuarios</h2>
             
@@ -100,6 +100,6 @@
     <?php require_once "./app/views/inc/script.php"; ?>
     <?php require_once "./app/views/inc/footer.php"; ?>
     
-    <script src="<?php echo APP_URL; ?>app/ajax/usuario.js"></script>
+    <script src="<?php echo APP_URL; ?>app/ajax/usuario.js?v=88"></script>
 </body>
 </html>

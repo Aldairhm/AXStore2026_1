@@ -24,10 +24,25 @@ $(document).ready(function () {
     pageLength: 5,
     responsive: true,
     columnDefs: [
-      { responsivePriority: 1, targets: 0 }, // Nombre
-      { responsivePriority: 2, targets: 2 }, // Acciones (Cambiado de -1 a 2 para claridad)
-      { orderable: false, targets: [2] }, // ELIMINADO EL 3, solo el índice 2 (Acciones)
-      { searchable: false, targets: [2] }, // ELIMINADO EL 3
+      {
+        targets: 0,
+        createdCell: function (td) {
+          $(td).attr("data-label", "Nombre");
+        },
+      },
+      {
+        targets: 1,
+        createdCell: function (td) {
+          $(td).attr("data-label", "Descripción");
+        },
+      },
+      /* ESTA ES LA LÍNEA MÁGICA QUE TE FALTA */
+      {
+        targets: 2,
+        createdCell: function (td) {
+          $(td).attr("data-label", "Acciones");
+        },
+      },
     ],
     buttons: [
       {
@@ -122,35 +137,35 @@ function editar(id) {
 
 // Función para eliminar categoría
 function eliminar(id) {
-    Swal.fire({
-        title: "¿Estás seguro?",
-        text: "No podrás revertir esto...",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33", // Rojo para peligro
-        cancelButtonColor: "#3085d6", // Azul para cancelar
-        confirmButtonText: "Sí, eliminar",
-        cancelButtonText: "Cancelar",
-        reverseButtons: true // Pone el botón de cancelar a la izquierda
-    }).then((result) => {
-        // Si el usuario hizo clic en "Sí, eliminar"
-        if (result.isConfirmed) {
-            $.ajax({
-              url: "app/controllers/categoriaController.php",
-              type: "POST",
-              data: { accion: "eliminarCategoria", id: id },
-              dataType: "json",
-              success: function(response){
-                  if(response.status==="success"){
-                    mostrarExito(response.message);
-                    tabla.ajax.reload(null, false);
-                  }else{
-                    mostrarError(response.message)
-                  }
-              }
-            });
-        }
-    });
+  Swal.fire({
+    title: "¿Estás seguro?",
+    text: "No podrás revertir esto...",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33", // Rojo para peligro
+    cancelButtonColor: "#3085d6", // Azul para cancelar
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar",
+    reverseButtons: true, // Pone el botón de cancelar a la izquierda
+  }).then((result) => {
+    // Si el usuario hizo clic en "Sí, eliminar"
+    if (result.isConfirmed) {
+      $.ajax({
+        url: "app/controllers/categoriaController.php",
+        type: "POST",
+        data: { accion: "eliminarCategoria", id: id },
+        dataType: "json",
+        success: function (response) {
+          if (response.status === "success") {
+            mostrarExito(response.message);
+            tabla.ajax.reload(null, false);
+          } else {
+            mostrarError(response.message);
+          }
+        },
+      });
+    }
+  });
 }
 
 function editar_Y_registrarCategoria(formData, id) {

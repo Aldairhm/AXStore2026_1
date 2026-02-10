@@ -4,8 +4,7 @@
 
 <body>
     <?php require_once "./app/views/inc/header.php"; ?>
-
-    <section class="container fade-in" style="margin-top: 120px;">
+    <section class="container fade-in" style="margin-top: 50px;">
         <div class="d-flex" style="justify-content: space-between; align-items: center; margin-bottom: 40px;">
             <h2 class="section-title">Categorías Registradas</h2>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCategoria">
@@ -19,7 +18,7 @@
                     <tr>
                         <th>Nombre</th>
                         <th>Descripción</th>
-                        <th>Acciones</th>
+                        <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -59,7 +58,7 @@
 
     <?php require_once "./app/views/inc/script.php"; ?>
     <?php require_once "./app/views/inc/footer.php"; ?>
-    <script src="app/views/assets/js/categoria.js"></script>
+    <script src="app/views/assets/js/categoria.js?v=23"></script>
 
 </body>
 

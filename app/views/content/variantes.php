@@ -9,7 +9,7 @@
 
 <body class="bg-light">
     <?php require_once "./app/views/inc/header.php"; ?>
-    <main class="py-5 mt-5" id="variantes-container" data-id="<?php echo $id; ?>">
+    <main class="py-3 mt-5" id="variantes-container" data-id="<?php echo $id; ?>">
         <section class="container fade-in">
             <div class="d-flex" style="justify-content: space-between; align-items: center; margin-bottom: 40px;">
                 <h2 class="section-title">Variantes Registradas</h2>

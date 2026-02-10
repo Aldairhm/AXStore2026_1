@@ -35,7 +35,7 @@ try {
                     <div class="d-flex justify-content-center align-items-center">
                         <div class="dropdown">
                             <button class="btn btn-kebab-luxury shadow-none border-0" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-three-dots-vertical text-dark"></i>
+                                <i class="bi bi-three-dots-vertical"></i> 
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 animate__animated animate__fadeIn">
                                 <li><a class="dropdown-item py-2" onclick="abrirEditarProducto(' . $id . ')"><i class="bi bi-pencil-fill me-2 text-warning"></i> Editar Producto</a></li>

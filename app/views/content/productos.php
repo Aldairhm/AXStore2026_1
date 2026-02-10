@@ -4,8 +4,7 @@
 
 <body>
     <?php require_once "./app/views/inc/header.php"; ?>
-
-    <section class="container fade-in" style="margin-top: 120px;">
+    <section class="container fade-in" style="margin-top: 50px;">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="section-title"><i class="fas fa-boxes me-2"></i>Gestión de Productos</h2>
             <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalProducto" data-modo="nuevo">

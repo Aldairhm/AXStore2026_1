@@ -24,21 +24,21 @@ try {
                 $id = $row["id"];
                 $sub_array[] = '
                     <div class="dropdown">
-                        <button class="btn btn-sm shadow-none border-0 p-0 btn-kebab-luxury" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-three-dots-vertical" style="font-size: 1.3rem;"></i>
+                        <button class="btn shadow-none border-0 p-0 btn-kebab-luxury" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots-vertical"></i>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-                            <li>
-                                <a class="dropdown-item py-2" onclick="editar(' . $id . ')">
-                                    <i class="bi bi-pencil-fill me-2 text-warning"></i> Editar Categoría
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2" onclick="eliminar(' . $id . ')">
-                                    <i class="bi bi-trash-fill me-2 text-danger"></i> Eliminar Categoría
-                                </a>
-                            </li>
-                        </ul>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                                <li>
+                                    <a class="dropdown-item py-2" onclick="editar(' . $id . ')">
+                                        <i class="bi bi-pencil-fill me-2 text-warning"></i> Editar Categoría
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2" onclick="eliminar(' . $id . ')">
+                                        <i class="bi bi-trash-fill me-2 text-danger"></i> Eliminar Categoría
+                                    </a>
+                                </li>
+                            </ul>
                     </div>';
 
                 $data[] = $sub_array;
@@ -49,7 +49,7 @@ try {
         case "registrarCategoria":
             $nombre          = isset($_POST["nombre"]) ? trim($_POST["nombre"]) : null;
             $descripcion     = isset($_POST["descripcion"]) ? trim($_POST["descripcion"]) : null;
-            if ($categoriaModel->isExistente(strtolower($nombre),0)) {
+            if ($categoriaModel->isExistente(strtolower($nombre), 0)) {
                 $response = ["status" => "error", "message" => "La categoría ya existe"];
                 break;
             }
@@ -91,7 +91,7 @@ try {
             //comprobamos traer un id valido y el nombre
             if ($id > 0 && !empty($nombre)) {
                 //comprobamos si la categoria existe
-                if ($categoriaModel->isExistente(strtolower($nombre),$id)) {
+                if ($categoriaModel->isExistente(strtolower($nombre), $id)) {
                     $response = ["status" => "error", "message" => "La categoría ya existe"];
                     break;
                 }
@@ -116,23 +116,23 @@ try {
             }
             break;
         case 'eliminarCategoria':
-            $id= isset($_POST['id']) ? (int)($_POST['id']) : 0;
+            $id = isset($_POST['id']) ? (int)($_POST['id']) : 0;
             //comprobamos un id valido
-            if($id>0){
+            if ($id > 0) {
                 //comprobamos si no tiene productos asociados
-                $productos= $categoriaModel->puedeEliminar($id);
-                if(!$productos){
-                    $response= ["status" => "error", "message" => "No se puede eliminar la categoría porque tiene productos asociados"];
-                }else{
-                    $elimino= $categoriaModel->eliminar($id);
-                    if($elimino){
-                        $response= ["status" => "success", "message" => "Categoría eliminada correctamente"];
-                    }else{
-                        $response= ["status" => "error", "message" => "No se pudo eliminar la categoría"];
+                $productos = $categoriaModel->puedeEliminar($id);
+                if (!$productos) {
+                    $response = ["status" => "error", "message" => "No se puede eliminar la categoría porque tiene productos asociados"];
+                } else {
+                    $elimino = $categoriaModel->eliminar($id);
+                    if ($elimino) {
+                        $response = ["status" => "success", "message" => "Categoría eliminada correctamente"];
+                    } else {
+                        $response = ["status" => "error", "message" => "No se pudo eliminar la categoría"];
                     }
                 }
-            }else{
-                $response= ["status" => "error", "message" => "ID inválido"];
+            } else {
+                $response = ["status" => "error", "message" => "ID inválido"];
             }
             break;
         default:

@@ -61,7 +61,6 @@ html {
 body {
     margin: 0;
     padding: 0;
-    padding-top: 80px !important;
     background-color: var(--light-color);
     color: var(--text-color);
     line-height: 1.7;
@@ -1710,7 +1709,7 @@ footer .container {
 @media (max-width: 1200px) {
     :root {
         --desktop-padding: var(--tablet-padding);
-        --header-total-height: 60px;
+        --header-total-height: 50px;
         --branding-height: 60px;
     }
 
@@ -1750,7 +1749,7 @@ footer .container {
 /* Tablets */
 @media (max-width: 991px) {
     :root {
-        --header-total-height: 60px;
+        --header-total-height: 50px;
         --branding-height: 60px;
         --topbar-height: 0;
     }
