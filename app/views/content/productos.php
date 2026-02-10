@@ -18,7 +18,7 @@
                     <tr>
                         <th>Producto</th>
                         <th>Categoría</th>
-                        <th>Descipcion</th>
+                        <th>Descripción</th>
                         <th>Estado</th>
                         <th class="text-center">Acciones</th>
                     </tr>
@@ -186,8 +186,8 @@
 
     <?php require_once "./app/views/inc/script.php"; ?>
     <?php require_once "./app/views/inc/footer.php"; ?>
-    <script src="app/views/assets/js/producto.js?v=97"></script>
-    
+    <script src="app/views/assets/js/producto.js?v=99"></script>
+
 </body>
 
 </html>

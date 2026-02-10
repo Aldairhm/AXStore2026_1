@@ -38,7 +38,7 @@ try {
                                 <i class="bi bi-three-dots-vertical text-dark"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 animate__animated animate__fadeIn">
-                                <li><a class="dropdown-item py-2" onclick="editarProducto(' . $id . ')"><i class="bi bi-pencil-fill me-2 text-warning"></i> Editar Producto</a></li>
+                                <li><a class="dropdown-item py-2" onclick="abrirEditarProducto(' . $id . ')"><i class="bi bi-pencil-fill me-2 text-warning"></i> Editar Producto</a></li>
                                 <li><a class="dropdown-item py-2" href="variantes?id=' . $id . '"><i class="bi bi-eye-fill me-2 text-info"></i> Ver Variantes</a></li>
                             </ul>
                         </div>
@@ -73,10 +73,10 @@ try {
             $response = $res ? ["status" => "success", "message" => "Actualizado"] : ["status" => "error", "message" => "Sin cambios"];
             break;
 
-            case 'obtenerTodosLosProductosConVariantes':
-    $datos = $productoModel->obtenerTodosLosProductosConVariantes();
-    $response = ["status" => "success", "data" => $datos];
-    break;
+        case 'obtenerTodosLosProductosConVariantes':
+            $datos = $productoModel->obtenerTodosLosProductosConVariantes();
+            $response = ["status" => "success", "data" => $datos];
+            break;
 
         /* ============================================================
            3. REGISTRO MAESTRO (CON HASH Y SKU ALEATORIO)

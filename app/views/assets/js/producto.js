@@ -17,26 +17,30 @@ $(document).ready(function () {
   // 1. Configuración de DataTable (Vista General)
   tabla = $("#tablaProductos").DataTable({
     ajax: {
-      url: "app/controllers/productoController.php",
-      type: "POST",
-      data: { accion: "cargarProductos" },
+        url: "app/controllers/productoController.php",
+        type: "POST",
+        data: { accion: "cargarProductos" },
     },
-    responsive: true,
+    // Desactivamos el responsive nativo para usar nuestras Cards CSS
+    responsive: false, 
     autoWidth: false,
     dom: '<"d-flex justify-content-between align-items-center px-2 mb-3"lf>rt<"d-flex justify-content-between align-items-center px-2 mt-4"ip>',
     language: { url: "app/ajax/idioma.json" },
-    columns: [
-      { width: "20%" },
-      { width: "20%" },
-      { width: "40%" },
-      { width: "20%" },
-      { width: "20%", className: "text-center" },
+    
+    // Inyectamos los labels para que el CSS sepa qué nombre poner en el móvil
+    columnDefs: [
+        { targets: 0, createdCell: function (td) { $(td).attr('data-label', 'Producto'); } },
+        { targets: 1, createdCell: function (td) { $(td).attr('data-label', 'Categoría'); } },
+        { targets: 2, createdCell: function (td) { $(td).attr('data-label', 'Descripción'); } },
+        { targets: 3, createdCell: function (td) { $(td).attr('data-label', 'Estado'); } },
+        { targets: 4, createdCell: function (td) { $(td).attr('data-label', 'Acciones'); },}
     ],
+    
     order: [[0, "asc"]],
     drawCallback: function () {
-      $(".dataTables_paginate > .paginate_button").addClass("btn btn-sm");
+        $(".dataTables_paginate > .paginate_button").addClass("btn btn-sm");
     },
-  });
+});
 
   cargarCategorias();
 
@@ -362,6 +366,85 @@ function generarMatrizUnificada() {
   mostrarExito(`Se generaron ${contadorNuevas} combinaciones listas para configurar.`);
 }
 
+// Función que dispararás desde el botón de la tabla (ej: onclick="abrirEditar(12)")
+function abrirEditarProducto(id) {
+    $.ajax({
+        url: "app/controllers/productoController.php",
+        type: "POST",
+        data: { 
+            accion: "obtener_uno", 
+            id: id 
+        },
+        dataType: "json",
+        success: function(response) {
+            if (response.status === "success") {
+                const producto = response.data;
+                
+                // Llenamos los campos del modal con los datos recibidos
+                $("#id_producto_edit").val(producto.id);
+                $("#nombre_edit").val(producto.nombre);
+                $("#id_categoria_edit").val(producto.id_categoria);
+                $("#estado_edit").val(producto.estado);
+                $("#descripcion_edit").val(producto.descripcion);
+
+                // Mostramos el modal de edición
+                $("#modalProductoEdicion").modal("show");
+            } else {
+                Swal.fire("Error", response.message, "error");
+            }
+        },
+        error: function() {
+            Swal.fire("Error", "No se pudo conectar con el servidor", "error");
+        }
+    });
+}
+
+$("#formProductoEdicion").on("submit", function(e) {
+    e.preventDefault(); // Evitamos que la página se recargue
+
+    // Creamos un objeto FormData para manejar los datos del formulario
+    let datos = new FormData(this);
+    datos.append("accion", "editarProducto"); // Inyectamos la acción para el controlador
+
+    $.ajax({
+        url: "app/controllers/productoController.php",
+        type: "POST",
+        data: datos,
+        processData: false, // Necesario para FormData
+        contentType: false, // Necesario para FormData
+        dataType: "json",
+        success: function(response) {
+            if (response.status === "success") {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Actualizado!',
+                    text: response.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+                $("#modalProductoEdicion").modal("hide"); // Cerramos el modal
+                
+                // Suponiendo que tu DataTable se llama 'tabla'
+                if (typeof tabla !== 'undefined') {
+                    tabla.ajax.reload(null, false); // Recargamos la tabla sin perder la posición
+                }
+            } else {
+                // Manejamos errores como "Nombre ya existe" o "Sin cambios"
+                Swal.fire("Atención", response.message, "warning");
+            }
+        },
+        error: function(jqXHR) {
+            // Manejo de errores de servidor o validaciones de PHP (ej: el throw Exception)
+            let msg = "Error al procesar la solicitud";
+            if(jqXHR.responseJSON && jqXHR.responseJSON.message) {
+                msg = jqXHR.responseJSON.message;
+            }
+            Swal.fire("Error", msg, "error");
+        }
+    });
+});
+
 // --- BLOQUE 4: FUNCIONES GLOBALES DE SOPORTE ---
 function prepararExpansion(id) {
   $("#cuerpoVariantes").empty(); // REGLA: Tabla vacía al inicio (Carga Incremental)
@@ -446,6 +529,7 @@ function cargarCategorias() {
           opt += `<option value="${i.id}">${i.nombre}</option>`;
         });
         $("#id_categoria").html(opt);
+        $("#id_categoria_edit").html(opt);
       }
     },
     "json",

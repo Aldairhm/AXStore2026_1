@@ -59,7 +59,7 @@
 
     <?php require_once "./app/views/inc/script.php"; ?>
     <?php require_once "./app/views/inc/footer.php"; ?>
-    <script src="app/views/assets/js/categoria.js?v=8"></script>
+    <script src="app/views/assets/js/categoria.js"></script>
 
 </body>
 
