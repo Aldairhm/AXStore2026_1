@@ -37,7 +37,7 @@ try {
 
             if ($usuario) {
 
-            $usuario['username'] = $username;
+                $usuario['username'] = $username;
                 session_start();
                 $_SESSION['usuario'] = $usuario;
                 $response = ["status" => "success", "message" => "Inicio de sesión exitoso", "usuario" => $usuario];
@@ -176,11 +176,13 @@ try {
             break;
 
         case "cerrar":
-            session_start();
+            // Verificar si la sesión NO está iniciada antes de iniciarla
+            if (session_status() == PHP_SESSION_NONE) {
+                session_start();
+            }
             session_destroy();
             $response = ["status" => "success", "message" => "Sesión cerrada"];
             break;
-
         default:
             $response = ["status" => "error", "message" => "Opción no válida"];
             break;

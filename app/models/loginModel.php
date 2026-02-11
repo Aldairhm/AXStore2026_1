@@ -18,6 +18,7 @@ class Login
             $sql = "SELECT nombre_real,
             username,
             password,
+            rol,
             estado
             FROM usuario
             WHERE username = :username
@@ -45,7 +46,7 @@ class Login
             $usernameEncriptado = Encriptar::openCypher('encrypt', strtolower(trim($username)));
 
             // Traemos password y estado para validar en el controlador
-            $sql = "SELECT id, nombre_real, username, password, estado FROM usuario WHERE username = :username LIMIT 1";
+            $sql = "SELECT id, nombre_real, username, password, rol, estado FROM usuario WHERE username = :username LIMIT 1";
             $stmt = $this->conexion->prepare($sql);
             $stmt->bindParam(':username', $usernameEncriptado, PDO::PARAM_STR);
             $stmt->execute();
