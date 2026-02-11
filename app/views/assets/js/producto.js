@@ -311,7 +311,7 @@ function generarMatrizUnificada() {
     mostrarError("Atributos: No puedes seleccionar 1 atributo en un mismo select o completa los valores de estos")
     return;
   }
-
+  
   // 2. GENERACIÓN DE COMBINACIONES
   const valoresParaCombinar = atributosData.map((a) => a.valores);
   let combinaciones = valoresParaCombinar.length > 1

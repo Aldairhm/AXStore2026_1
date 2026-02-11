@@ -267,8 +267,8 @@
 
     <?php require_once "./app/views/inc/script.php"; ?>
     <?php require_once "./app/views/inc/footer.php"; ?>
-    <script src="app/views/assets/js/variantes.js?v=31"></script>
-    <script src="app/views/assets/js/producto.js?v=44"></script>
+    <script src="app/views/assets/js/variantes.js?v=21"></script>
+    <script src="app/views/assets/js/producto.js?v=47"></script>
 </body>
 
 </html>

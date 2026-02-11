@@ -93,7 +93,7 @@ $(document).ready(function () {
         if (response.status === "success") {
           mostrarExito(response.message);
           // Limpiamos el input y escondemos el botón
-          $("#inputGaleria").val('');
+          $("#inputGaleria").val("");
           $("#btnGuardarGaleria").addClass("d-none");
 
           // Refrescamos la galería
@@ -386,8 +386,7 @@ function renderProducts(productsList) {
     let precioFormateado = precioVenta.toFixed(2);
 
     // Lógica de Stock: bg-danger para reserva (stock crítico) y bg-success para normal
-    let stockClass =
-      product.stock <= product.reserva ? "bg-danger" : "bg-success";
+    let stockClass = product.stock < 6 ? "bg-danger" : "bg-success";
     let stockText = product.stock > 0 ? `${product.stock} un.` : "Agotado";
 
     const card = `
