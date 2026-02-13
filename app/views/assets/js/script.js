@@ -11,9 +11,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const navLinks = document.querySelectorAll('.navmenu a');
     const mobileOverlay = document.getElementById('mobile-nav-overlay');
     const body = document.body;
+
+    // [NUEVO] Referencias a los botones de WhatsApp y Usuario
+    const whatsappToggleBtn = document.querySelector('.grupos-icon [data-bs-toggle="dropdown"]');
+    const userTogleBtn = document.querySelector('.user-icon [data-bs-toggle="dropdown"]');
     
     if (mobileMenuBtn && navmenu) {
         const icon = mobileMenuBtn.querySelector('i');
+
+        // [NUEVO] Función auxiliar para cerrar dropdowns de Bootstrap manualmente
+        function cerrarDropdownBootstrap(selectorPadre) {
+            const dropdownMenu = document.querySelector(selectorPadre + ' .dropdown-menu');
+            const dropdownToggle = document.querySelector(selectorPadre + ' [data-bs-toggle="dropdown"]');
+            
+            if (dropdownMenu && dropdownMenu.classList.contains('show')) {
+                dropdownMenu.classList.remove('show');
+                if (dropdownToggle) {
+                    dropdownToggle.classList.remove('show');
+                    dropdownToggle.setAttribute('aria-expanded', 'false');
+                }
+            }
+        }
 
         // Función para abrir menú
         function openMenu() {
@@ -30,14 +48,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const cartModal = document.getElementById('cart-modal');
             if (cartModal) cartModal.style.display = 'none';
 
-            // [MODIFICADO] Cerrar Perfil (Dropdown de Bootstrap) si está abierto
-            const userDropdown = document.querySelector('.user-icon .dropdown-menu');
-            const userToggle = document.querySelector('.user-icon [data-bs-toggle="dropdown"]');
-            if (userDropdown && userDropdown.classList.contains('show')) {
-                userDropdown.classList.remove('show');
-                if (userToggle) userToggle.classList.remove('show');
-                if (userToggle) userToggle.setAttribute('aria-expanded', 'false');
-            }
+            // [NUEVO] Cerrar Dropdowns de Bootstrap si están abiertos
+            cerrarDropdownBootstrap('.user-icon');   // Cierra usuario
+            cerrarDropdownBootstrap('.grupos-icon'); // Cierra WhatsApp
         }
 
         // Función para cerrar menú
@@ -78,6 +91,28 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
+        // [NUEVO] Click en icono WhatsApp cierra el menú móvil
+        if (whatsappToggleBtn) {
+            whatsappToggleBtn.addEventListener('click', function() {
+                if (navmenu.classList.contains('mobile-nav-active')) {
+                    closeMenu();
+                }
+                // Opcional: Cerrar también usuario si quisieras exclusividad total entre iconos
+                cerrarDropdownBootstrap('.user-icon');
+            });
+        }
+
+        // [NUEVO] Click en icono Usuario cierra el menú móvil
+        if (userTogleBtn) {
+            userTogleBtn.addEventListener('click', function() {
+                if (navmenu.classList.contains('mobile-nav-active')) {
+                    closeMenu();
+                }
+                // Opcional: Cerrar también WhatsApp
+                cerrarDropdownBootstrap('.grupos-icon');
+            });
+        }
+
         // Click en enlaces del menú
         navLinks.forEach(link => {
             link.addEventListener('click', function(e) {
@@ -102,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const parent = this.parentElement;
                     const isActive = parent.classList.contains('dropdown-active');
                     
-                    // Cerrar todos los dropdowns
+                    // Cerrar todos los dropdowns internos del menú
                     const allDropdowns = navmenu.querySelectorAll('.dropdown.dropdown-active');
                     allDropdowns.forEach(d => d.classList.remove('dropdown-active'));
                     

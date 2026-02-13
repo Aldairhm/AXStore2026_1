@@ -62,7 +62,7 @@
                 </div>
 
                 <!-- Categorías Estilo Pill Scroll -->
-                <div class="category-segment-container mb-5">
+                <div id="categorias" class="category-segment-container mb-5">
                     <div class="d-flex align-items-center justify-content-between mb-3 px-2">
                         <h5 class="fw-bold mb-0 text-uppercase letter-spacing-1 small">Colecciones</h5>
                         <div class="category-divider-line flex-grow-1 ms-3"></div>

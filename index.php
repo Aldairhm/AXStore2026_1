@@ -46,25 +46,52 @@ if (isset($_GET['opcion']) && $_GET['opcion'] == 'cerrar') {
     exit(); 
 }
 
+/* ===============================================
+   CAPTURA DE VISTAS
+   =============================================== */
 if (isset($_GET['views'])) {
     $url = explode("/", $_GET['views']);
 } else {
     $url = ["login"];
 }
 
-// ... Middleware de seguridad ...
+/* ===============================================
+   MIDDLEWARE DE SEGURIDAD Y ROLES
+   =============================================== */
 $vistas_publicas = ['login', '404', 'recuperar', 'nueva_clave'];
 
+// 1. Validar si el usuario NO ha iniciado sesión
 if (!isset($_SESSION['usuario'])) {
     if (!in_array($url[0], $vistas_publicas)) {
         $url[0] = "login";
     }
-} else {
+} 
+// 2. Validar si el usuario SÍ ha iniciado sesión
+else {
+    // A) Si intenta ir a login estando logueado, mandar a home
     if ($url[0] == "login") {
         $url[0] = "home";
     }
+
+    // B) VALIDACIÓN ESPECÍFICA PARA VENDEDOR
+    // Aquí verificamos el rol y restringimos el acceso
+    if (isset($_SESSION['usuario']['rol']) && $_SESSION['usuario']['rol'] == 'vendedor') {
+        
+        // Definimos las ÚNICAS vistas que el vendedor puede ver.
+        // Si intenta entrar a 'salidas', 'productos' o 'usuarios', será rechazado
+        // porque no están en esta lista.
+        $vistas_permitidas_vendedor = ['home', '404'];
+
+        if (!in_array($url[0], $vistas_permitidas_vendedor)) {
+            // Si la vista solicitada no está permitida, lo forzamos a ir al home
+            $url[0] = "home";
+        }
+    }
 }
 
+/* ===============================================
+   CARGA DEL CONTROLADOR
+   =============================================== */
 $viewsController = new viewsController();
 $vista = $viewsController->obtenerVistasControlador($url[0]);
 require_once $vista;

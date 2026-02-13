@@ -217,9 +217,6 @@
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     }
 
-    .container {
-        max-width: 1400px;
-    }
 
     /* ====================================
    LOGO MEJORADO CON TAGLINE
@@ -251,10 +248,10 @@
    ==================================== */
 
     .navmenu {
-        flex: 1;
+        flex: auto;
         display: flex;
         justify-content: center;
-        margin: 0 2rem;
+        margin: 0;
     }
 
     .navmenu ul {
@@ -621,7 +618,7 @@
 
     @media (max-width: 1200px) {
         .navmenu {
-            margin: 0 1rem;
+            margin: 0;
         }
 
         .navmenu a {
@@ -632,7 +629,7 @@
 
     @media (max-width: 992px) {
         .navmenu {
-            display: none;
+            display: flex;
         }
 
         .logo h1 {
