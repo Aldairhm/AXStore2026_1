@@ -241,6 +241,14 @@ $(document).ready(function () {
 
   // --- BLOQUE 3: GENERACIÓN DE MATRIZ UNIFICADA ---
   $("#btnGenerarMatriz").on("click", function () {
+    //datos del producto padre
+    const nombre = $("#nombre").val();
+    const descripcion = $("#descripcion").val();
+    
+    if(nombre==='' || descripcion===''){
+      mostrarError("Debe llenar los datos del producto antes")
+      return;
+    }
     generarMatrizUnificada();
   });
 
