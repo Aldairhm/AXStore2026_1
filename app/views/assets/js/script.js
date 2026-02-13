@@ -149,61 +149,249 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ==========================================
-    // 3. LÓGICA DE PRODUCTOS
+    // 3. LÓGICA DE PRODUCTOS DINÁMICA (CORREGIDA)
     // ==========================================
     const productGrid = document.getElementById('product-grid');
-    const categoryButtons = document.querySelectorAll('.category-btn');
+    const categoriesContainer = document.getElementById('categories-container');
+    let allProducts = [];
 
-    if (productGrid && typeof products !== 'undefined') {
-        categoryButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                categoryButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                renderProducts(button.dataset.category);
+    if (productGrid && categoriesContainer) {
+        cargarDatosHome();
+    }
+
+    function cargarDatosHome() {
+        // 1. Cargar Productos primero para saber cuáles categorías son funcionales
+        $.ajax({
+            url: 'app/controllers/productoController.php',
+            type: 'POST',
+            data: { accion: 'obtenerTodosLosProductosConVariantes' },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    allProducts = response.data;
+                    
+                    // Una vez tenemos los productos, cargamos las categorías
+                    $.ajax({
+                        url: 'app/controllers/productoController.php',
+                        type: 'POST',
+                        data: { accion: 'obtenerCategorias' },
+                        dataType: 'json',
+                        success: function(catResponse) {
+                            if (catResponse.status === 'success') {
+                                // Filtramos solo las categorías que tienen al menos un producto en allProducts
+                                const functionalCategories = catResponse.data.filter(cat => 
+                                    allProducts.some(p => p.nombre_categoria === cat.nombre)
+                                );
+                                renderizarCategorias(functionalCategories);
+                            }
+                        }
+                    });
+
+                    renderizarProductosFiltrados(allProducts);
+                }
+            },
+            error: function(err) {
+                console.error("Error al cargar productos:", err);
+                productGrid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-danger">Error al conectar con el servidor.</p></div>';
+            }
+        });
+    }
+
+    function renderizarCategorias(categorias) {
+        // Renderizar el selector de la toolbar
+        const $catFilter = $("#category-filter");
+        $catFilter.find('option:not([value="all"])').remove();
+        
+        // Renderizar las Pills de navegación
+        categoriesContainer.innerHTML = '<div class="catalog-pill active" data-category="all">Todos los Productos</div>';
+        
+        categorias.forEach(cat => {
+            // Opción en el select
+            const option = document.createElement('option');
+            option.value = cat.nombre;
+            option.textContent = cat.nombre.toUpperCase();
+            $catFilter.append(option);
+
+            // Pill de navegación
+            const pill = document.createElement('div');
+            pill.className = 'catalog-pill';
+            pill.dataset.category = cat.nombre;
+            pill.textContent = cat.nombre;
+            categoriesContainer.appendChild(pill);
+        });
+
+        // Eventos para las pills
+        document.querySelectorAll('.catalog-pill').forEach(pill => {
+            pill.addEventListener('click', function() {
+                const category = this.dataset.category;
+                document.querySelectorAll('.catalog-pill').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Sincronizar con el select
+                $catFilter.val(category);
+                
+                aplicarFiltros();
             });
         });
-        
-        function renderProducts(category = 'all') {
-            productGrid.innerHTML = '';
-            const filteredProducts = category === 'all' 
-                ? products 
-                : products.filter(p => p.category === category);
-            
-            if (filteredProducts.length === 0) {
-                productGrid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">No hay productos</p></div>';
-                return;
-            }
 
-            filteredProducts.forEach((product, index) => {
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.style.animationDelay = `${index * 0.1}s`;
-                card.innerHTML = `
-                    <div class="product-img"><img src="${product.image}" alt="${product.name}"></div>
-                    <div class="product-info">
-                        <span class="product-category">${product.category}</span>
-                        <h3 class="product-title">${product.name}</h3>
-                        <p class="product-desc">${product.description}</p>
-                        <div class="product-price">$${product.price.toFixed(2)}</div>
-                        <div class="product-actions">
-                            <button class="add-to-cart" data-id="${product.id}">Añadir al carrito</button>
-                            <button class="wishlist"><i class="far fa-heart"></i></button>
-                        </div>
-                    </div>`;
-                productGrid.appendChild(card);
+        // Evento para el select
+        $catFilter.on('change', function() {
+            const category = $(this).val();
+            document.querySelectorAll('.catalog-pill').forEach(p => {
+                p.classList.toggle('active', p.dataset.category === category);
             });
-            attachProductEvents();
-        }
-
-        function attachProductEvents() {
-            document.querySelectorAll('.add-to-cart').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    if (typeof addToCart === 'function') addToCart.call(this);
-                });
-            });
-        }
-        renderProducts();
+            aplicarFiltros();
+        });
     }
+
+    // Nueva función de filtrado unificada (igual al catálogo)
+    function aplicarFiltros() {
+        const busqueda = $("#product-search").val().toLowerCase();
+        const categoria = $("#category-filter").val();
+
+        const filtrados = allProducts.filter(p => {
+            const matchBusqueda = p.nombre.toLowerCase().includes(busqueda) || 
+                                 (p.sku && p.sku.toLowerCase().includes(busqueda));
+            const matchCategoria = (categoria === 'all' || p.nombre_categoria === categoria);
+            return matchBusqueda && matchCategoria;
+        });
+
+        renderizarProductosFiltrados(filtrados);
+    }
+
+    function renderizarProductosFiltrados(productos) {
+        productGrid.innerHTML = '';
+        
+        if (productos.length === 0) {
+            $("#noResults").removeClass("d-none");
+            return;
+        }
+
+        $("#noResults").addClass("d-none");
+        
+        const rutaBase = "app/views/assets/images/";
+        const maxId = Math.max(...allProducts.map(p => p.id), 0);
+        const umbralNuevo = maxId - 12;
+
+        productos.forEach((product, index) => {
+            let precioVenta = Number(product.precio_venta);
+            let precioFormateado = precioVenta.toFixed(2);
+            
+            let badgesHtml = '';
+            if (product.id > umbralNuevo) badgesHtml += '<span class="badge-premium badge-new">NUEVO</span>';
+            if (parseInt(product.ventas_totales) >= 5) badgesHtml += '<span class="badge-premium badge-top">TOP VENTAS</span>';
+            if (product.stock > 0 && product.stock <= product.reserva) badgesHtml += '<span class="badge-premium badge-low-stock">STOCK BAJO</span>';
+
+            const mainImg = `${rutaBase}${product.imagen || 'default.png'}`;
+            const hoverImg = product.imagen_hover ? `${rutaBase}${product.imagen_hover}` : mainImg;
+            let stockColor = product.stock > 5 ? 'text-success' : product.stock > 0 ? 'text-warning' : 'text-danger';
+
+            const col = document.createElement('div');
+            col.className = 'col animate__animated animate__fadeIn';
+            
+            col.innerHTML = `
+                <div class="card h-100 border-0 shadow-sm transition-hover product-card">
+                    <div class="product-badge-container">${badgesHtml}</div>
+                    <div class="product-quick-actions">
+                        <button class="btn-action-premium btnQuickViewHome" data-id="${product.id}" title="Vista Rápida">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="product-image-container">
+                        <img src="${mainImg}" class="product-img-main" alt="${product.nombre}">
+                        <img src="${hoverImg}" class="product-img-hover" alt="${product.nombre} hover">
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-light text-dark border">${product.nombre_categoria}</span>
+                            <span class="small fw-bold ${stockColor}">${product.stock > 0 ? product.stock + ' un.' : 'AGOTADO'}</span>
+                        </div>
+                        <p class="text-muted small mb-1">${product.nombre_producto_padre || ''}</p>
+                        <h5 class="card-title fw-bold text-dark mb-3">${product.nombre}</h5>
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="h4 mb-0 text-primary fw-bold">$${precioFormateado}</span>
+                                <span class="small text-muted">SKU: ${product.sku}</span>
+                            </div>
+                            <a href="catalogo" class="btn btn-dark w-100 py-2">
+                                <i class="fas fa-shopping-bag me-1"></i> VER EN CATÁLOGO
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            productGrid.appendChild(col);
+        });
+
+        $(".btnQuickViewHome").on("click", function() {
+            abrirQuickView($(this).data("id"));
+        });
+    }
+
+    // Eventos de búsqueda
+    $("#product-search").on("input", aplicarFiltros);
+    $("#btn-refresh").on("click", function() {
+        $("#product-search").val("");
+        $("#category-filter").val("all").trigger("change");
+        cargarDatosHome();
+    });
+
+    function abrirQuickView(id) {
+        $.ajax({
+            url: "app/controllers/productoController.php",
+            method: "POST",
+            dataType: "json",
+            data: { accion: "obtenerDetalleQuickView", id: id },
+            beforeSend: function() {
+                Swal.fire({ title: 'Cargando...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            },
+            success: function(response) {
+                Swal.close();
+                if (response.status === "success") {
+                    const data = response.data;
+                    const v = data.variante;
+                    const ruta = "app/views/assets/images/";
+                    
+                    $("#qv-name").text(v.nombre);
+                    $("#qv-category").text(v.nombre_categoria);
+                    $("#qv-sku").text("SKU: " + v.sku);
+                    $("#qv-price").text("$" + parseFloat(v.precio_venta).toFixed(2));
+                    $("#qv-stock").text(v.stock + " unidades");
+                    $("#qv-description").text(v.descripcion || "Sin descripción disponible.");
+                    
+                    const $gallery = $("#qv-gallery-thumbs");
+                    $gallery.empty();
+                    if (data.imagenes.length > 0) {
+                        $("#qv-main-img").attr("src", ruta + data.imagenes[0].ruta_imagen);
+                        data.imagenes.forEach((img, index) => {
+                            $gallery.append(`<div class="quick-view-thumb ${index === 0 ? 'active' : ''}"><img src="${ruta}${img.ruta_imagen}" alt="Thumb"></div>`);
+                        });
+                    } else {
+                        $("#qv-main-img").attr("src", ruta + "default.png");
+                    }
+
+                    const $attrContainer = $("#qv-attributes");
+                    $attrContainer.empty();
+                    if (data.atributos.length > 0) {
+                        let attrHtml = '<div class="row row-cols-2 g-2">';
+                        data.atributos.forEach(attr => {
+                            attrHtml += `<div class="col"><div class="p-2 border rounded bg-light small"><span class="text-muted">${attr.nombre}:</span> <strong class="text-dark">${attr.valor}</strong></div></div>`;
+                        });
+                        attrHtml += '</div>';
+                        $attrContainer.append(attrHtml);
+                    }
+                    $("#modalQuickView").modal("show");
+                }
+            }
+        });
+    }
+
+    // Manejador para miniaturas en el modal de Home
+    $(document).on("click", ".quick-view-thumb", function() {
+        $(".quick-view-thumb").removeClass("active");
+        $(this).addClass("active");
+        $("#qv-main-img").attr("src", $(this).find("img").attr("src"));
+    });
 
     // ==========================================
     // 4. ANIMACIONES AL SCROLL

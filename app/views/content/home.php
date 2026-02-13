@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 
-<?php include 'app/views/inc/head.php'; ?>
+<head>
+    <?php include 'app/views/inc/head.php'; ?>
+    <link rel="stylesheet" href="<?php echo APP_URL; ?>app/views/assets/css/ss.css?v=<?php echo time(); ?>" />
+</head>
 
 <body class="bg-light">
     <?php include 'app/views/inc/header.php'; ?>
@@ -31,22 +34,57 @@
             </div>
         </section>
 
-        <section class="categories py-5">
-            <div class="container text-center">
-                <h2 class="section-title mb-5">Nuestras Categorías</h2>
-                <div class="d-flex flex-wrap justify-content-center gap-3">
-                    <button class="btn btn-outline-dark rounded-0 px-4" data-category="all">Todos</button>
-                    <button class="btn btn-outline-dark rounded-0 px-4" data-category="autopartes">Autopartes</button>
-                    <button class="btn btn-outline-dark rounded-0 px-4" data-category="hogar">Hogar</button>
-                    <button class="btn btn-outline-dark rounded-0 px-4" data-category="">....</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="categorias" class="products py-5 bg-white">
+        <!-- Cabecera de Catálogo Replicada -->
+        <section class="catalog-header py-5 bg-white">
             <div class="container">
-                <h2 class="section-title text-center mb-5">Nuestros Productos</h2>
-                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="product-grid">
+                <!-- Smart Toolbar -->
+                <div class="smart-toolbar-container mb-4">
+                    <div class="smart-toolbar shadow-sm">
+                        <div class="search-focus">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="product-search" placeholder="¿Qué estás buscando hoy?">
+                        </div>
+                        
+                        <div class="toolbar-divider d-none d-md-block"></div>
+                        
+                        <div class="pill-select-wrapper d-none d-md-block">
+                            <select id="category-filter" class="pill-select">
+                                <option value="all">TODAS LAS CATEGORÍAS</option>
+                            </select>
+                        </div>
+
+                        <div class="action-hub">
+                            <button class="btn-pill-action primary" id="btn-refresh" data-tooltip="Actualizar">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categorías Estilo Pill Scroll -->
+                <div class="category-segment-container mb-5">
+                    <div class="d-flex align-items-center justify-content-between mb-3 px-2">
+                        <h5 class="fw-bold mb-0 text-uppercase letter-spacing-1 small">Colecciones</h5>
+                        <div class="category-divider-line flex-grow-1 ms-3"></div>
+                    </div>
+                    <div class="category-pill-wrapper" id="categories-container">
+                        <div class="catalog-pill active" data-category="all">Todos los Productos</div>
+                        <!-- Categorías dinámicas aquí -->
+                    </div>
+                </div>
+
+                <!-- Grid de Productos -->
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4" id="product-grid">
+                    <!-- Esqueletos de carga o productos -->
+                </div>
+
+                <!-- Mensaje de No Resultados -->
+                <div id="noResults" class="text-center py-5 d-none">
+                    <div class="mb-4">
+                        <i class="fas fa-search fa-4x text-light"></i>
+                    </div>
+                    <h3 class="fw-bold">No encontramos lo que buscas</h3>
+                    <p class="text-muted">Intenta con otros términos o categorías.</p>
                 </div>
             </div>
         </section>
@@ -563,6 +601,62 @@
                 <h3 class="font-luxury mb-3">¡Pedido Confirmado!</h3>
                 <p class="text-muted mb-4" id="confirmation-message">Tu pedido ha sido procesado exitosamente.</p>
                 <button class="btn btn-luxury w-100" data-bs-dismiss="modal">Continuar Comprando</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Quick View (Vista Rápida Home) -->
+    <div class="modal fade modal-quickview" id="modalQuickView" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-body p-0">
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3 z-index-10" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="row g-0">
+                        <!-- Galería Izquierda -->
+                        <div class="col-lg-7">
+                            <div class="quickview-img-large">
+                                <img id="qv-main-img" src="" alt="Vista Rápida">
+                            </div>
+                            <div class="px-4 pb-4">
+                                <div class="quick-view-gallery" id="qv-gallery-thumbs">
+                                    <!-- Miniaturas dinámicas -->
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Información Derecha -->
+                        <div class="col-lg-5 bg-white p-4 p-md-5">
+                            <div class="mb-2">
+                                <span id="qv-category" class="badge bg-light text-dark border">Categoría</span>
+                                <span id="qv-sku" class="badge bg-dark ms-2">SKU</span>
+                            </div>
+                            <h2 id="qv-name" class="fw-bold mb-3">Nombre del Producto</h2>
+                            <h3 id="qv-price" class="text-primary fw-bold mb-4">$0.00</h3>
+                            
+                            <div class="mb-4">
+                                <h6 class="fw-bold text-muted small text-uppercase mb-2">Descripción</h6>
+                                <p id="qv-description" class="text-muted lh-lg">No hay descripción disponible.</p>
+                            </div>
+
+                            <div id="qv-attributes" class="mb-4">
+                                <!-- Atributos dinámicos -->
+                            </div>
+
+                            <div class="bg-light p-3 rounded mb-4 d-flex align-items-center">
+                                <i class="fas fa-warehouse text-success me-3 fs-4"></i>
+                                <div>
+                                    <small class="text-muted d-block">Existencias Disponibles</small>
+                                    <strong id="qv-stock" class="fs-5">0 unidades</strong>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <a href="catalogo" class="btn btn-danger btn-lg py-3 fw-bold">
+                                    <i class="fas fa-shopping-cart me-2"></i> IR AL CATÁLOGO PARA COMPRAR
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -12,48 +12,69 @@
     <main class="py-5 mt-5">
         <section class="container fade-in">
             
-            <!-- Barra de búsqueda y filtros -->
-            <div class="row mb-4">
-                <div class="col-md-4 mb-3">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white">
-                            <i class="fas fa-search"></i>
-                        </span>
-                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar productos...">
-                        <button class="btn btn-outline-secondary" type="button" id="clearSearch">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
+            <!-- SMART TOOLBAR PILL (Experimental Design) -->
+            <div class="smart-toolbar slide-in-pill">
+                <div class="search-focus">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar por nombre o SKU...">
+                    <button class="btn-clear-luxury me-2" type="button" id="clearSearch" title="Borrar">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
-
-                <div class="col-md-4 mb-3">
-                    <select class="form-select" id="categoryFilter">
-                        <option value="all">Todas las categorías</option>
+                
+                <div class="toolbar-divider d-none d-md-block"></div>
+                
+                <div class="pill-select-wrapper d-none d-md-block">
+                    <select class="pill-select" id="categoryFilter">
+                        <option value="all">Todas las Categorías</option>
                     </select>
                 </div>
-
-                <div class="col-md-4 mb-3">
-                    <a href="salidas" class="btn btn-primary">
-                        <i class="fas fa-shipping-fast"></i> Salidas
+                
+                <div class="action-hub mt-3 mt-md-0">
+                    <a href="salidas" class="btn-pill-action" data-tooltip="Ver Salidas">
+                        <i class="fas fa-shipping-fast"></i>
                     </a>
+                    <button id="btnExportarPDF" class="btn-pill-action primary" data-tooltip="Exportar PDF">
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- Contador de resultados -->
-            <div class="mb-3">
-                <small class="text-muted">
-                    <span id="resultCount">0</span> productos encontrados
-                </small>
+            <!-- NAVEGACIÓN DE CATEGORÍAS (PILL SCROLL) -->
+            <div class="category-segment-container fade-in" style="animation-delay: 0.1s;">
+                <div class="d-flex align-items-center mb-3">
+                    <h5 class="text-uppercase small fw-bold letter-spacing-2 mb-0 me-3 text-muted">Colecciones</h5>
+                    <div class="category-divider-line flex-grow-1"></div>
+                </div>
+                <div class="category-pill-wrapper" id="catalogo-categories-nav">
+                    <!-- Las categorías se cargarán aquí como botones/pills -->
+                    <div class="category-pill-skeleton"></div>
+                </div>
+            </div>
+
+            <!-- Cabecera de Resultados (Minimal) -->
+            <div class="mb-4 fade-in" style="animation-delay: 0.3s;">
+                <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
+                    <i class="fas fa-box-open me-2 text-primary"></i>
+                    <span id="resultCount" class="fw-bold">0</span> productos encontrados
+                </span>
             </div>
 
             <!-- Grid de productos -->
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="product-grid"></div>
 
-            <!-- Mensaje cuando no hay resultados -->
-            <div id="noResults" class="text-center py-5 d-none">
-                <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No se encontraron productos</h5>
-                <p class="text-muted">Intenta con otros términos de búsqueda</p>
+            <!-- Mensaje cuando no hay resultados (Luxury style) -->
+            <div id="noResults" class="text-center py-5 d-none fade-in">
+                <div class="mb-4">
+                    <i class="fas fa-search fa-4x text-muted opacity-25"></i>
+                </div>
+                <h3 class="font-luxury text-muted">Sin coincidencias</h3>
+                <p class="text-muted mx-auto" style="max-width: 400px;">
+                    No hemos encontrado productos que coincidan con tu búsqueda. Intenta simplificar los términos o cambiar de categoría.
+                </p>
+                <button class="btn btn-link text-luxury text-decoration-none fw-bold" onclick="document.getElementById('clearSearch').click()">
+                    RESETEAR BÚSQUEDA
+                </button>
             </div>
 
         </section>
@@ -132,7 +153,12 @@
 
                                 <!-- Dirección de entrega -->
                                 <div class="mb-3">
-                                    <label class="form-label fw-bold small">Dirección de Entrega <span class="text-danger">*</span></label>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label fw-bold small mb-0">Dirección de Entrega <span class="text-danger">*</span></label>
+                                        <a href="#" id="verifyAddressBtn" target="_blank" class="text-primary small text-decoration-none d-none">
+                                            <i class="fas fa-map-marked-alt me-1"></i>Verificar en Mapa
+                                        </a>
+                                    </div>
                                     <textarea name="direccion" id="direccion" class="form-control" rows="2" placeholder="Ingrese la dirección completa"></textarea>
                                 </div>
 
@@ -187,6 +213,62 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Quick View (Vista Rápida Premium) -->
+    <div class="modal fade modal-quickview" id="modalQuickView" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-body p-0">
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3 z-index-10" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="row g-0">
+                        <!-- Galería Izquierda -->
+                        <div class="col-lg-7">
+                            <div class="quickview-img-large">
+                                <img id="qv-main-img" src="" alt="Vista Rápida">
+                            </div>
+                            <div class="px-4 pb-4">
+                                <div class="quick-view-gallery" id="qv-gallery-thumbs">
+                                    <!-- Miniaturas dinámicas -->
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Información Derecha -->
+                        <div class="col-lg-5 bg-white p-4 p-md-5">
+                            <div class="mb-2">
+                                <span id="qv-category" class="badge bg-light text-dark border">Categoría</span>
+                                <span id="qv-sku" class="badge bg-dark ms-2">SKU</span>
+                            </div>
+                            <h2 id="qv-name" class="fw-bold mb-3">Nombre del Producto</h2>
+                            <h3 id="qv-price" class="text-primary fw-bold mb-4">$0.00</h3>
+                            
+                            <div class="mb-4">
+                                <h6 class="fw-bold text-muted small text-uppercase mb-2">Descripción</h6>
+                                <p id="qv-description" class="text-muted lh-lg">No hay descripción disponible.</p>
+                            </div>
+
+                            <div id="qv-attributes" class="mb-4">
+                                <!-- Atributos dinámicos -->
+                            </div>
+
+                            <div class="bg-light p-3 rounded mb-4 d-flex align-items-center">
+                                <i class="fas fa-warehouse text-success me-3 fs-4"></i>
+                                <div>
+                                    <small class="text-muted d-block">Existencias Disponibles</small>
+                                    <strong id="qv-stock" class="fs-5">0 unidades</strong>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-danger btn-lg py-3 fw-bold btnSalidaQuick" id="btnSalidaFromQuick">
+                                    <i class="fas fa-shipping-fast me-2"></i> REGISTRAR SALIDA
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
