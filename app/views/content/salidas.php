@@ -28,10 +28,16 @@
         }
         .stat-card {
             border-left: 4px solid;
-            transition: transform 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            cursor: pointer;
         }
         .stat-card:hover {
-            transform: translateY(-3px);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.1) !important;
+            filter: brightness(0.98);
+        }
+        .stat-card:active {
+            transform: translateY(-2px);
         }
     </style>
 </head>
@@ -127,9 +133,14 @@
                         <i class="fas fa-clock text-warning me-2"></i>Pendientes / En Curso
                     </button>
                 </li>
+                <li class="nav-item me-2" role="presentation">
+                    <button class="nav-link fw-bold border-0 rounded-top bg-white text-muted shadow-sm" id="entregados-tab" data-bs-toggle="tab" data-bs-target="#entregados" type="button" role="tab" aria-controls="entregados" aria-selected="false">
+                        <i class="fas fa-check-circle text-success me-2"></i>Entregados
+                    </button>
+                </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-bold border-0 rounded-top bg-white text-muted shadow-sm" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial" type="button" role="tab" aria-controls="historial" aria-selected="false">
-                        <i class="fas fa-history text-secondary me-2"></i>Historial (Finalizados)
+                    <button class="nav-link fw-bold border-0 rounded-top bg-white text-muted shadow-sm" id="cancelados-tab" data-bs-toggle="tab" data-bs-target="#cancelados" type="button" role="tab" aria-controls="cancelados" aria-selected="false">
+                        <i class="fas fa-ban text-danger me-2"></i>Cancelados
                     </button>
                 </li>
             </ul>

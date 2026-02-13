@@ -564,28 +564,6 @@ a {
 /* ============================================
    HERO SECTION - RESPONSIVE
    ============================================ */
-.hero {
-    background: linear-gradient(rgba(10, 10, 10, 0.5), rgba(10, 10, 10, 0.5)),
-        url('http://localhost/AXStore2026_1/app/views/assets/images/logo.png') no-repeat center center;
-    background-size: cover;
-    background-position: center;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    padding: 0 0 60px;
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
-
-.hero-content {
-    max-width: 600px;
-    color: var(--white);
-    z-index: 2;
-    padding: 40px 0;
-}
 
 .hero h2 {
     font-size: clamp(2rem, 6vw, 4rem);
@@ -625,9 +603,6 @@ a {
     color: var(--dark-color);
 }
 
-.hero-overlay {
-    top: 0;
-}
 
 /* ============================================
    CATEGORÍAS
@@ -651,9 +626,9 @@ a {
 
 .category-btn {
     padding: 12px 30px;
-    border: 1px solid var(--dark-color);
-    background: transparent;
-    color: var(--dark-color);
+    border: 1px solid var(--dark-color) !important;
+    background: transparent !important;
+    color: var(--dark-color) !important;
     border-radius: 0;
     cursor: pointer;
     transition: var(--transition);
@@ -663,33 +638,34 @@ a {
     font-size: 0.8rem;
     position: relative;
     overflow: hidden;
+    z-index: 1;
 }
 
-.category-btn:after {
+.category-btn::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 0;
+    left: -100%;
     width: 100%;
     height: 100%;
     background-color: var(--dark-color);
-    transform: translateY(100%);
-    transition: var(--transition);
+    transition: all 0.4s cubic-bezier(0.6, 0.1, 0.3, 1);
     z-index: -1;
 }
 
-.category-btn:hover {
-    color: var(--primary-color);
-    border-color: var(--dark-color);
+.category-btn:hover,
+.category-btn.active {
+    color: var(--white) !important;
+    transform: translateY(-3px);
 }
 
-.category-btn:hover:after {
-    transform: translateY(0);
+.category-btn:hover::before,
+.category-btn.active::before {
+    left: 0;
 }
 
 .category-btn.active {
-    background-color: var(--dark-color);
-    color: var(--primary-color);
+    background-color: var(--dark-color) !important;
 }
 
 /* ============================================

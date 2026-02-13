@@ -11,8 +11,14 @@ $(document).ready(function () {
 // Establecer fecha y hora actual por defecto
 function setFechaHoraActual() {
     const ahora = new Date();
-    const fecha = ahora.toISOString().split('T')[0];
-    const hora = ahora.toTimeString().split(' ')[0].substring(0, 5);
+    
+    // Obtener fecha local ajustando por el offset de la zona horaria
+    const offset = ahora.getTimezoneOffset() * 60000; // offset en ms
+    const localISOTime = new Date(ahora.getTime() - offset).toISOString();
+    
+    const fecha = localISOTime.split('T')[0];
+    const hora = ahora.getHours().toString().padStart(2, '0') + ':' + 
+                 ahora.getMinutes().toString().padStart(2, '0');
     
     $("#fecha_salida").val(fecha);
     $("#hora_salida").val(hora);
@@ -48,13 +54,25 @@ function cargarTodosLosProductos() {
     });
 }
 
-// Cargar categorías únicas
+// Cargar categorías únicas y renderizar Pills
 function cargarCategorias() {
     const categorias = [...new Set(allProducts.map(p => p.nombre_categoria))];
-    const $categoryFilter = $("#categoryFilter");
+    const $categorySelect = $("#categoryFilter");
+    const $categoryNav = $("#catalogo-categories-nav");
+    
+    // Limpiar contenedores
+    $categorySelect.html('<option value="all">Todas las Categorías</option>');
+    $categoryNav.empty();
+
+    // Agregar botón "TODOS" a los Pills
+    $categoryNav.append('<div class="catalog-pill active" data-category="all">TODOS</div>');
     
     categorias.sort().forEach(categoria => {
-        $categoryFilter.append(`<option value="${categoria}">${categoria}</option>`);
+        // Agregar al Select (se mantiene oculto pero sincronizado)
+        $categorySelect.append(`<option value="${categoria}">${categoria}</option>`);
+        
+        // Agregar al Nav visual (Pills)
+        $categoryNav.append(`<div class="catalog-pill" data-category="${categoria}">${categoria}</div>`);
     });
 }
 
@@ -83,7 +101,7 @@ function aplicarFiltros() {
     updateResultCount();
 }
 
-// Renderizar productos con botón de salida
+// Renderizar productos con funciones Premium
 function renderProducts(productsList) {
     const $productGrid = $("#product-grid");
     const $noResults = $("#noResults");
@@ -98,45 +116,77 @@ function renderProducts(productsList) {
     $noResults.addClass("d-none");
     $productGrid.removeClass("d-none");
 
+    const maxId = Math.max(...productsList.map(p => p.id), 0);
+    const umbralNuevo = maxId - 12; // Marcar como nuevos los últimos 12 IDs
+
     $.each(productsList, function (i, product) {
         let precioVenta = Number(product.precio_venta);
         let precioFormateado = precioVenta.toFixed(2);
-        let stockClass = product.stock > 5 ? "bg-success" : product.stock > 0 ? "bg-warning text-dark" : "bg-danger";
-        let stockText = product.stock > 0 ? `${product.stock} disponibles` : "Agotado";
         
+        // --- LÓGICA DE ETIQUETAS (BADGES) ---
+        let badgesHtml = '';
+        
+        // 1. Etiqueta NUEVO (Basado en ID si no hay fecha)
+        if (product.id > umbralNuevo) {
+            badgesHtml += '<span class="badge-premium badge-new">NUEVO</span>';
+        }
+        
+        // 2. Etiqueta STOCK BAJO (Si stock es menor o igual a reserva)
+        if (product.stock > 0 && product.stock <= product.reserva) {
+            badgesHtml += '<span class="badge-premium badge-low-stock">STOCK BAJO</span>';
+        }
+
+        // 3. Etiqueta TOP VENTAS (Si tiene más de 5 unidades vendidas)
+        if (parseInt(product.ventas_totales) >= 5) {
+            badgesHtml += '<span class="badge-premium badge-top">TOP VENTAS</span>';
+        }
+
+        // --- LÓGICA DE IMAGENES (HOVER FX) ---
+        const mainImg = `${ruta}${product.imagen}`;
+        const hoverImg = product.imagen_hover ? `${ruta}${product.imagen_hover}` : mainImg;
+
         // Deshabilitar botón si no hay stock
         let disabledBtn = product.stock <= 0 ? 'disabled' : '';
+        let stockColor = product.stock > 5 ? 'text-success' : product.stock > 0 ? 'text-warning' : 'text-danger';
 
         const card = `
             <div class="col">
-                <div class="card h-100 border-0 shadow-sm transition-hover">
+                <div class="card h-100 border-0 shadow-sm transition-hover product-card">
                     
-                    <span class="badge ${stockClass} position-absolute top-0 start-0 m-2 shadow-sm">
-                        ${stockText}
-                    </span>
+                    <!-- Contenedor de Badges -->
+                    <div class="product-badge-container">
+                        ${badgesHtml}
+                    </div>
 
-                    <div class="p-3" style="height: 200px;">
-                        <img src="${ruta}${product.imagen}" 
-                             class="card-img-top h-100 w-100" 
-                             style="object-fit: contain;" 
-                             alt="${product.nombre}">
+                    <!-- Acciones Rápidas Flotantes -->
+                    <div class="product-quick-actions">
+                        <button class="btn-action-premium btnQuickView" data-id="${product.id}" title="Vista Rápida">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <!-- Imagen con Efecto Hover -->
+                    <div class="product-image-container">
+                        <img src="${mainImg}" class="product-img-main" alt="${product.nombre}">
+                        <img src="${hoverImg}" class="product-img-hover" alt="${product.nombre} hover">
                     </div>
 
                     <div class="card-body d-flex flex-column">
-                        <span class="badge bg-light text-dark border mb-2">${product.nombre_categoria}</span>
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-light text-dark border">${product.nombre_categoria}</span>
+                            <span class="small fw-bold ${stockColor}">${product.stock > 0 ? product.stock + ' un.' : 'AGOTADO'}</span>
+                        </div>
+                        
                         <p class="text-muted small mb-1">${product.nombre_producto_padre}</p>
-                        <h4 class="card-title fw-bold text-dark mb-3">${product.nombre}</h4>
+                        <h5 class="card-title fw-bold text-dark mb-3">${product.nombre}</h5>
                         
                         <div class="mt-auto">
-                            <div class="mb-2">
-                                <span class="h5 mb-0 fw-bold text-primary">$${precioFormateado}</span>
-                                <br>
-                                <small class="text-muted">SKU: ${product.sku}</small>
-                                <br>
-                                <small class="text-muted">Reserva: ${product.reserva} un.</small>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="h4 mb-0 fw-bold text-primary">$${precioFormateado}</span>
+                                <small class="text-muted fw-bold">SKU: ${product.sku}</small>
                             </div>
                             
-                            <button class="btn btn-danger btn-sm w-100 btnSalidaProducto" 
+                            <button class="btn btn-danger btn-sm w-100 btnSalidaProducto py-2" 
                                     data-id="${product.id}"
                                     data-nombre="${product.nombre}"
                                     data-sku="${product.sku}"
@@ -144,7 +194,7 @@ function renderProducts(productsList) {
                                     data-stock="${product.stock}"
                                     data-imagen="${product.imagen}"
                                     ${disabledBtn}>
-                                <i class="fas fa-truck me-1"></i> Registrar Salida
+                                <i class="fas fa-truck me-1"></i> REGISTRAR SALIDA
                             </button>
                         </div>
                     </div>
@@ -168,12 +218,29 @@ function updateResultCount() {
 
 // Configurar eventos
 function setupEvents() {
-    // Búsqueda
+    // Eventos de Categoría (Pills)
+    $(document).on("click", ".catalog-pill", function() {
+        $(".catalog-pill").removeClass("active");
+        $(this).addClass("active");
+        
+        const category = $(this).data("category");
+        $("#categoryFilter").val(category); // Sincronizar con el select oculto
+        
+        aplicarFiltros();
+    });
+
     $("#searchInput").on("keyup", aplicarFiltros);
-    $("#categoryFilter").on("change", aplicarFiltros);
+    $("#categoryFilter").on("change", function() {
+        // Sincronizar Pills cuando cambia el select (por si se usa en móvil/consola)
+        const val = $(this).val();
+        $(`.catalog-pill[data-category="${val}"]`).click();
+    });
+    
     $("#statusFilter").on("change", aplicarFiltros);
+    
     $("#clearSearch").on("click", function() {
         $("#searchInput").val("");
+        $(".catalog-pill").first().click(); // Resetear a "TODOS"
         aplicarFiltros();
     });
 
@@ -193,6 +260,50 @@ function setupEvents() {
 
     // Calcular totales en tiempo real
     $("#cantidad_salida, #precio_envio, #costo_extra").on("input", calcularTotales);
+
+    // Botones dinámicos de las tarjetas
+    $(document).on("click", ".btnQuickView", function() {
+        const id = $(this).data("id");
+        abrirQuickView(id);
+    });
+
+    // Acción desde Quick View
+    $("#btnSalidaFromQuick").on("click", function() {
+        const id = $(this).data("id");
+        const prod = allProducts.find(p => p.id == id);
+        $("#modalQuickView").modal("hide");
+        if (prod) abrirModalSalida(prod);
+    });
+
+    // Cambio de imagen en Quick View
+    $(document).on("click", ".quick-view-thumb", function() {
+        $(".quick-view-thumb").removeClass("active");
+        $(this).addClass("active");
+        const newSrc = $(this).find("img").attr("src");
+        $("#qv-main-img").fadeOut(200, function() {
+            $(this).attr("src", newSrc).fadeIn(200);
+        });
+    });
+
+    // Google Maps dinámico en Registro
+
+    // Google Maps dinámico en Registro
+    $("#direccion").on("input", function() {
+        const query = $(this).val().trim();
+        const $btn = $("#verifyAddressBtn");
+        
+        if (query.length > 3) {
+            $btn.attr("href", `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`);
+            $btn.removeClass("d-none");
+        } else {
+            $btn.addClass("d-none");
+        }
+    });
+
+    // Resetear botón de mapa al abrir/cerrar modal
+    $("#modalSalidaProducto").on("show.bs.modal hidden.bs.modal", function() {
+        $("#verifyAddressBtn").addClass("d-none").attr("href", "#");
+    });
 
     // ============================================
     // VALIDACIONES EN TIEMPO REAL (ON BLUR)
@@ -241,6 +352,11 @@ function setupEvents() {
     $("#formSalidaProducto").on("submit", function(e) {
         e.preventDefault();
         registrarSalida();
+    });
+
+    // Reporte PDF
+    $("#btnExportarPDF").on("click", function() {
+        generarPDFCatalogo();
     });
 }
 
@@ -661,6 +777,282 @@ function registrarSalida() {
         complete: function() {
             // Rehabilitar botón
             $btnSubmit.prop("disabled", false).html('<i class="fas fa-check me-1"></i> Registrar Salida');
+        }
+    });
+}
+
+/**
+ * Helper para convertir una URL de imagen a Base64
+ * Útil para pdfmake que requiere imágenes en este formato
+ */
+function getBase64ImageFromURL(url) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.setAttribute("crossOrigin", "anonymous");
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            const dataURL = canvas.toDataURL("image/png");
+            resolve(dataURL);
+        };
+        img.onerror = (error) => {
+            console.warn("No se pudo cargar imagen para PDF:", url);
+            // Retornar una imagen por defecto o vacía en caso de error
+            resolve(null);
+        };
+        img.src = url;
+    });
+}
+
+/**
+ * Genera un PDF del catálogo de productos en formato de FICHAS CON IMAGEN
+ * agrupado por categorías
+ */
+async function generarPDFCatalogo() {
+    if (allProducts.length === 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin Datos',
+            text: 'No hay productos para generar el catálogo',
+            confirmButtonColor: '#ffc107'
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Generando Catálogo Visual',
+        text: 'Procesando imágenes, por favor espere...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    try {
+        // 1. Agrupar productos por categoría
+        const productosPorCategoria = {};
+        allProducts.forEach(product => {
+            const cat = product.nombre_categoria || "Sin Categoría";
+            if (!productosPorCategoria[cat]) {
+                productosPorCategoria[cat] = [];
+            }
+            productosPorCategoria[cat].push(product);
+        });
+
+        // 2. Definir contenido inicial
+        const pdfContent = [
+            { text: 'CATÁLOGO VISUAL DE PRODUCTOS', style: 'header' },
+            { text: 'Generado el: ' + new Date().toLocaleDateString(), style: 'subheader' },
+            { text: '\n' }
+        ];
+
+        // 3. Procesar cada categoría
+        const categoriasParaPdf = Object.keys(productosPorCategoria).sort();
+        
+        for (const categoria of categoriasParaPdf) {
+            pdfContent.push({ text: categoria.toUpperCase(), style: 'categoryTitle' });
+            
+            const productos = productosPorCategoria[categoria].sort((a, b) => a.nombre.localeCompare(b.nombre));
+            
+            // Crear grid de fichas (3 por fila)
+            const rows = [];
+            for (let i = 0; i < productos.length; i += 3) {
+                const chunk = productos.slice(i, i + 3);
+                const columns = [];
+                
+                for (const p of chunk) {
+                    const imgUrl = p.imagen ? `${ruta}${p.imagen}` : `${ruta}default.png`;
+                    const base64Img = await getBase64ImageFromURL(imgUrl);
+                    
+                    columns.push({
+                        stack: [
+                            base64Img ? {
+                                image: base64Img,
+                                width: 100,
+                                height: 100,
+                                alignment: 'center',
+                                margin: [0, 5, 0, 5]
+                            } : { text: '\n(Imagen no disponible)\n', alignment: 'center', fontSize: 8, margin: [0, 40, 0, 40] },
+                            { text: p.nombre_categoria || categoria, style: 'prodCategory' },
+                            { text: p.nombre, style: 'prodName' },
+                            { text: '$' + parseFloat(p.precio_venta).toFixed(2), style: 'prodPrice' }
+                        ],
+                        width: '33%',
+                        margin: [5, 5, 5, 15],
+                        canvas: [{ type: 'rect', x: 0, y: 0, w: 160, h: 175, r: 5, lineWidth: 0.5, lineColor: '#eee' }]
+                    });
+                }
+                
+                // Rellenar columnas vacías para mantener alineación
+                while (columns.length < 3) {
+                    columns.push({ text: '', width: '33%' });
+                }
+                
+                rows.push({ columns: columns, columnGap: 10 });
+            }
+            
+            pdfContent.push(...rows);
+            pdfContent.push({ text: '\n', pageBreak: 'after' });
+        }
+
+        // Quitar el último pageBreak
+        if (pdfContent.length > 0) {
+            delete pdfContent[pdfContent.length - 1].pageBreak;
+        }
+
+        // 4. Configuración de estilos
+        const docDefinition = {
+            content: pdfContent,
+            pageSize: 'A4',
+            pageMargins: [40, 60, 40, 60],
+            styles: {
+                header: {
+                    fontSize: 24,
+                    bold: true,
+                    alignment: 'center',
+                    color: '#dc3545',
+                    margin: [0, 0, 0, 5]
+                },
+                subheader: {
+                    fontSize: 10,
+                    alignment: 'center',
+                    color: '#666',
+                    margin: [0, 0, 0, 30]
+                },
+                categoryTitle: {
+                    fontSize: 16,
+                    bold: true,
+                    color: '#333',
+                    background: '#f4f4f4',
+                    margin: [0, 20, 0, 15],
+                    padding: [5, 5, 5, 5]
+                },
+                prodCategory: {
+                    fontSize: 7,
+                    bold: true,
+                    alignment: 'center',
+                    color: '#666',
+                    margin: [0, 2, 0, 2]
+                },
+                prodName: {
+                    fontSize: 9,
+                    bold: true,
+                    alignment: 'center',
+                    margin: [0, 2, 0, 2],
+                    color: '#222'
+                },
+                prodPrice: {
+                    fontSize: 11,
+                    bold: true,
+                    alignment: 'center',
+                    color: '#dc3545',
+                    margin: [0, 0, 0, 5]
+                }
+            },
+            footer: function(currentPage, pageCount) {
+                return {
+                    text: 'Página ' + currentPage.toString() + ' de ' + pageCount,
+                    alignment: 'center',
+                    fontSize: 9,
+                    margin: [0, 20, 0, 0],
+                    color: '#888'
+                };
+            }
+        };
+
+        window.pdfMake.createPdf(docDefinition).download('Catalogo_Visual_' + new Date().toISOString().split('T')[0] + '.pdf');
+        
+        Swal.close();
+        Swal.fire({
+            icon: 'success',
+            title: '¡Catálogo Creado!',
+            text: 'El catálogo visual se ha descargado correctamente',
+            timer: 3000,
+            showConfirmButton: false
+        });
+
+    } catch (error) {
+        console.error("Error crítico en PDF:", error);
+        Swal.close();
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de Generación',
+            text: 'Ocurrió un error al procesar las imágenes del catálogo',
+            confirmButtonColor: '#dc3545'
+        });
+    }
+}
+
+// --- FUNCIONES PREMIUM ADICIONALES ---
+
+function abrirQuickView(id) {
+    $.ajax({
+        url: "app/controllers/productoController.php",
+        method: "POST",
+        dataType: "json",
+        data: { accion: "obtenerDetalleQuickView", id: id },
+        beforeSend: function() {
+            Swal.fire({ title: 'Cargando...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+        },
+        success: function(response) {
+            Swal.close();
+            if (response.status === "success") {
+                const data = response.data;
+                const v = data.variante;
+                
+                // Llenar datos básicos
+                $("#qv-name").text(v.nombre);
+                $("#qv-category").text(v.nombre_categoria);
+                $("#qv-sku").text("SKU: " + v.sku);
+                $("#qv-price").text("$" + parseFloat(v.precio_venta).toFixed(2));
+                $("#qv-stock").text(v.stock + " unidades");
+                $("#qv-description").text(v.descripcion || "Sin descripción disponible para este producto.");
+                
+                // Imágenes
+                const $gallery = $("#qv-gallery-thumbs");
+                $gallery.empty();
+                
+                if (data.imagenes.length > 0) {
+                    $("#qv-main-img").attr("src", ruta + data.imagenes[0].ruta_imagen);
+                    data.imagenes.forEach((img, index) => {
+                        $gallery.append(`
+                            <div class="quick-view-thumb ${index === 0 ? 'active' : ''}">
+                                <img src="${ruta}${img.ruta_imagen}" alt="Thumbnail">
+                            </div>
+                        `);
+                    });
+                } else {
+                    $("#qv-main-img").attr("src", ruta + "default.png");
+                }
+
+                // Atributos
+                const $attrContainer = $("#qv-attributes");
+                $attrContainer.empty();
+                if (data.atributos.length > 0) {
+                    $attrContainer.append('<h6 class="fw-bold text-muted small text-uppercase mb-2">Características</h6>');
+                    let attrHtml = '<div class="row row-cols-2 g-2">';
+                    data.atributos.forEach(attr => {
+                        attrHtml += `
+                            <div class="col">
+                                <div class="p-2 border rounded bg-light small">
+                                    <span class="text-muted">${attr.nombre}:</span> <br>
+                                    <strong class="text-dark">${attr.valor}</strong>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    attrHtml += '</div>';
+                    $attrContainer.append(attrHtml);
+                }
+
+                // Configurar botón de salida en el modal
+                $("#btnSalidaFromQuick").data("id", v.id);
+
+                $("#modalQuickView").modal("show");
+            }
         }
     });
 }

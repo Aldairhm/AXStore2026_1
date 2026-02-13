@@ -3,7 +3,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <title>AXStore - Luxury</title>
+    <title>AXStore - Online</title>
     
     <link rel="stylesheet" href="<?php echo APP_URL; ?>app/views/assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="<?php echo APP_URL; ?>app/views/assets/css/all.min.css">

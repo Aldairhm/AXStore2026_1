@@ -1,6 +1,7 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1)
+;
 
 require_once __DIR__ . "/../../config/conexion.php";
 
@@ -14,8 +15,8 @@ class Producto
     }
 
     /* ============================================================
-       1. PRODUCTO PADRE
-    ============================================================ */
+     1. PRODUCTO PADRE
+     ============================================================ */
 
     public function obtenerProductoPorId(int $id): ?array
     {
@@ -59,8 +60,8 @@ class Producto
     }
 
     /* ============================================================
-       2. VARIANTES Y EAV
-    ============================================================ */
+     2. VARIANTES Y EAV
+     ============================================================ */
 
     public function getVariantesPorProducto(int $id): array
     {
@@ -103,7 +104,8 @@ class Producto
 
             // Retornamos el array o null si no se encuentra el ID
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-        } catch (PDOException $e) {
+        }
+        catch (PDOException $e) {
             // Log de error si algo sale mal con la base de datos
             error_log("Error en getVariantePorId: " . $e->getMessage());
             return null;
@@ -148,8 +150,8 @@ class Producto
     }
 
     /* ============================================================
-       3. IDENTIDAD (HASH Y SKU)
-    ============================================================ */
+     3. IDENTIDAD (HASH Y SKU)
+     ============================================================ */
 
     public function generarHashVariante(array $attr): string
     {
@@ -195,8 +197,8 @@ class Producto
     }
 
     /* ============================================================
-       4. EXPANSIÓN Y CONTRATOS (Aquí estaba el que faltaba)
-    ============================================================ */
+     4. EXPANSIÓN Y CONTRATOS (Aquí estaba el que faltaba)
+     ============================================================ */
 
     public function obtenerAtributosProducto(int $id): array
     {
@@ -250,8 +252,8 @@ class Producto
     }
 
     /* ============================================================
-       5. UTILIDADES
-    ============================================================ */
+     5. UTILIDADES
+     ============================================================ */
 
     public function generarNombreVarianteDesdeAtributos(int $idV): string
     {
@@ -299,20 +301,22 @@ class Producto
     v.nombre_variante AS nombre, 
     v.precio_venta, 
     v.stock, 
-    -- Si no hay imagen principal, ponemos una por defecto para que no truene el front
-    COALESCE(vi.ruta_imagen, 'default.png') AS imagen, 
     v.sku, 
     v.comision,
     v.reserva,
     p.nombre AS nombre_producto_padre,
     p.id AS id_producto,
     c.nombre AS nombre_categoria,
-    c.id AS id_categoria
+    c.id AS id_categoria,
+    -- Imagen Principal (Portada)
+    COALESCE((SELECT ruta_imagen FROM variante_imagen WHERE id_variante = v.id AND es_principal = 1 LIMIT 1), 'default.png') AS imagen,
+    -- Imagen Secundaria (Para Hover Effect)
+    COALESCE((SELECT ruta_imagen FROM variante_imagen WHERE id_variante = v.id AND es_principal = 0 ORDER BY id ASC LIMIT 1), '') AS imagen_hover,
+    -- Conteo de ventas para etiqueta TOP (Tabla correcta: salida)
+    (SELECT IFNULL(SUM(cantidad), 0) FROM salida WHERE id_variante = v.id) AS ventas_totales
     FROM variante v
     INNER JOIN producto p ON v.id_producto = p.id
     INNER JOIN categoria c ON p.id_categoria = c.id
-    -- Unimos con la nueva tabla filtrando solo por la imagen de portada
-    LEFT JOIN variante_imagen vi ON vi.id_variante = v.id AND vi.es_principal = 1
     WHERE p.estado = 1
     ORDER BY c.nombre, p.nombre, v.nombre_variante;";
 
@@ -323,8 +327,8 @@ class Producto
     }
 
     /* ============================================================
-        6. GESTIÓN DE GALERÍA DE VARIANTES
-    ============================================================ */
+     6. GESTIÓN DE GALERÍA DE VARIANTES
+     ============================================================ */
 
     public function registrarImagenVariante(int $idV, string $ruta, int $principal = 0): ?int
     {
@@ -349,7 +353,8 @@ class Producto
             $stmt->execute([$idImg]);
             $img = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$img) return ["status" => "error", "message" => "No existe"];
+            if (!$img)
+                return ["status" => "error", "message" => "No existe"];
 
             $this->conexion->beginTransaction();
 
@@ -372,8 +377,10 @@ class Producto
                 "id_variante" => $img['id_variante'],
                 "refreshGrid" => $debeRefrescarGrid // <--- Esto asegura que el JS actúe
             ];
-        } catch (Exception $e) {
-            if ($this->conexion->inTransaction()) $this->conexion->rollBack();
+        }
+        catch (Exception $e) {
+            if ($this->conexion->inTransaction())
+                $this->conexion->rollBack();
             return ["status" => "error", "message" => $e->getMessage()];
         }
     }
@@ -384,18 +391,30 @@ class Producto
         $transaccionPropia = !$this->conexion->inTransaction();
 
         try {
-            if ($transaccionPropia) $this->conexion->beginTransaction();
+            if ($transaccionPropia)
+                $this->conexion->beginTransaction();
 
             // 1. Quitamos principal a todas
             $this->conexion->prepare("UPDATE variante_imagen SET es_principal = 0 WHERE id_variante = ?")->execute([$idV]);
             // 2. Seteamos la nueva
             $this->conexion->prepare("UPDATE variante_imagen SET es_principal = 1 WHERE id = ?")->execute([$idImg]);
 
-            if ($transaccionPropia) $this->conexion->commit();
+            if ($transaccionPropia)
+                $this->conexion->commit();
             return true;
-        } catch (Exception $e) {
-            if ($transaccionPropia) $this->conexion->rollBack();
+        }
+        catch (Exception $e) {
+            if ($transaccionPropia)
+                $this->conexion->rollBack();
             return false;
         }
+    }
+
+    public function getImagenesVariante(int $id): array
+    {
+        $sql = "SELECT id, ruta_imagen, es_principal FROM variante_imagen WHERE id_variante = :id ORDER BY es_principal DESC, id ASC";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

@@ -3,6 +3,7 @@ let allSalidas = [];
 let filteredSalidas = [];
 let currentPage = 1;
 const itemsPerPage = 9;
+let currentSalidaDetail = null; // Para almacenar la salida abierta en el modal
 
 $(document).ready(function () {
     cargarTodasLasSalidas();
@@ -16,8 +17,12 @@ function setFechasIniciales() {
     const hace30Dias = new Date();
     hace30Dias.setDate(hoy.getDate() - 30);
     
-    $("#fechaHasta").val(hoy.toISOString().split('T')[0]);
-    $("#fechaDesde").val(hace30Dias.toISOString().split('T')[0]);
+    const offset = hoy.getTimezoneOffset() * 60000;
+    const fechaHasta = new Date(hoy.getTime() - offset).toISOString().split('T')[0];
+    const fechaDesde = new Date(hace30Dias.getTime() - offset).toISOString().split('T')[0];
+    
+    $("#fechaHasta").val(fechaHasta);
+    $("#fechaDesde").val(fechaDesde);
 }
 
 // Cargar todas las salidas
@@ -61,7 +66,8 @@ function calcularEstadisticas() {
     const unidadesTotales = salidasActivas.reduce((sum, s) => sum + parseInt(s.cantidad || 0), 0);
     
     // Salidas de hoy (también solo activas)
-    const hoy = new Date().toISOString().split('T')[0];
+    const offset = new Date().getTimezoneOffset() * 60000;
+    const hoy = new Date(new Date().getTime() - offset).toISOString().split('T')[0];
     const salidasHoy = salidasActivas.filter(s => s.fecha_salida === hoy).length;
     
     $("#totalSalidas").text(total);
@@ -95,9 +101,12 @@ function aplicarFiltros() {
         if (activeTab === 'pendientes-tab') {
             // Mostrar Pendiente, En camino, y Vencidos (que no sean Entregado/Cancelado)
             matchesTab = (estado !== 'Entregado' && estado !== 'Cancelado');
-        } else {
-            // Historial: Entregado y Cancelado
-            matchesTab = (estado === 'Entregado' || estado === 'Cancelado');
+        } else if (activeTab === 'entregados-tab') {
+            // Solo mostrar salidas Entregadas
+            matchesTab = (estado === 'Entregado');
+        } else if (activeTab === 'cancelados-tab') {
+            // Solo mostrar salidas Canceladas
+            matchesTab = (estado === 'Cancelado');
         }
 
         return matchesSearch && matchesFechaDesde && matchesFechaHasta && matchesTab;
@@ -196,9 +205,16 @@ function puedeDevolver(salida) {
         };
     }
 
+    // No puede devolver si ya está entregado
+    if (estado === 'Entregado') {
+        return {
+            puede: false,
+            motivo: 'Producto ya entregado'
+        };
+    }
+
     /* 
-    Se permite devolución en cualquier estado (Entregado, En camino, Pendiente)
-    y sin importar vencimiento de fecha.
+    Se permite devolución solo para estados: Pendiente y En camino
     */
 
     if (salida.fecha_entrega) {
@@ -343,11 +359,17 @@ function crearCardSalida(salida) {
 
                     <!-- Dirección si existe -->
                     ${salida.direccion && salida.direccion.trim() ? `
-                    <div class="mt-3 pt-3 border-top">
-                        <p class="text-muted small mb-0">
-                            <i class="fas fa-map-marker-alt me-1"></i>
-                            ${salida.direccion.substring(0, 50)}${salida.direccion.length > 50 ? '...' : ''}
+                    <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
+                        <p class="text-muted small mb-0 flex-grow-1">
+                            <i class="fas fa-map-marker-alt me-1 text-danger"></i>
+                            ${salida.direccion.substring(0, 40)}${salida.direccion.length > 40 ? '...' : ''}
                         </p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(salida.direccion)}" 
+                           target="_blank" 
+                           class="btn btn-sm btn-light border ms-2 text-primary"
+                           title="Ver en Google Maps">
+                            <i class="fas fa-directions"></i>
+                        </a>
                     </div>
                     ` : ''}
 
@@ -462,6 +484,7 @@ function verDetalleSalida(id) {
 
 // Mostrar modal con detalle completo
 function mostrarModalDetalle(salida) {
+    currentSalidaDetail = salida; // Guardar para impresión
     const total = parseFloat(salida.total);
     const subtotal = parseFloat(salida.subtotal);
     const precioEnvio = parseFloat(salida.precio_envio || 0);
@@ -590,10 +613,17 @@ function mostrarModalDetalle(salida) {
 
                     ${salida.direccion && salida.direccion.trim() ? `
                     <div class="mb-3">
-                        <strong class="d-block mb-2">
-                            <i class="fas fa-map-marker-alt me-2 text-danger"></i>
-                            Dirección de Entrega:
-                        </strong>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong class="mb-0">
+                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>
+                                Dirección de Entrega:
+                            </strong>
+                            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(salida.direccion)}" 
+                               target="_blank" 
+                               class="btn btn-sm btn-outline-primary py-1 px-3 fs-7">
+                                <i class="fas fa-map-marked-alt me-1"></i>Abrir en Google Maps
+                            </a>
+                        </div>
                         <p class="bg-light p-3 rounded mb-0">${salida.direccion}</p>
                     </div>
                     ` : ''}
@@ -656,7 +686,7 @@ function mostrarModalDetalle(salida) {
                     </button>
                     ` : ''}
 
-                    ${estado !== 'Cancelado' ? `
+                    ${estado !== 'Cancelado' && estado !== 'Entregado' ? `
                     <button class="btn btn-outline-danger w-100 btnDevolverSalida" 
                             data-id="${salida.id}"
                             data-cantidad="${salida.cantidad}"
@@ -665,6 +695,10 @@ function mostrarModalDetalle(salida) {
                             data-fecha-entrega="${salida.fecha_entrega || ''}">
                         <i class="fas fa-undo me-2"></i>Devolver Stock (Cancelar)
                     </button>
+                    ` : estado === 'Entregado' ? `
+                    <div class="alert alert-success text-center mb-0">
+                        <i class="fas fa-check-circle me-2"></i>Producto Entregado - No se puede devolver
+                    </div>
                     ` : `
                     <div class="alert alert-danger text-center mb-0">
                         <i class="fas fa-ban me-2"></i>Salida Cancelada
@@ -801,24 +835,175 @@ function updateResultCount() {
     $("#resultCount").text(filteredSalidas.length);
 }
 
-// Exportar a Excel (simulado)
-function exportarSalidas() {
+// Exportar Historial a PDF (Respeta Filtros)
+async function exportarSalidasPDF() {
     if (filteredSalidas.length === 0) {
         Swal.fire({
             icon: 'warning',
             title: 'Sin Datos',
-            text: 'No hay salidas para exportar',
+            text: 'No hay salidas para exportar con los filtros actuales',
             confirmButtonColor: '#ffc107'
         });
         return;
     }
 
     Swal.fire({
-        icon: 'info',
-        title: 'Exportando...',
-        text: `Se exportarán ${filteredSalidas.length} salidas a Excel`,
-        confirmButtonColor: '#28a745'
+        title: 'Generando Reporte PDF',
+        text: 'Por favor espere...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
     });
+
+    try {
+        const totalMonto = filteredSalidas.reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+        const totalUnidades = filteredSalidas.reduce((sum, s) => sum + parseInt(s.cantidad || 0), 0);
+        
+        let activeTab = $("#salidasTabs .nav-link.active").text().trim();
+        const fechaDesc = `Desde: ${$("#fechaDesde").val() || 'Inicio'} Hasta: ${$("#fechaHasta").val() || 'Hoy'}`;
+
+        const docDefinition = {
+            pageSize: 'A4',
+            pageOrientation: 'landscape',
+            pageMargins: [30, 40, 30, 40],
+            header: function(currentPage, pageCount) {
+                return {
+                    text: 'AX STORE - Reporte de Historial de Salidas',
+                    alignment: 'center',
+                    margin: [0, 15, 0, 0],
+                    fontSize: 8,
+                    color: '#999'
+                };
+            },
+            footer: function(currentPage, pageCount) {
+                return {
+                    text: `Página ${currentPage} de ${pageCount}`,
+                    alignment: 'center',
+                    margin: [0, 10, 0, 0],
+                    fontSize: 8
+                };
+            },
+            content: [
+                {
+                    columns: [
+                        { text: 'REPORTE DE SALIDAS', style: 'mainHeader' },
+                        { 
+                            text: [
+                                { text: 'Fecha Generación: ', bold: true },
+                                new Date().toLocaleString()
+                            ], 
+                            alignment: 'right', 
+                            fontSize: 9,
+                            margin: [0, 5, 0, 0]
+                        }
+                    ]
+                },
+                {
+                    canvas: [{ type: 'line', x1: 0, y1: 5, x2: 780, y2: 5, lineWidth: 1, lineColor: '#0b5ee1' }]
+                },
+                { text: '\n' },
+                {
+                    columns: [
+                        {
+                            stack: [
+                                { text: 'FILTROS APLICADOS', style: 'sectionTitle' },
+                                { text: `Pestaña: ${activeTab}`, fontSize: 9 },
+                                { text: `Rango: ${fechaDesc}`, fontSize: 9 },
+                                { text: `Búsqueda: ${$("#searchInput").val() || 'Ninguna'}`, fontSize: 9 }
+                            ]
+                        },
+                        {
+                            stack: [
+                                { text: 'RESUMEN GENERAL', style: 'sectionTitle', alignment: 'right' },
+                                { text: `Total Salidas: ${filteredSalidas.length}`, alignment: 'right', fontSize: 9 },
+                                { text: `Cant. Total Unidades: ${totalUnidades}`, alignment: 'right', fontSize: 9 },
+                                { text: `Monto Acumulado: $${totalMonto.toFixed(2)}`, alignment: 'right', fontSize: 11, bold: true, color: '#0b5ee1' }
+                            ]
+                        }
+                    ]
+                },
+                { text: '\n' },
+                {
+                    table: {
+                        headerRows: 1,
+                        widths: [40, 60, '*', 50, 40, 50, 50, 60, 60, 60],
+                        body: [
+                            [
+                                { text: 'ID', style: 'tableHeader' },
+                                { text: 'FECHA', style: 'tableHeader' },
+                                { text: 'PRODUCTO', style: 'tableHeader' },
+                                { text: 'SKU', style: 'tableHeader' },
+                                { text: 'CANT', style: 'tableHeader' },
+                                { text: 'PRECIO', style: 'tableHeader' },
+                                { text: 'ENVÍO', style: 'tableHeader' },
+                                { text: 'TOTAL', style: 'tableHeader' },
+                                { text: 'ESTADO', style: 'tableHeader' },
+                                { text: 'USUARIO', style: 'tableHeader' }
+                            ],
+                            ...filteredSalidas.map(s => [
+                                { text: s.id, alignment: 'center', fontSize: 8 },
+                                { text: s.fecha_salida, alignment: 'center', fontSize: 8 },
+                                { text: s.nombre_producto, fontSize: 8 },
+                                { text: s.sku, alignment: 'center', fontSize: 7 },
+                                { text: s.cantidad, alignment: 'center', fontSize: 8 },
+                                { text: '$' + parseFloat(s.precio_unitario).toFixed(2), alignment: 'right', fontSize: 8 },
+                                { text: '$' + parseFloat(s.precio_envio || 0).toFixed(2), alignment: 'right', fontSize: 8 },
+                                { text: '$' + parseFloat(s.total).toFixed(2), alignment: 'right', fontSize: 8, bold: true },
+                                { 
+                                    text: s.estado.toUpperCase(), 
+                                    alignment: 'center', 
+                                    fontSize: 7, 
+                                    bold: true,
+                                    color: s.estado === 'Entregado' ? '#28a745' : s.estado === 'Cancelado' ? '#dc3545' : '#ffc107'
+                                },
+                                { text: s.usuario || 'N/A', fontSize: 8 }
+                            ])
+                        ]
+                    },
+                    layout: {
+                        fillColor: function (rowIndex, node, columnIndex) {
+                            return (rowIndex % 2 === 0) ? '#f8f9fa' : null;
+                        },
+                        hLineWidth: function (i, node) { return (i === 0 || i === node.table.body.length) ? 0.5 : 0.1; },
+                        vLineWidth: function (i, node) { return 0; },
+                        hLineColor: function (i, node) { return '#e2e8f0'; }
+                    }
+                }
+            ],
+            styles: {
+                mainHeader: { fontSize: 18, bold: true, color: '#0b5ee1' },
+                sectionTitle: { fontSize: 10, bold: true, color: '#333', margin: [0, 0, 0, 5] },
+                tableHeader: {
+                    bold: true,
+                    fontSize: 9,
+                    color: 'white',
+                    fillColor: '#0b5ee1',
+                    alignment: 'center',
+                    margin: [0, 2, 0, 2]
+                }
+            }
+        };
+
+        const fechaArchivo = new Date().toISOString().split('T')[0];
+        window.pdfMake.createPdf(docDefinition).download(`Reporte_Salidas_${fechaArchivo}.pdf`);
+        Swal.close();
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Reporte Generado',
+            text: 'El archivo PDF ha sido descargado correctamente.',
+            timer: 3000,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+
+    } catch (error) {
+        console.error("Error al generar PDF:", error);
+        Swal.close();
+        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar el reporte PDF' });
+    }
 }
 
 // Cambiar estado con confirmación
@@ -882,8 +1067,31 @@ function setupEvents() {
         aplicarFiltros();
     });
 
+    // Estadísticas interactivas
+    $("#totalSalidas").closest(".stat-card").on("click", function() {
+        $("#searchInput").val("");
+        setFechasIniciales();
+        $("#ordenar").val("fecha_desc");
+        aplicarFiltros();
+        Swal.fire({ icon: 'info', title: 'Filtros Reiniciados', text: 'Viendo todas las salidas', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
+    });
+
+    $("#montoTotal").closest(".stat-card").on("click", function() {
+        $("#ordenar").val("monto_desc");
+        aplicarFiltros();
+        Swal.fire({ icon: 'info', title: 'Ordenado por Monto', text: 'Filtrando por mayores ingresos', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
+    });
+
+    $("#salidasHoy").closest(".stat-card").on("click", function() {
+        const hoy = new Date().toISOString().split('T')[0];
+        $("#fechaDesde, #fechaHasta").val(hoy);
+        $("#ordenar").val("fecha_desc");
+        aplicarFiltros();
+        Swal.fire({ icon: 'info', title: 'Filtrado: Hoy', text: 'Viendo solo las salidas de este día', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
+    });
+
     // Exportar
-    $("#btnExportar").on("click", exportarSalidas);
+    $("#btnExportar").on("click", exportarSalidasPDF);
 
     // Cambio de pestaña
     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -926,9 +1134,165 @@ function setupEvents() {
         }
     });
 
-    // Imprimir detalle
+    // Imprimir detalle (Ticket PDF)
     $("#btnImprimirDetalle").on("click", function() {
-        window.print();
+        if (currentSalidaDetail) {
+            generarPDFTicket(currentSalidaDetail);
+        } else {
+            window.print();
+        }
     });
+}
+
+/**
+ * Helper para convertir una URL de imagen a Base64
+ */
+function getBase64ImageFromURL(url) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.setAttribute("crossOrigin", "anonymous");
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            const dataURL = canvas.toDataURL("image/png");
+            resolve(dataURL);
+        };
+        img.onerror = (error) => {
+            resolve(null);
+        };
+        img.src = url;
+    });
+}
+
+/**
+ * Genera un Ticket PDF compacto (layout de 80mm) con pdfmake
+ */
+async function generarPDFTicket(salida) {
+    Swal.fire({
+        title: 'Generando Ticket',
+        text: 'Por favor espere...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    try {
+        // En este archivo 'ruta' ya está definido arriba
+        const imgUrl = salida.imagen ? `${ruta}${salida.imagen}` : `${ruta}default.png`;
+        const base64Img = await getBase64ImageFromURL(imgUrl);
+
+        const docDefinition = {
+            pageSize: { width: 226.77, height: 'auto' }, // ~80mm width
+            pageMargins: [10, 10, 10, 10],
+            content: [
+                { text: 'AX STORE', style: 'storeName' },
+                { text: 'Comprobante de Salida', style: 'ticketTitle' },
+                { canvas: [{ type: 'line', x1: 0, y1: 5, x2: 206.77, y2: 5, lineWidth: 0.5 }] },
+                { text: '\n' },
+                {
+                    columns: [
+                        { text: 'ID Salida:', bold: true, fontSize: 8 },
+                        { text: '#' + salida.id, alignment: 'right', fontSize: 8 }
+                    ]
+                },
+                {
+                    columns: [
+                        { text: 'Fecha:', bold: true, fontSize: 8 },
+                        { text: salida.fecha_salida + ' ' + salida.hora_salida, alignment: 'right', fontSize: 8 }
+                    ]
+                },
+                {
+                    columns: [
+                        { text: 'Estado:', bold: true, fontSize: 8 },
+                        { text: (salida.estado || 'Pendiente').toUpperCase(), alignment: 'right', fontSize: 8, color: '#dc3545' }
+                    ]
+                },
+                { text: '\n' },
+                { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 206.77, y2: 0, lineWidth: 0.5 }] },
+                { text: 'PRODUCTO', style: 'sectionHeader' },
+                base64Img ? {
+                    image: base64Img,
+                    width: 60,
+                    alignment: 'center',
+                    margin: [0, 5, 0, 5]
+                } : {},
+                { text: salida.nombre_producto, bold: true, fontSize: 9, alignment: 'center' },
+                { text: 'SKU: ' + salida.sku, fontSize: 7, alignment: 'center', color: '#666' },
+                { text: '\n' },
+                {
+                    table: {
+                        widths: ['*', 'auto'],
+                        body: [
+                            [
+                                { text: 'Cant x Precio', fontSize: 8 },
+                                { text: salida.cantidad + ' x $' + parseFloat(salida.precio_unitario).toFixed(2), alignment: 'right', fontSize: 8 }
+                            ],
+                            [
+                                { text: 'Subtotal', bold: true, fontSize: 8 },
+                                { text: '$' + parseFloat(salida.subtotal).toFixed(2), alignment: 'right', bold: true, fontSize: 8 }
+                            ]
+                        ]
+                    },
+                    layout: 'noBorders'
+                },
+                { text: '\n' },
+                { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 206.77, y2: 0, lineWidth: 0.5 }] },
+                { text: 'ENVÍO / ENTREGA', style: 'sectionHeader' },
+                { text: 'Dirección:', bold: true, fontSize: 7 },
+                { text: salida.direccion_entrega || 'N/A', fontSize: 7, margin: [0, 0, 0, 5] },
+                {
+                    columns: [
+                        { text: 'Fecha Est. Entrega:', bold: true, fontSize: 7 },
+                        { text: salida.fecha_entrega || 'N/A', alignment: 'right', fontSize: 7 }
+                    ]
+                },
+                { text: '\n' },
+                { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 206.77, y2: 0, lineWidth: 1 }] },
+                {
+                    table: {
+                        widths: ['*', 'auto'],
+                        body: [
+                            [
+                                { text: 'Gastos de Envío', fontSize: 8 },
+                                { text: '$' + parseFloat(salida.precio_envio || 0).toFixed(2), alignment: 'right', fontSize: 8 }
+                            ],
+                            [
+                                { text: 'Costo Extra', fontSize: 8 },
+                                { text: '$' + parseFloat(salida.costo_extra || 0).toFixed(2), alignment: 'right', fontSize: 8 }
+                            ],
+                            [
+                                { text: 'TOTAL A PAGAR', style: 'totalLabel' },
+                                { text: '$' + parseFloat(salida.total).toFixed(2), style: 'totalValue' }
+                            ]
+                        ]
+                    },
+                    layout: 'noBorders',
+                    margin: [0, 5, 0, 5]
+                },
+                { text: '\n' },
+                { text: '¡Gracias por su preferencia!', alignment: 'center', fontSize: 8, italic: true },
+                { text: 'AX STORE', alignment: 'center', fontSize: 7, margin: [0, 10, 0, 0], color: '#aaa' }
+            ],
+            styles: {
+                storeName: { fontSize: 16, bold: true, alignment: 'center', margin: [0, 0, 0, 2] },
+                ticketTitle: { fontSize: 10, alignment: 'center', color: '#666' },
+                sectionHeader: { fontSize: 8, bold: true, margin: [0, 10, 0, 5], color: '#333' },
+                totalLabel: { fontSize: 10, bold: true, margin: [0, 5, 0, 0] },
+                totalValue: { fontSize: 12, bold: true, alignment: 'right', color: '#dc3545' }
+            }
+        };
+
+        window.pdfMake.createPdf(docDefinition).download('Ticket_Salida_' + salida.id + '.pdf');
+        Swal.close();
+
+    } catch (error) {
+        console.error("Error al generar ticket:", error);
+        Swal.close();
+        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar el ticket PDF' });
+    }
 }
 
