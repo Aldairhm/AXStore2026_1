@@ -1685,13 +1685,13 @@ footer .container {
 @media (max-width: 1200px) {
     :root {
         --desktop-padding: var(--tablet-padding);
-        --header-total-height: 50px;
+        --header-total-height: 80px;
         --branding-height: 60px;
     }
 
     body {
-        /*padding-top: var(--header-total-height);*/
-        padding-top: 60px !important;
+        padding-top: var(--header-total-height) !important;
+        /*padding-top: 60px !important;*/
     }
 
     .container {
@@ -1725,7 +1725,7 @@ footer .container {
 /* Tablets */
 @media (max-width: 991px) {
     :root {
-        --header-total-height: 50px;
+        --header-total-height: 80px;
         --branding-height: 60px;
         --topbar-height: 0;
     }
@@ -1900,7 +1900,7 @@ footer .container {
     }
 
     .branding {
-        padding: 12px 0;
+        padding: 5px 0;
     }
 
     .logo h1 {

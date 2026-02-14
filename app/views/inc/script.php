@@ -18,3 +18,17 @@
 <script src="<?php echo APP_URL; ?>app/views/assets/js/buttons.colVis.min.js"></script>
 
 <script src="<?php echo APP_URL; ?>app/views/assets/js/script.js?v=<?php echo time(); ?>"></script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    // Ajusta la ruta si tu proyecto no está en la raíz del dominio
+    navigator.serviceWorker.register('<?php echo APP_URL; ?>sw.js')
+      .then(function(registration) {
+        console.log('ServiceWorker registrado con éxito: ', registration.scope);
+      }, function(err) {
+        console.log('Fallo al registrar ServiceWorker: ', err);
+      });
+  });
+}
+</script>

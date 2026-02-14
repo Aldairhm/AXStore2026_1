@@ -1,0 +1,21 @@
+{
+  "name": "AXStore Online",
+  "short_name": "AXStore",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0b5ee1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "app/views/assets/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "app/views/assets/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -424,7 +424,7 @@
         }
 
         .logo h1 {
-            font-size: 1.5rem;
+            font-size: 1.7rem;
         }
 
         .logo-tagline {
@@ -456,10 +456,14 @@
         }
 
         .logo h1 {
-            font-size: 1.3rem;
+            font-size: 1.6rem;
         }
 
-        .logo-tagline {
-            display: none;
-        }
+        /* Busca esto dentro de @media (max-width: 768px) */
+    .logo-tagline {
+        display: block !important; /* Forzamos que se muestre */
+        font-size: 0.55rem;        /* Lo hacemos pequeñito para que quepa */
+        margin-left: 2px;
+        color: #718096;
+    }
     }
