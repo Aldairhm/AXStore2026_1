@@ -40,6 +40,18 @@ function cargarTodosLosProductos() {
                 cargarCategorias();
                 renderProducts(filteredProducts);
                 updateResultCount();
+
+                // [NUEVO] Abrir modal de salida automáticamente si viene el ID en la URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const abrirSalidaId = urlParams.get('abrirSalida');
+                if (abrirSalidaId) {
+                    const productToOpen = allProducts.find(p => p.id == abrirSalidaId);
+                    if (productToOpen) {
+                        setTimeout(() => abrirModalSalida(productToOpen), 500);
+                        // Limpiar la URL para que no se reabra al recargar
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                }
             } else {
                 console.error("Error al cargar productos");
                 showNoResults();
@@ -163,6 +175,9 @@ function renderProducts(productsList) {
                         <button class="btn-action-premium btnQuickView" data-id="${product.id}" title="Vista Rápida">
                             <i class="fas fa-eye"></i>
                         </button>
+                        <button class="btn-action-premium btnPdfDownload" data-id="${product.id}" title="Descargar Ficha PDF">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
                     </div>
 
                     <!-- Imagen con Efecto Hover -->
@@ -202,6 +217,137 @@ function renderProducts(productsList) {
             </div>
         `;
         $productGrid.append(card);
+    });
+}
+
+// Event listener para el botón PDF (Delegado para mayor robustez)
+$(document).on("click", ".btnPdfDownload", function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const id = $(this).data("id");
+    console.log("PDF Clicked for ID:", id);
+    
+    // Usamos la variable global filteredProducts o buscamos en products si estuviera disponible
+    // En catalogo.js la variable global es 'allProducts'
+    const product = allProducts.find(p => p.id == id);
+    
+    if (product) {
+        console.log("Generating Ticket for:", product.nombre);
+        descargarFichaProducto(product);
+    } else {
+        console.error("Product not found for ID:", id);
+    }
+});
+
+// Función para descargar PDF tipo TICKET
+async function descargarFichaProducto(product) {
+    console.log("Iniciando descargarFichaProducto...");
+    try {
+        const { jsPDF } = window.jspdf;
+        if (!jsPDF) throw new Error("jsPDF no está cargado correctamente.");
+
+        // Formato Ticket (80mm x 150mm aprox)
+        const doc = new jsPDF({
+            unit: 'mm',
+            format: [80, 160]
+        });
+    
+    const pageWidth = 80;
+    const margin = 5;
+    const availableWidth = pageWidth - (margin * 2);
+    
+    // Header Ticket
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("AXStore", pageWidth / 2, 10, { align: "center" });
+    
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("******************************************", pageWidth / 2, 14, { align: "center" });
+    doc.text("FICHA DE PRODUCTO", pageWidth / 2, 18, { align: "center" });
+    doc.text("******************************************", pageWidth / 2, 22, { align: "center" });
+    
+    // Imagen del Producto (Centrada)
+    let yPos = 25;
+    try {
+        const imgUrl = "app/views/assets/images/" + (product.imagen || 'default.png');
+        const imgData = await getBase64ImageFromUrl(imgUrl);
+        const imgSize = 50; 
+        const xImg = (pageWidth - imgSize) / 2;
+        doc.addImage(imgData, "JPEG", xImg, yPos, imgSize, imgSize);
+        yPos += imgSize + 5;
+    } catch (err) {
+        console.error("Error cargando imagen para PDF:", err);
+        yPos += 5;
+    }
+    
+    // Datos del Producto
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    const splitTitle = doc.splitTextToSize(product.nombre.toUpperCase(), availableWidth);
+    doc.text(splitTitle, pageWidth / 2, yPos, { align: "center" });
+    yPos += (splitTitle.length * 5) + 2;
+    
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(`CAT: ${product.nombre_categoria}`, pageWidth / 2, yPos, { align: "center" });
+    yPos += 4;
+    doc.text(`SKU: ${product.sku}`, pageWidth / 2, yPos, { align: "center" });
+    yPos += 8;
+    
+    // Precio (Grande)
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(`PRECIO: $${parseFloat(product.precio_venta).toFixed(2)}`, pageWidth / 2, yPos, { align: "center" });
+    yPos += 10;
+    
+    // Línea divisoria
+    doc.setFontSize(8);
+    doc.text("------------------------------------------", pageWidth / 2, yPos, { align: "center" });
+    yPos += 5;
+    
+    // Stock Info
+    doc.setFontSize(9);
+    doc.text(`STOCK DISPONIBLE: ${product.stock} UNI.`, pageWidth / 2, yPos, { align: "center" });
+    yPos += 10;
+    
+    // Footer
+    doc.setFontSize(7);
+    doc.text("¡GRACIAS POR SU PREFERENCIA!", pageWidth / 2, yPos, { align: "center" });
+    yPos += 4;
+    doc.text(new Date().toLocaleString(), pageWidth / 2, yPos, { align: "center" });
+    
+    console.log("Guardando PDF...");
+    doc.save(`Ticket_${product.sku}.pdf`);
+    console.log("PDF guardado con éxito.");
+
+    } catch (error) {
+        console.error("Error fatal generando PDF:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error al generar PDF',
+            text: 'Hubo un problema al crear el ticket. Revisa la consola para más detalles.'
+        });
+    }
+}
+
+// Helper para imagen
+function getBase64ImageFromUrl(url) {
+    return new Promise((resolve, reject) => {
+        var img = new Image();
+        img.setAttribute("crossOrigin", "anonymous");
+        img.onload = () => {
+            var canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            var dataURL = canvas.toDataURL("image/jpeg");
+            resolve(dataURL);
+        };
+        img.onerror = error => reject(error);
+        img.src = url;
     });
 }
 
@@ -261,20 +407,84 @@ function setupEvents() {
     // Calcular totales en tiempo real
     $("#cantidad_salida, #precio_envio, #costo_extra").on("input", calcularTotales);
 
-    // Botones dinámicos de las tarjetas
+    // Acción desde Quick View
     $(document).on("click", ".btnQuickView", function() {
         const id = $(this).data("id");
         abrirQuickView(id);
     });
 
-    // Acción desde Quick View
-    $("#btnSalidaFromQuick").on("click", function() {
-        const id = $(this).data("id");
-        const prod = allProducts.find(p => p.id == id);
-        $("#modalQuickView").modal("hide");
-        if (prod) abrirModalSalida(prod);
-    });
+    function abrirQuickView(id) {
+        $.ajax({
+            url: "app/controllers/productoController.php",
+            type: "POST",
+            data: { accion: "obtenerDetalleQuickView", id: id },
+            dataType: "json",
+            beforeSend: function() {
+                Swal.fire({
+                    title: 'Cargando...',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+            },
+            success: function(response) {
+                Swal.close();
+                if (response.status === "success") {
+                    const data = response.data;
+                    const v = data.variante;
+                    
+                    console.log("Quick View Data:", v); // DEBUG: Ver qué llega del backend
 
+                    // [MEJORA] Mostrar nombre del Padre + Variante
+                    const nombrePadre = v.nombre_producto_padre || "Producto";
+                    const nombreVariante = v.nombre || "";
+                    
+                    $("#qv-category").text(v.nombre_categoria);
+                    $("#qv-sku").text("SKU: " + v.sku);
+                    
+                    // Actualizamos el título para que sea descriptivo
+                    $("#qv-name").html(`<small class="text-muted d-block fs-6 mb-1">${nombrePadre}</small>${nombreVariante}`);
+                    
+                    $("#qv-price").text("$" + parseFloat(v.precio_venta).toFixed(2));
+                    $("#qv-stock").text(v.stock + " unidades");
+                    $("#qv-description").text(v.descripcion || "Sin descripción.");
+
+                    // Galería
+                    const $gallery = $("#qv-gallery-thumbs");
+                    $gallery.empty();
+                    const ruta = "app/views/assets/images/";
+                    
+                    if (data.imagenes.length > 0) {
+                         $("#qv-main-img").attr("src", ruta + data.imagenes[0].ruta_imagen);
+                         data.imagenes.forEach((img, idx) => {
+                             $gallery.append(`<div class="quick-view-thumb ${idx===0?'active':''}"><img src="${ruta}${img.ruta_imagen}"></div>`);
+                         });
+                    } else {
+                        $("#qv-main-img").attr("src", ruta + "default.png");
+                    }
+                    
+                    // Atributos
+                    const $attr = $("#qv-attributes");
+                    $attr.empty();
+                    if(data.atributos.length > 0){
+                        let html = '<div class="d-flex flex-wrap gap-2">';
+                        data.atributos.forEach(a => {
+                            html += `<span class="badge bg-light text-dark border">${a.nombre_atributo}: ${a.valor}</span>`;
+                        });
+                        html += '</div>';
+                        $attr.html(html);
+                    }
+                    
+                    $("#modalQuickView").modal("show");
+                } else {
+                    Swal.fire("Error", response.message, "error");
+                }
+            },
+            error: function() {
+                Swal.close();
+                Swal.fire("Error", "No se pudo conectar", "error");
+            }
+        });
+    }
     // Cambio de imagen en Quick View
     $(document).on("click", ".quick-view-thumb", function() {
         $(".quick-view-thumb").removeClass("active");
@@ -1038,7 +1248,7 @@ function abrirQuickView(id) {
                         attrHtml += `
                             <div class="col">
                                 <div class="p-2 border rounded bg-light small">
-                                    <span class="text-muted">${attr.nombre}:</span> <br>
+                                    <span class="text-muted">${attr.nombre_atributo}:</span> <br>
                                     <strong class="text-dark">${attr.valor}</strong>
                                 </div>
                             </div>
@@ -1052,7 +1262,14 @@ function abrirQuickView(id) {
                 $("#btnSalidaFromQuick").data("id", v.id);
 
                 $("#modalQuickView").modal("show");
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: response.message || 'No se pudo cargar el detalle.' });
             }
+        },
+        error: function(xhr, status, error) {
+            Swal.close();
+            console.error("Error QuickView:", error);
+            Swal.fire({ icon: 'error', title: 'Error de Conexión', text: 'No se pudo conectar con el servidor.' });
         }
     });
 }

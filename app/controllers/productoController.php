@@ -336,6 +336,27 @@ try {
             }
             break;
 
+        case 'obtenerDetalleQuickView':
+            $id = (int)$_POST["id"];
+            $variante = $productoModel->getVariantePorId($id);
+            if ($variante) {
+                // Agregar el nombre del producto padre, categoría y descripción
+                $productoPadre = $productoModel->obtenerProductoPorId((int)$variante['id_producto']);
+                if ($productoPadre) {
+                    $variante['nombre_categoria'] = $productoPadre['categoria'];
+                    $variante['descripcion'] = $productoPadre['descripcion'];
+                }
+                
+                $response = ["status" => "success", "data" => [
+                    "variante" => $variante,
+                    "imagenes" => $productoModel->getImagenesVariante($id),
+                    "atributos" => $productoModel->obtenerValorAtributosVariante($id)
+                ]];
+            } else {
+                $response = ["status" => "error", "message" => "Variante no encontrada"];
+            }
+            break;
+
         case 'cambiarPortada':
             $idV = (int)$_POST["id_variante"];
             $idImg = (int)$_POST["id"];

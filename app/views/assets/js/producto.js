@@ -386,11 +386,16 @@ function abrirEditarProducto(id) {
         dataType: "json",
         success: function(response) {
             if (response.status === "success") {
-                const producto = response.data;
+                const producto = response.data; // Note: In 'obtener_uno', response.data IS the product object directly, not {variante: ...}
                 
                 // Llenamos los campos del modal con los datos recibidos
                 $("#id_producto_edit").val(producto.id);
-                $("#nombre_edit").val(producto.nombre);
+                // [NUEVO] Mostramos el nombre completo (Padre + Variante) si es posible, o solo el nombre
+                const nombreCompleto = producto.nombre_producto_padre 
+                                     ? `${producto.nombre_producto_padre} - ${producto.nombre}` 
+                                     : producto.nombre;
+                
+                $("#nombre_edit").val(nombreCompleto);
                 $("#id_categoria_edit").val(producto.id_categoria);
                 $("#estado_edit").val(producto.estado);
                 $("#descripcion_edit").val(producto.descripcion);
