@@ -2261,11 +2261,13 @@ body.mobile-nav-open {
 
 /* 1. Elevar los modales por encima del Header (que tiene z-index 11000) */
 .modal-backdrop {
-    z-index: 12000 !important; /* Fondo oscuro */
+    z-index: 12000 !important;
+    /* Fondo oscuro */
 }
 
 .modal {
-    z-index: 12010 !important; /* El modal en sí */
+    z-index: 12010 !important;
+    /* El modal en sí */
 }
 
 /* 2. Forzar centrado vertical perfecto y evitar que se peguen arriba */
@@ -2288,4 +2290,53 @@ body.mobile-nav-open {
 /* 4. Corrección para evitar conflictos con Animate.css si lo usas en el modal */
 .modal.animate__animated {
     --animate-duration: 0.3s;
+}
+
+/* ============================================
+   CARRUSEL DE PRODUCTOS - HOME
+   ============================================ */
+.product-carousel-container {
+    padding: 20px 0 50px;
+    position: relative;
+}
+
+.productSwiper {
+    padding: 15px 5px 60px !important;
+}
+
+.productSwiper .swiper-slide {
+    height: auto;
+    display: flex;
+}
+
+.productSwiper .swiper-button-next,
+.productSwiper .swiper-button-prev {
+    color: var(--primary-color);
+    background: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    top: 45%;
+}
+
+.productSwiper .swiper-button-next:after,
+.productSwiper .swiper-button-prev:after {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.productSwiper .swiper-pagination-bullet-active {
+    background: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+    .productSwiper {
+        padding-bottom: 50px !important;
+    }
+
+    .productSwiper .swiper-button-next,
+    .productSwiper .swiper-button-prev {
+        display: none;
+    }
 }

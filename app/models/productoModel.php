@@ -20,8 +20,12 @@ class Producto
 
     public function obtenerProductoPorId(int $id): ?array
     {
-        $sql = "SELECT p.id, p.nombre, p.descripcion, p.estado, c.nombre AS categoria, c.id AS id_categoria 
-                FROM producto p INNER JOIN categoria c ON p.id_categoria = c.id WHERE p.id = :id";
+        $sql = "SELECT p.id, p.nombre, p.descripcion, p.estado, 
+                COALESCE(c.nombre, 'Sin Categoría') AS categoria, 
+                c.id AS id_categoria 
+                FROM producto p 
+                LEFT JOIN categoria c ON p.id_categoria = c.id 
+                WHERE p.id = :id";
         $stmt = $this->conexion->prepare($sql);
         $stmt->execute([':id' => $id]);
         $res = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -89,12 +93,16 @@ class Producto
 
     public function getVariantePorId(int $id): ?array
     {
-        // Usamos LEFT JOIN para no perder los datos de la variante si no hay fotos
-        // Usamos COALESCE para poner una imagen por defecto si la ruta viene NULL
+        // [MEJORA] Ahora hacemos JOIN completo para traer info del padre y evitar queries extra
         $sql = "SELECT 
                 v.*, 
+                p.nombre AS nombre_producto_padre,
+                p.descripcion AS descripcion_producto,
+                COALESCE(c.nombre, 'Sin Categoría') AS nombre_categoria,
                 COALESCE(m.ruta_imagen, 'default.png') as imagen 
             FROM variante v 
+            INNER JOIN producto p ON v.id_producto = p.id
+            LEFT JOIN categoria c ON p.id_categoria = c.id
             LEFT JOIN variante_imagen m ON m.id_variante = v.id AND m.es_principal = 1 
             WHERE v.id = :id";
 

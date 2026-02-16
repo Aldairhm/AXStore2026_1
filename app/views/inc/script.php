@@ -17,6 +17,9 @@
 <script src="<?php echo APP_URL; ?>app/views/assets/js/buttons.print.min.js"></script>
 <script src="<?php echo APP_URL; ?>app/views/assets/js/buttons.colVis.min.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="<?php echo APP_URL; ?>app/views/assets/js/script.js?v=<?php echo time(); ?>"></script>
 
 <script>

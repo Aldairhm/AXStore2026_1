@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let stockColor = product.stock > 5 ? 'text-success' : product.stock > 0 ? 'text-warning' : 'text-danger';
 
             const col = document.createElement('div');
-            col.className = 'col animate__animated animate__fadeIn';
+            col.className = 'swiper-slide animate__animated animate__fadeIn';
             
             col.innerHTML = `
                 <div class="card h-100 border-0 shadow-sm transition-hover product-card">
@@ -330,6 +330,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="product-quick-actions">
                         <button class="btn-action-premium btnQuickViewHome" data-id="${product.id}" title="Vista Rápida">
                             <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn-action-premium btnPdfDownloadHome" data-id="${product.id}" title="Descargar Ficha PDF">
+                            <i class="fas fa-file-pdf"></i>
                         </button>
                     </div>
                     <div class="product-image-container">
@@ -348,9 +351,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span class="h4 mb-0 text-primary fw-bold">$${precioFormateado}</span>
                                 <span class="small text-muted">SKU: ${product.sku}</span>
                             </div>
-                            <a href="catalogo" class="btn btn-dark w-100 py-2">
-                                <i class="fas fa-shopping-bag me-1"></i> VER EN CATÁLOGO
-                            </a>
+                            <button class="btn btn-danger btn-sm w-100 btnSalidaHome py-2" 
+                                    data-id="${product.id}"
+                                    ${product.stock <= 0 ? 'disabled' : ''}>
+                                <i class="fas fa-truck me-1"></i> REGISTRAR SALIDA
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -358,18 +363,68 @@ document.addEventListener('DOMContentLoaded', function() {
             productGrid.appendChild(col);
         });
 
-        $(".btnQuickViewHome").on("click", function() {
+        // Listeners específicos para elementos dentro del grid
+        $(".btnQuickViewHome").off("click").on("click", function() {
             abrirQuickView($(this).data("id"));
+        });
+
+        // Inicializar o actualizar Swiper
+        inicializarSwiper();
+    }
+
+    let productSwiperInstance = null;
+    function inicializarSwiper() {
+        if (productSwiperInstance) {
+            productSwiperInstance.destroy(true, true);
+        }
+
+        productSwiperInstance = new Swiper(".productSwiper", {
+            slidesPerView: 1,
+            spaceBetween: 20,
+            loop: false,
+            pagination: {
+                el: ".swiper-pagination",
+                clickable: true,
+                dynamicBullets: true
+            },
+            navigation: {
+                nextEl: ".swiper-button-next",
+                prevEl: ".swiper-button-prev",
+            },
+            breakpoints: {
+                576: { slidesPerView: 2 },
+                992: { slidesPerView: 3 },
+                1200: { slidesPerView: 4 },
+            }
         });
     }
 
-    // Eventos de búsqueda
-    $("#product-search").on("input", aplicarFiltros);
+    // Event listener para el botón PDF en Home (Delegado)
+    $(document).on("click", ".btnPdfDownloadHome", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const id = $(this).data("id");
+        console.log("Home PDF Clicked for ID:", id);
+        
+        const product = allProducts.find(p => p.id == id);
+        
+        if (product) {
+            console.log("Generating Home Ticket for:", product.nombre);
+            descargarFichaProducto(product);
+        } else {
+            console.error("Home Product not found for ID:", id);
+        }
+    });
+
     $("#btn-refresh").on("click", function() {
         $("#product-search").val("");
         $("#category-filter").val("all").trigger("change");
         cargarDatosHome();
     });
+
+    // Eventos de búsqueda
+    $("#product-search").on("input", aplicarFiltros);
 
     function abrirQuickView(id) {
         $.ajax({
@@ -385,11 +440,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (response.status === "success") {
                     const data = response.data;
                     const v = data.variante;
+                    console.log("Quick View Data (Home):", v); // DEBUG
                     const ruta = "app/views/assets/images/";
                     
-                    $("#qv-name").text(v.nombre);
+                    // [MEJORA] Mostrar nombre del Padre + Variante
+                    const nombrePadre = v.nombre_producto_padre || "Producto";
+                    const nombreVariante = v.nombre || "";
+
                     $("#qv-category").text(v.nombre_categoria);
                     $("#qv-sku").text("SKU: " + v.sku);
+                    // Actualizamos el título para que sea descriptivo
+                    $("#qv-name").html(`<small class="text-muted d-block fs-6 mb-1">${nombrePadre}</small>${nombreVariante}`);
+
                     $("#qv-price").text("$" + parseFloat(v.precio_venta).toFixed(2));
                     $("#qv-stock").text(v.stock + " unidades");
                     $("#qv-description").text(v.descripcion || "Sin descripción disponible.");
@@ -410,22 +472,35 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.atributos.length > 0) {
                         let attrHtml = '<div class="row row-cols-2 g-2">';
                         data.atributos.forEach(attr => {
-                            attrHtml += `<div class="col"><div class="p-2 border rounded bg-light small"><span class="text-muted">${attr.nombre}:</span> <strong class="text-dark">${attr.valor}</strong></div></div>`;
+                            attrHtml += `<div class="col"><div class="p-2 border rounded bg-light small"><span class="text-muted">${attr.nombre_atributo}:</span> <strong class="text-dark">${attr.valor}</strong></div></div>`;
                         });
                         attrHtml += '</div>';
                         $attrContainer.append(attrHtml);
                     }
                     $("#modalQuickView").modal("show");
+                    $("#btnSalidaFromQuick").data("id", id);
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error', text: response.message || 'No se pudo cargar el detalle.' });
                 }
+            },
+            error: function(xhr, status, error) {
+                Swal.close();
+                console.error("Error QuickView:", error);
+                Swal.fire({ icon: 'error', title: 'Error de Conexión', text: 'No se pudo conectar con el servidor.' });
             }
         });
     }
 
-    // Manejador para miniaturas en el modal de Home
+
+
+    // Manejador para miniaturas en el modal de Home (con efecto fade)
     $(document).on("click", ".quick-view-thumb", function() {
         $(".quick-view-thumb").removeClass("active");
         $(this).addClass("active");
-        $("#qv-main-img").attr("src", $(this).find("img").attr("src"));
+        const newSrc = $(this).find("img").attr("src");
+        $("#qv-main-img").fadeOut(200, function() {
+            $(this).attr("src", newSrc).fadeIn(200);
+        });
     });
 
     // ==========================================
@@ -523,6 +598,117 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     
+
+// Función para descargar PDF tipo TICKET
+async function descargarFichaProducto(product) {
+    console.log("Iniciando descargarFichaProducto (Home)...");
+    try {
+        const { jsPDF } = window.jspdf;
+        if (!jsPDF) throw new Error("jsPDF no está cargado correctamente.");
+
+        // Formato Ticket (80mm x 150mm aprox)
+        const doc = new jsPDF({
+            unit: 'mm',
+            format: [80, 160]
+        });
+    
+    const pageWidth = 80;
+    const margin = 5;
+    const availableWidth = pageWidth - (margin * 2);
+    
+    // Header Ticket
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("AXStore", pageWidth / 2, 10, { align: "center" });
+    
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("******************************************", pageWidth / 2, 14, { align: "center" });
+    doc.text("FICHA DE PRODUCTO", pageWidth / 2, 18, { align: "center" });
+    doc.text("******************************************", pageWidth / 2, 22, { align: "center" });
+    
+    // Imagen del Producto (Centrada)
+    let yPos = 25;
+    try {
+        const imgUrl = "app/views/assets/images/" + (product.imagen || 'default.png');
+        const imgData = await getBase64ImageFromUrl(imgUrl);
+        const imgSize = 50; 
+        const xImg = (pageWidth - imgSize) / 2;
+        doc.addImage(imgData, "JPEG", xImg, yPos, imgSize, imgSize);
+        yPos += imgSize + 5;
+    } catch (err) {
+        console.error("Error cargando imagen para PDF:", err);
+        yPos += 5;
+    }
+    
+    // Datos del Producto
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    const splitTitle = doc.splitTextToSize(product.nombre.toUpperCase(), availableWidth);
+    doc.text(splitTitle, pageWidth / 2, yPos, { align: "center" });
+    yPos += (splitTitle.length * 5) + 2;
+    
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(`CAT: ${product.nombre_categoria}`, pageWidth / 2, yPos, { align: "center" });
+    yPos += 4;
+    doc.text(`SKU: ${product.sku}`, pageWidth / 2, yPos, { align: "center" });
+    yPos += 8;
+    
+    // Precio (Grande)
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(`PRECIO: $${parseFloat(product.precio_venta).toFixed(2)}`, pageWidth / 2, yPos, { align: "center" });
+    yPos += 10;
+    
+    // Línea divisoria
+    doc.setFontSize(8);
+    doc.text("------------------------------------------", pageWidth / 2, yPos, { align: "center" });
+    yPos += 5;
+    
+    // Stock Info
+    doc.setFontSize(9);
+    doc.text(`STOCK DISPONIBLE: ${product.stock} UNI.`, pageWidth / 2, yPos, { align: "center" });
+    yPos += 10;
+    
+    // Footer
+    doc.setFontSize(7);
+    doc.text("¡GRACIAS POR SU PREFERENCIA!", pageWidth / 2, yPos, { align: "center" });
+    yPos += 4;
+    doc.text(new Date().toLocaleString(), pageWidth / 2, yPos, { align: "center" });
+    
+    console.log("Guardando PDF (Home)...");
+    doc.save(`Ticket_${product.sku}.pdf`);
+    console.log("PDF guardado con éxito (Home).");
+
+    } catch (error) {
+        console.error("Error fatal generando PDF (Home):", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error al generar PDF',
+            text: 'Hubo un problema al crear el ticket térmico.'
+        });
+    }
+}
+
+// Helper para imagen
+function getBase64ImageFromUrl(url) {
+    return new Promise((resolve, reject) => {
+        var img = new Image();
+        img.setAttribute("crossOrigin", "anonymous");
+        img.onload = () => {
+            var canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            var dataURL = canvas.toDataURL("image/jpeg");
+            resolve(dataURL);
+        };
+        img.onerror = error => reject(error);
+        img.src = url;
+    });
+}
 
 // Estilos para notificaciones
 const style = document.createElement('style');
