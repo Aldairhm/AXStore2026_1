@@ -189,7 +189,10 @@ function renderProducts(productsList) {
                     <div class="card-body d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <span class="badge bg-light text-dark border">${product.nombre_categoria}</span>
-                            <span class="small fw-bold ${stockColor}">${product.stock > 0 ? product.stock + ' un.' : 'AGOTADO'}</span>
+                            <div class="text-end">
+                                <span class="d-block small fw-bold ${stockColor}">${product.stock > 0 ? product.stock + ' un.' : 'AGOTADO'}</span>
+                                <span class="d-block x-small text-muted" style="font-size: 0.7rem;">Reserva: ${product.reserva} un.</span>
+                            </div>
                         </div>
                         
                         <p class="text-muted small mb-1">${product.nombre_producto_padre}</p>
@@ -445,7 +448,8 @@ function setupEvents() {
                     $("#qv-name").html(`<small class="text-muted d-block fs-6 mb-1">${nombrePadre}</small>${nombreVariante}`);
                     
                     $("#qv-price").text("$" + parseFloat(v.precio_venta).toFixed(2));
-                    $("#qv-stock").text(v.stock + " unidades");
+                    $("#qv-stock").text(v.stock + " un.");
+                    $("#qv-reserva").text(v.reserva + " un.");
                     $("#qv-description").text(v.descripcion || "Sin descripción.");
 
                     // Galería

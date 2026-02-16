@@ -34,11 +34,24 @@
                             <!-- Atributos dinámicos -->
                         </div>
 
-                        <div class="bg-light p-3 rounded mb-4 d-flex align-items-center">
-                            <i class="fas fa-warehouse text-success me-3 fs-4"></i>
-                            <div>
-                                <small class="text-muted d-block">Existencias Disponibles</small>
-                                <strong id="qv-stock" class="fs-5">0 unidades</strong>
+                        <div class="row g-2 mb-4">
+                            <div class="col-6">
+                                <div class="bg-light p-3 rounded d-flex align-items-center h-100">
+                                    <i class="fas fa-warehouse text-success me-3 fs-4"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Existencias</small>
+                                        <strong id="qv-stock" class="fs-6">0 un.</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="bg-light p-3 rounded d-flex align-items-center h-100">
+                                    <i class="fas fa-hand-holding-usd text-warning me-3 fs-4"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Reserva</small>
+                                        <strong id="qv-reserva" class="fs-6">0 un.</strong>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
