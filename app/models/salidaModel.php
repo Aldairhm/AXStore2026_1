@@ -17,14 +17,12 @@ class Salida
     public function registrarSalida(array $datos): ?int
     {
         $sql = "INSERT INTO salida (
-                    id_variante, id_usuario, cantidad, fecha_salida, hora_salida, 
-                    fecha_entrega, direccion, precio_envio, costo_extra, 
-                    precio_unitario, subtotal, total, observaciones
-                ) VALUES (
-                    :id_variante, :id_usuario, :cantidad, :fecha_salida, :hora_salida,
-                    :fecha_entrega, :direccion, :precio_envio, :costo_extra,
-                    :precio_unitario, :subtotal, :total, :observaciones
-                )";
+                id_variante, id_usuario, cantidad, fecha_salida, hora_salida,
+                precio_unitario, subtotal, descuento, total, estado, fecha_entrega
+            ) VALUES (
+                :id_variante, :id_usuario, :cantidad, :fecha_salida, :hora_salida,
+                :precio_unitario, :subtotal, :descuento, :total, 'Entregado', :fecha_entrega
+            )";
 
         $stmt = $this->conexion->prepare($sql);
 
@@ -34,14 +32,11 @@ class Salida
             ':cantidad' => $datos['cantidad'],
             ':fecha_salida' => $datos['fecha_salida'],
             ':hora_salida' => $datos['hora_salida'],
-            ':fecha_entrega' => $datos['fecha_entrega'],
-            ':direccion' => $datos['direccion'],
-            ':precio_envio' => $datos['precio_envio'],
-            ':costo_extra' => $datos['costo_extra'],
             ':precio_unitario' => $datos['precio_unitario'],
             ':subtotal' => $datos['subtotal'],
+            ':descuento' => $datos['descuento'],
             ':total' => $datos['total'],
-            ':observaciones' => $datos['observaciones']
+            ':fecha_entrega' => $datos['fecha_salida'],
         ]) ? (int)$this->conexion->lastInsertId() : null;
     }
 
@@ -108,12 +103,7 @@ class Salida
                     v.stock as stock_actual,
                     u.nombre_real as usuario,
                     c.nombre as nombre_categoria,
-                    -- Calcular si está dentro del plazo de devolución
-                    CASE 
-                        WHEN s.fecha_entrega IS NULL THEN 1
-                        WHEN CURDATE() <= s.fecha_entrega THEN 1
-                        ELSE 0
-                    END as puede_devolver
+                    1 as puede_devolver
                 FROM salida s
                 INNER JOIN variante v ON s.id_variante = v.id
                 INNER JOIN usuario u ON s.id_usuario = u.id
@@ -138,17 +128,8 @@ class Salida
                     u.nombre_real as usuario,
                     c.nombre as nombre_categoria,
                     p.nombre as nombre_producto_padre,
-                    -- Calcular si está dentro del plazo de devolución
-                    CASE 
-                        WHEN s.fecha_entrega IS NULL THEN 1
-                        WHEN CURDATE() <= s.fecha_entrega THEN 1
-                        ELSE 0
-                    END as puede_devolver,
-                    -- Calcular días restantes para devolución
-                    CASE 
-                        WHEN s.fecha_entrega IS NULL THEN NULL
-                        ELSE DATEDIFF(s.fecha_entrega, CURDATE())
-                    END as dias_para_devolucion
+                    1 as puede_devolver,
+                    NULL as dias_para_devolucion
                 FROM salida s
                 INNER JOIN variante v ON s.id_variante = v.id
                 INNER JOIN usuario u ON s.id_usuario = u.id
@@ -429,54 +410,81 @@ class Salida
     /**
      * Registrar una devolución con todas las validaciones
      */
-    public function procesarDevolucion(int $id, string $motivo = ''): array
-    {
-        // Verificar si puede devolver
-        $validacion = $this->puedeDevolver($id);
+   public function procesarDevolucion(int $id, string $motivo = '', ?int $cantidadADevolver = null): array
+{
+    $salida = $this->obtenerDetalleSalida($id);
 
-        if (!$validacion['puede']) {
-            return [
-                'exito' => false,
-                'mensaje' => $validacion['motivo']
-            ];
-        }
-
-        $salida = $this->obtenerDetalleSalida($id);
-
-        try {
-            $this->conexion->beginTransaction();
-
-            // Cambiar estado a Cancelado
-            if (!$this->cambiarEstadoSalida($id, 'Cancelado')) {
-                throw new Exception("Error al cambiar el estado de la salida");
-            }
-
-            // Restaurar stock
-            if (!$this->actualizarStock($salida['id_variante'], $salida['cantidad'])) {
-                throw new Exception("Error al restaurar el stock");
-            }
-
-            // Registrar en tabla de devoluciones (opcional - si tienes una tabla para esto)
-            // $this->registrarHistorialDevolucion($id, $motivo);
-
-            $this->conexion->commit();
-
-            return [
-                'exito' => true,
-                'mensaje' => "Devolución procesada exitosamente. Se restauraron {$salida['cantidad']} unidades al inventario",
-                'cantidad_devuelta' => $salida['cantidad'],
-                'stock_actualizado' => $salida['stock_actual'] + $salida['cantidad']
-            ];
-
-        }
-        catch (Exception $e) {
-            $this->conexion->rollBack();
-            return [
-                'exito' => false,
-                'mensaje' => "Error al procesar devolución: " . $e->getMessage()
-            ];
-        }
+    if (!$salida) {
+        return ['exito' => false, 'mensaje' => 'Salida no encontrada'];
     }
+
+    if ($salida['estado'] === 'Cancelado') {
+        return ['exito' => false, 'mensaje' => 'Esta salida ya fue cancelada'];
+    }
+
+    $cantidadOriginal = (int)$salida['cantidad'];
+
+    // Si no se especifica cantidad, devolver todo
+    if ($cantidadADevolver === null || $cantidadADevolver <= 0) {
+        $cantidadADevolver = $cantidadOriginal;
+    }
+
+    // No puede devolver más de lo que hay
+    if ($cantidadADevolver > $cantidadOriginal) {
+        return ['exito' => false, 'mensaje' => 'No puede devolver más unidades de las registradas'];
+    }
+
+    $esTotal = ($cantidadADevolver >= $cantidadOriginal);
+
+    try {
+        $this->conexion->beginTransaction();
+
+        if ($esTotal) {
+            // Devolución total: cancelar la salida
+            if (!$this->cambiarEstadoSalida($id, 'Cancelado')) {
+                throw new Exception("Error al cancelar la salida");
+            }
+        } else {
+            // Devolución parcial: reducir cantidad, mantener estado Entregado
+            $nuevaCantidad = $cantidadOriginal - $cantidadADevolver;
+            $nuevoSubtotal = $nuevaCantidad * (float)$salida['precio_unitario'];
+            $nuevoTotal    = max(0.0, $nuevoSubtotal - (float)$salida['descuento']);
+
+            $sql = "UPDATE salida SET cantidad = :cantidad, subtotal = :subtotal, total = :total WHERE id = :id";
+            $stmt = $this->conexion->prepare($sql);
+            if (!$stmt->execute([
+                ':cantidad' => $nuevaCantidad,
+                ':subtotal' => $nuevoSubtotal,
+                ':total'    => $nuevoTotal,
+                ':id'       => $id
+            ])) {
+                throw new Exception("Error al actualizar la cantidad");
+            }
+        }
+
+        // Restaurar stock con la cantidad devuelta
+        if (!$this->actualizarStock($salida['id_variante'], $cantidadADevolver)) {
+            throw new Exception("Error al restaurar el stock");
+        }
+
+        $this->conexion->commit();
+
+        $mensaje = $esTotal
+            ? "Devolución total: se canceló la salida y se restauraron {$cantidadADevolver} unidades."
+            : "Devolución parcial: se devolvieron {$cantidadADevolver} unidades al stock. La salida continúa con " . ($cantidadOriginal - $cantidadADevolver) . " unidades.";
+
+        return [
+            'exito'            => true,
+            'mensaje'          => $mensaje,
+            'cantidad_devuelta' => $cantidadADevolver,
+            'stock_actualizado' => (int)$salida['stock_actual'] + $cantidadADevolver
+        ];
+
+    } catch (Exception $e) {
+        $this->conexion->rollBack();
+        return ['exito' => false, 'mensaje' => "Error: " . $e->getMessage()];
+    }
+}
 
     /**
      * Obtener estadísticas de devoluciones

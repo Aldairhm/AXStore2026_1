@@ -52,9 +52,9 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 class="fw-bold text-dark mb-1">
-                        <i class="fas fa-truck text-danger me-2"></i>Historial de Salidas
+                        <i class="fas fa-check-circle text-success me-2"></i>Historial de Entregas
                     </h2>
-                    <p class="text-muted mb-0">Gestión y seguimiento de salidas de productos</p>
+                    <p class="text-muted mb-0">Gestión y seguimiento de entregas de productos</p>
                 </div>
                 
             </div>
@@ -66,7 +66,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <p class="text-muted mb-1 small">Total Salidas</p>
+                                    <p class="text-muted mb-1 small">Total Entregas</p>
                                     <h3 class="fw-bold mb-0" id="totalSalidas">0</h3>
                                 </div>
                                 <div class="bg-danger bg-opacity-10 p-3 rounded-circle">
@@ -127,23 +127,12 @@
             </div>
 
             <!-- Pestañas de Navegación -->
-            <ul class="nav nav-tabs mb-4 border-bottom-0" id="salidasTabs" role="tablist">
-                <li class="nav-item me-2" role="presentation">
-                    <button class="nav-link active fw-bold border-0 rounded-top bg-white shadow-sm" id="pendientes-tab" data-bs-toggle="tab" data-bs-target="#pendientes" type="button" role="tab" aria-controls="pendientes" aria-selected="true">
-                        <i class="fas fa-clock text-warning me-2"></i>Pendientes / En Curso
-                    </button>
-                </li>
-                <li class="nav-item me-2" role="presentation">
-                    <button class="nav-link fw-bold border-0 rounded-top bg-white text-muted shadow-sm" id="entregados-tab" data-bs-toggle="tab" data-bs-target="#entregados" type="button" role="tab" aria-controls="entregados" aria-selected="false">
-                        <i class="fas fa-check-circle text-success me-2"></i>Entregados
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-bold border-0 rounded-top bg-white text-muted shadow-sm" id="cancelados-tab" data-bs-toggle="tab" data-bs-target="#cancelados" type="button" role="tab" aria-controls="cancelados" aria-selected="false">
-                        <i class="fas fa-ban text-danger me-2"></i>Cancelados
-                    </button>
-                </li>
-            </ul>
+            <!-- Título de sección simplificado -->
+            <div class="mb-4 border-bottom pb-2">
+                <h5 class="fw-bold text-success">
+                    <i class="fas fa-check-circle me-2"></i>Listado de Entregas Realizadas
+                </h5>
+            </div>
 
             <!-- Filtros -->
             <div class="card border-0 shadow-sm mb-4">
@@ -194,7 +183,7 @@
             <!-- Contador de resultados -->
             <div class="mb-3">
                 <small class="text-muted">
-                    <span id="resultCount">0</span> salidas encontradas
+                    <span id="resultCount">0</span> entregas encontradas
                 </small>
             </div>
 
@@ -210,8 +199,7 @@
                 <p class="text-muted">No hay salidas registradas con los filtros aplicados</p>
             </div>
 
-            <!-- Paginación -->
-            <nav aria-label="Paginación de salidas" class="mt-4 d-none" id="paginationContainer">
+            <nav aria-label="Paginación de entregas" class="mt-4 d-none" id="paginationContainer">
                 <ul class="pagination justify-content-center" id="pagination">
                 </ul>
             </nav>
@@ -223,9 +211,9 @@
     <div class="modal fade" id="modalDetalleSalida" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-danger text-white">
+                <div class="modal-header bg-success text-white">
                     <h5 class="modal-title">
-                        <i class="fas fa-info-circle me-2"></i>Detalle de Salida
+                        <i class="fas fa-info-circle me-2"></i>Detalle de Entrega
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>

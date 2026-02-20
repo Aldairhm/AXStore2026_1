@@ -342,7 +342,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="card-body d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <span class="badge bg-light text-dark border">${product.nombre_categoria}</span>
-                            <span class="small fw-bold ${stockColor}">${product.stock > 0 ? product.stock + ' un.' : 'AGOTADO'}</span>
+                            <div class="text-end">
+                                <span class="d-block small fw-bold ${stockColor}">${product.stock > 0 ? product.stock + ' un.' : 'AGOTADO'}</span>
+                                <span class="d-block x-small text-muted" style="font-size: 0.7rem;">Reserva: ${product.reserva} un.</span>
+                                <span class="d-block x-small text-success fw-bold" style="font-size: 0.75rem;">Comisión: $${parseFloat(product.comision).toFixed(2)}</span>
+                            </div>
                         </div>
                         <p class="text-muted small mb-1">${product.nombre_producto_padre || ''}</p>
                         <h5 class="card-title fw-bold text-dark mb-3">${product.nombre}</h5>
@@ -351,11 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span class="h4 mb-0 text-primary fw-bold">$${precioFormateado}</span>
                                 <span class="small text-muted">SKU: ${product.sku}</span>
                             </div>
-                            <button class="btn btn-danger btn-sm w-100 btnSalidaHome py-2" 
-                                    data-id="${product.id}"
-                                    ${product.stock <= 0 ? 'disabled' : ''}>
-                                <i class="fas fa-truck me-1"></i> REGISTRAR SALIDA
-                            </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -454,6 +454,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     $("#qv-price").text("$" + parseFloat(v.precio_venta).toFixed(2));
                     $("#qv-stock").text(v.stock + " unidades");
+                    $("#qv-reserva").text(v.reserva + " un.");
                     $("#qv-description").text(v.descripcion || "Sin descripción disponible.");
                     
                     const $gallery = $("#qv-gallery-thumbs");

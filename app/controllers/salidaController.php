@@ -14,63 +14,52 @@ $response = ["status" => "error", "message" => "Opción inválida"];
 try {
     switch ($opcion) {
         case 'registrarSalida':
-            $db = Conexion::conectar();
-            $db->beginTransaction();
-            
-            $idVariante = (int)$_POST["id_variante"];
-            $cantidad = (int)$_POST["cantidad"];
-            
-            // Verificar stock disponible
-            $stockActual = $salidaModel->obtenerStockVariante($idVariante);
-            
-            if ($stockActual < $cantidad) {
-                throw new Exception("Stock insuficiente. Disponible: " . $stockActual);
-            }
-            
-            // Registrar la salida
-            $datos = [
-                'id_variante' => $idVariante,
-                'id_usuario' => 2, // Cambiar por sesión real: $_SESSION['usuario_id']
-                'cantidad' => $cantidad,
-                'fecha_salida' => $_POST["fecha_salida"],
-                'hora_salida' => $_POST["hora_salida"],
-                'fecha_entrega' => !empty($_POST["fecha_entrega"]) ? $_POST["fecha_entrega"] : null,
-                'direccion' => trim($_POST["direccion"]),
-                'precio_envio' => (float)$_POST["precio_envio"],
-                'costo_extra' => (float)$_POST["costo_extra"],
-                'precio_unitario' => (float)$_POST["precio_unitario"],
-                'subtotal' => (float)$_POST["subtotal"],
-                'total' => (float)$_POST["total"],
-                'observaciones' => trim($_POST["observaciones"])
-            ];
-            
-            $idSalida = $salidaModel->registrarSalida($datos);
-            
-            if (!$idSalida) {
-                throw new Exception("Error al registrar la salida");
-            }
-            
-            // Restar del stock
-            if (!$salidaModel->actualizarStock($idVariante, -$cantidad)) {
-                throw new Exception("Error al actualizar el stock");
-            }
-            
-            $db->commit();
-            $response = [
-                "status" => "success", 
-                "message" => "Salida registrada correctamente. Stock actualizado.",
-                "id_salida" => $idSalida
-            ];
-            break;
+    $idVariante = (int)$_POST["id_variante"];
+    $cantidad   = (int)$_POST["cantidad"];
+
+    $stockActual = $salidaModel->obtenerStockVariante($idVariante);
+    if ($stockActual < $cantidad) {
+        throw new Exception("Stock insuficiente. Disponible: " . $stockActual);
+    }
+
+    $precioUnitario = (float)$_POST["precio_unitario"];
+    $subtotal       = $cantidad * $precioUnitario;
+    $descuento      = isset($_POST["descuento"]) ? (float)$_POST["descuento"] : 0.0;
+    $total          = max(0.0, $subtotal - $descuento);
+
+    $datos = [
+        'id_variante'     => $idVariante,
+        'id_usuario'      => 2,
+        'cantidad'        => $cantidad,
+        'fecha_salida'    => $_POST["fecha_salida"],
+        'hora_salida'     => $_POST["hora_salida"],
+        'precio_unitario' => $precioUnitario,
+        'subtotal'        => $subtotal,
+        'descuento'       => $descuento,
+        'total'           => $total,
+    ];
+
+    $idSalida = $salidaModel->registrarSalida($datos);
+
+    if (!$idSalida) {
+        throw new Exception("Error al registrar la salida en la base de datos");
+    }
+
+    if (!$salidaModel->actualizarStock($idVariante, -$cantidad)) {
+        throw new Exception("Error al actualizar el stock");
+    }
+
+    $response = [
+        "status"    => "success",
+        "message"   => "Salida registrada correctamente. Stock actualizado.",
+        "id_salida" => $idSalida
+    ];
+    break;
             
         case 'listarSalidas':
             $datos = $salidaModel->obtenerSalidas();
             $response = ["status" => "success", "data" => $datos];
             break;
-
-        // ============================================================
-        // CASOS PARA EL HISTORIAL DE SALIDAS
-        // ============================================================
 
         case 'obtenerTodasLasSalidas':
             $datos = $salidaModel->obtenerTodasLasSalidas();
@@ -176,32 +165,32 @@ try {
 
 
          case 'cambiarEstado':
-    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-    $nuevoEstado = isset($_POST['nuevo_estado']) ? trim($_POST['nuevo_estado']) : '';
-    
-    if ($id <= 0) {
-        throw new Exception("ID de salida inválido");
-    }
-    
-    if (empty($nuevoEstado)) {
-        throw new Exception("Debe especificar el nuevo estado");
-    }
-    
-    // Validar que el estado sea válido
-    $estadosValidos = ['Pendiente', 'En camino', 'Entregado', 'Cancelado'];
-    if (!in_array($nuevoEstado, $estadosValidos)) {
-        throw new Exception("Estado no válido");
-    }
-    
-    if ($salidaModel->cambiarEstadoSalida($id, $nuevoEstado)) {
-        $response = [
-            "status" => "success",
-            "message" => "Estado actualizado correctamente a: " . $nuevoEstado
-        ];
-    } else {
-        throw new Exception("Error al actualizar el estado");
-    }
-    break;   
+            $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+            $nuevoEstado = isset($_POST['nuevo_estado']) ? trim($_POST['nuevo_estado']) : '';
+            
+            if ($id <= 0) {
+                throw new Exception("ID de salida inválido");
+            }
+            
+            if (empty($nuevoEstado)) {
+                throw new Exception("Debe especificar el nuevo estado");
+            }
+            
+            // Validar que el estado sea válido
+            $estadosValidos = ['Pendiente', 'En camino', 'Entregado', 'Cancelado'];
+            if (!in_array($nuevoEstado, $estadosValidos)) {
+                throw new Exception("Estado no válido");
+            }
+            
+            if ($salidaModel->cambiarEstadoSalida($id, $nuevoEstado)) {
+                $response = [
+                    "status" => "success",
+                    "message" => "Estado actualizado correctamente a: " . $nuevoEstado
+                ];
+            } else {
+                throw new Exception("Error al actualizar el estado");
+            }
+            break;   
 
         case 'obtenerSalidasPorUsuario':
             $idUsuario = isset($_POST['id_usuario']) ? (int)$_POST['id_usuario'] : 0;
@@ -233,10 +222,6 @@ try {
                 "existe" => $existe
             ];
             break;
-
-        // ============================================================
-        // FUNCIONALIDAD MEJORADA: DEVOLUCIÓN DE SALIDAS CON VALIDACIÓN DE FECHA
-        // ============================================================
         
         case 'verificarPuedeDevolver':
             $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
@@ -256,27 +241,27 @@ try {
             break;
 
         case 'devolverSalida':
-            $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-            $motivo = isset($_POST['motivo']) ? trim($_POST['motivo']) : '';
-            
-            if ($id <= 0) {
-                throw new Exception("ID de salida inválido");
-            }
-            
-            // Procesar la devolución usando el método mejorado del modelo
-            $resultado = $salidaModel->procesarDevolucion($id, $motivo);
-            
-            if ($resultado['exito']) {
-                $response = [
-                    "status" => "success",
-                    "message" => $resultado['mensaje'],
-                    "cantidad_devuelta" => $resultado['cantidad_devuelta'],
-                    "stock_actualizado" => $resultado['stock_actualizado']
-                ];
-            } else {
-                throw new Exception($resultado['mensaje']);
-            }
-            break;
+    $id       = isset($_POST['id'])       ? (int)$_POST['id']       : 0;
+    $motivo   = isset($_POST['motivo'])   ? trim($_POST['motivo'])   : '';
+    $cantidad = isset($_POST['cantidad']) ? (int)$_POST['cantidad']  : null;
+
+    if ($id <= 0) {
+        throw new Exception("ID de salida inválido");
+    }
+
+    $resultado = $salidaModel->procesarDevolucion($id, $motivo, $cantidad);
+
+    if ($resultado['exito']) {
+        $response = [
+            "status"            => "success",
+            "message"           => $resultado['mensaje'],
+            "cantidad_devuelta" => $resultado['cantidad_devuelta'],
+            "stock_actualizado" => $resultado['stock_actualizado']
+        ];
+    } else {
+        throw new Exception($resultado['mensaje']);
+    }
+    break;
 
         case 'obtenerEstadisticasDevoluciones':
             $estadisticas = $salidaModel->obtenerEstadisticasDevoluciones();
@@ -292,9 +277,8 @@ try {
             break;
     }
 } catch (Exception $e) {
-    if (isset($db) && $db->inTransaction()) {
-        $db->rollBack();
-    }
+    // Si hay transacción activa (raro aquí porque removimos la manual, pero por si acaso), revertir
+    // Aunque ya no controlamos la transacción manualmente en el controller.
     $response = ["status" => "error", "message" => $e->getMessage()];
 }
 

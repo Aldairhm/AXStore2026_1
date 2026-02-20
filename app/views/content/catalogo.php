@@ -86,7 +86,7 @@
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title">
-                        <i class="fas fa-shipping-fast me-2"></i>Registrar Salida de Producto
+                        <i class="fas fa-check-circle me-2"></i>Registrar Entrega de Producto
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -122,7 +122,7 @@
 
                             <!-- Columna derecha: Formulario de salida -->
                             <div class="col-md-7">
-                                <h6 class="fw-bold text-muted mb-3">DATOS DE LA SALIDA</h6>
+                                <h6 class="fw-bold text-muted mb-3">DATOS DE LA ENTREGA</h6>
 
                                 <!-- Cantidad -->
                                 <div class="mb-3">
@@ -145,41 +145,11 @@
                                     </div>
                                 </div>
 
-                                <!-- Fecha de entrega estimada -->
+                                <!-- Descuento -->
                                 <div class="mb-3">
-                                    <label class="form-label fw-bold small">Fecha de Entrega Estimada <span class="text-danger">*</span></label>
-                                    <input type="date" name="fecha_entrega" id="fecha_entrega" class="form-control">
-                                </div>
-
-                                <!-- Dirección de entrega -->
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <label class="form-label fw-bold small mb-0">Dirección de Entrega <span class="text-danger">*</span></label>
-                                        <a href="#" id="verifyAddressBtn" target="_blank" class="text-primary small text-decoration-none d-none">
-                                            <i class="fas fa-map-marked-alt me-1"></i>Verificar en Mapa
-                                        </a>
-                                    </div>
-                                    <textarea name="direccion" id="direccion" class="form-control" rows="2" placeholder="Ingrese la dirección completa"></textarea>
-                                </div>
-
-                                <div class="row g-2 mb-3">
-                                    <!-- Precio de envío -->
-                                    <div class="col-6">
-                                        <label class="form-label fw-bold small">Precio de Envío ($) <span class="text-danger">*</span></label>
-                                        <input type="number" name="precio_envio" id="precio_envio" class="form-control" step="0.01" value="0.00">
-                                    </div>
-
-                                    <!-- Costo extra -->
-                                    <div class="col-6">
-                                        <label class="form-label fw-bold small">Costo Extra ($)</label>
-                                        <input type="number" name="costo_extra" id="costo_extra" class="form-control" step="0.01" value="0.00">
-                                    </div>
-                                </div>
-
-                                <!-- Observaciones -->
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold small">Observaciones</label>
-                                    <textarea name="observaciones" id="observaciones" class="form-control" rows="2" placeholder="Notas adicionales sobre la salida"></textarea>
+                                    <label class="form-label fw-bold small">Descuento ($)</label>
+                                    <input type="number" name="descuento" id="descuento_salida" class="form-control" step="0.01" min="0" value="0.00">
+                                    <small class="text-muted">Monto a descontar del subtotal (opcional)</small>
                                 </div>
 
                                 <!-- Resumen de totales -->
@@ -189,12 +159,8 @@
                                         <strong id="subtotalSalida">$0.00</strong>
                                     </div>
                                     <div class="d-flex justify-content-between mb-1">
-                                        <span>Envío:</span>
-                                        <strong id="envioSalida">$0.00</strong>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-1">
-                                        <span>Extra:</span>
-                                        <strong id="extraSalida">$0.00</strong>
+                                        <span>Descuento:</span>
+                                        <strong class="text-danger" id="descuentoSalidaPreview">-$0.00</strong>
                                     </div>
                                     <hr class="my-2">
                                     <div class="d-flex justify-content-between">
@@ -208,8 +174,8 @@
 
                     <div class="modal-footer bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger" id="btnRegistrarSalida">
-                            <i class="fas fa-check me-1"></i> Registrar Salida
+                        <button type="submit" class="btn btn-success" id="btnRegistrarSalida">
+                            <i class="fas fa-check me-1"></i> Registrar Entrega
                         </button>
                     </div>
                 </form>

@@ -192,6 +192,7 @@ function renderProducts(productsList) {
                             <div class="text-end">
                                 <span class="d-block small fw-bold ${stockColor}">${product.stock > 0 ? product.stock + ' un.' : 'AGOTADO'}</span>
                                 <span class="d-block x-small text-muted" style="font-size: 0.7rem;">Reserva: ${product.reserva} un.</span>
+                                <span class="d-block x-small text-success fw-bold" style="font-size: 0.75rem;">Comisión: $${parseFloat(product.comision).toFixed(2)}</span>
                             </div>
                         </div>
                         
@@ -204,7 +205,7 @@ function renderProducts(productsList) {
                                 <small class="text-muted fw-bold">SKU: ${product.sku}</small>
                             </div>
                             
-                            <button class="btn btn-danger btn-sm w-100 btnSalidaProducto py-2" 
+                            <button class="btn btn-success btn-sm w-100 btnSalidaProducto py-2" 
                                     data-id="${product.id}"
                                     data-nombre="${product.nombre}"
                                     data-sku="${product.sku}"
@@ -212,7 +213,7 @@ function renderProducts(productsList) {
                                     data-stock="${product.stock}"
                                     data-imagen="${product.imagen}"
                                     ${disabledBtn}>
-                                <i class="fas fa-truck me-1"></i> REGISTRAR SALIDA
+                                <i class="fas fa-check-circle me-1"></i> REGISTRAR ENTREGA
                             </button>
                         </div>
                     </div>
@@ -408,7 +409,7 @@ function setupEvents() {
     });
 
     // Calcular totales en tiempo real
-    $("#cantidad_salida, #precio_envio, #costo_extra").on("input", calcularTotales);
+    $("#cantidad_salida, #descuento_salida").on("input", calcularTotales);
 
     // Acción desde Quick View
     $(document).on("click", ".btnQuickView", function() {
@@ -590,11 +591,7 @@ function abrirModalSalida(producto) {
     $("#cantidad_salida").val(1);
     
     // Resetear campos
-    $("#precio_envio").val("0.00");
-    $("#costo_extra").val("0.00");
-    $("#direccion").val("");
-    $("#fecha_entrega").val("");
-    $("#observaciones").val("");
+    $("#descuento_salida").val("0.00");
     setFechaHoraActual();
     
     // Calcular totales iniciales
@@ -610,16 +607,22 @@ function abrirModalSalida(producto) {
 function calcularTotales() {
     const cantidad = parseFloat($("#cantidad_salida").val()) || 0;
     const precioUnitario = parseFloat($("#precio_unitario_salida").val()) || 0;
-    const precioEnvio = parseFloat($("#precio_envio").val()) || 0;
-    const costoExtra = parseFloat($("#costo_extra").val()) || 0;
+    const descuento = parseFloat($("#descuento_salida").val()) || 0;
     
     const subtotal = cantidad * precioUnitario;
-    const total = subtotal + precioEnvio + costoExtra;
+    const total = Math.max(0, subtotal - descuento);
     
     $("#subtotalSalida").text("$" + subtotal.toFixed(2));
-    $("#envioSalida").text("$" + precioEnvio.toFixed(2));
-    $("#extraSalida").text("$" + costoExtra.toFixed(2));
+    $("#descuentoSalidaPreview").text("-$" + descuento.toFixed(2));
     $("#totalSalida").text("$" + total.toFixed(2));
+
+    // Advertencia visual si el descuento supera el subtotal
+    if (descuento > subtotal && subtotal > 0) {
+        mostrarError("descuento_salida", `El descuento no puede superar el subtotal ($${subtotal.toFixed(2)})`);
+    } else {
+        $("#descuento_salida").removeClass("is-invalid");
+        $("#descuento_salida").siblings(".invalid-feedback").remove();
+    }
 }
 
 // ============================================
@@ -873,53 +876,31 @@ function validarDireccion() {
  * @returns {boolean} - true si todo es válido
  */
 function validarFormularioCompleto() {
-    console.log("🔍 Iniciando validación del formulario...");
     let esValido = true;
-    
-    // Limpiar validaciones previas
     limpiarValidaciones();
-    
-    // Validar campos obligatorios básicos
-    console.log("Validando cantidad...");
     esValido = validarCantidadVsStock() && esValido;
-    
-    console.log("Validando fecha de salida...");
     esValido = validarFechaSalida() && esValido;
-    
-    console.log("Validando hora de salida...");
     esValido = validarHoraSalida() && esValido;
-    
-    // Validar campos obligatorios de entrega
-    console.log("Validando fecha de entrega...");
-    esValido = validarFechaEntrega() && esValido;
-    
-    console.log("Validando dirección...");
-    esValido = validarDireccion() && esValido;
-    
-    console.log("Validando precio de envío (OBLIGATORIO y > 0)...");
-    esValido = validarPrecioEnvio() && esValido;
-    
-    // Validar costo extra (opcional)
-    console.log("Validando costo extra...");
-    esValido = validarNumeroDecimal("costo_extra", "Costo extra", false) && esValido;
-    
-    console.log(`✅ Resultado de validación: ${esValido ? "VÁLIDO" : "INVÁLIDO"}`);
-    
-    // Si hay errores, hacer scroll al primer campo inválido
+
+    // Validar que el descuento no supere el subtotal
+    const cantidad = parseFloat($("#cantidad_salida").val()) || 0;
+    const precioUnitario = parseFloat($("#precio_unitario_salida").val()) || 0;
+    const subtotal = cantidad * precioUnitario;
+    const descuento = parseFloat($("#descuento_salida").val()) || 0;
+    if (descuento > subtotal) {
+        mostrarError("descuento_salida", `El descuento ($${descuento.toFixed(2)}) no puede superar el subtotal ($${subtotal.toFixed(2)})`);
+        esValido = false;
+    }
+
     if (!esValido) {
         const primerError = $("#formSalidaProducto").find(".is-invalid").first();
-        if (primerError.length) {
-            console.log("❌ Enfocando primer campo con error:", primerError.attr("id"));
-            primerError.focus();
-        }
+        if (primerError.length) primerError.focus();
     }
-    
     return esValido;
 }
 
 // Registrar salida con validaciones completas
 function registrarSalida() {
-    // VALIDAR ANTES DE ENVIAR
     if (!validarFormularioCompleto()) {
         Swal.fire({
             icon: 'warning',
@@ -930,20 +911,23 @@ function registrarSalida() {
         return;
     }
     
-    // Deshabilitar botón para evitar doble envío
     const $btnSubmit = $("#btnRegistrarSalida");
     $btnSubmit.prop("disabled", true).html('<i class="fas fa-spinner fa-spin me-1"></i> Procesando...');
     
-    const cantidad = parseInt($("#cantidad_salida").val());
-    const formData = new FormData($("#formSalidaProducto")[0]);
+    const cantidad    = parseInt($("#cantidad_salida").val());
+    const precioUnit  = parseFloat($("#precio_unitario_salida").val());
+    const subtotal    = cantidad * precioUnit;
+    const descuento   = parseFloat($("#descuento_salida").val() || 0);
+    const total       = Math.max(0, subtotal - descuento);
+
+    const formData = new FormData();
     formData.append("accion", "registrarSalida");
-    
-    // Calcular totales para enviar
-    const subtotal = cantidad * parseFloat($("#precio_unitario_salida").val());
-    const total = subtotal + parseFloat($("#precio_envio").val() || 0) + parseFloat($("#costo_extra").val() || 0);
-    
-    formData.append("subtotal", subtotal.toFixed(2));
-    formData.append("total", total.toFixed(2));
+    formData.append("id_variante",      $("#id_variante_salida").val());
+    formData.append("cantidad",         cantidad);
+    formData.append("fecha_salida",     $("#fecha_salida").val());
+    formData.append("hora_salida",      $("#hora_salida").val());
+    formData.append("precio_unitario",  precioUnit.toFixed(2));
+    formData.append("descuento",        descuento.toFixed(2));
     
     $.ajax({
         url: "app/controllers/salidaController.php",
@@ -960,15 +944,10 @@ function registrarSalida() {
                     text: response.message,
                     confirmButtonColor: '#28a745'
                 }).then(() => {
-                    // Cerrar modal con Bootstrap 5
                     const modalElement = document.getElementById('modalSalidaProducto');
                     const modal = bootstrap.Modal.getInstance(modalElement);
                     modal.hide();
-                    
-                    // Limpiar validaciones
                     limpiarValidaciones();
-                    
-                    // Recargar productos para actualizar stock
                     cargarTodosLosProductos();
                 });
             } else {
@@ -980,7 +959,7 @@ function registrarSalida() {
                 });
             }
         },
-        error: function(xhr, status, error) {
+        error: function() {
             Swal.fire({
                 icon: 'error',
                 title: 'Error de Conexión',
@@ -989,7 +968,6 @@ function registrarSalida() {
             });
         },
         complete: function() {
-            // Rehabilitar botón
             $btnSubmit.prop("disabled", false).html('<i class="fas fa-check me-1"></i> Registrar Salida');
         }
     });
