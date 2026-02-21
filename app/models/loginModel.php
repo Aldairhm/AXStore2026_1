@@ -15,7 +15,7 @@ class Login
     public function getLogin(string $username, string $password): ?array
     {
         try {
-            $sql = "SELECT nombre_real,
+            $sql = "SELECT id,nombre_real,
             username,
             password,
             rol,

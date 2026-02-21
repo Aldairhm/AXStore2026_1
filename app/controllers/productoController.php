@@ -155,6 +155,29 @@ try {
             ]];
             break;
 
+        case 'registrarMovimiento':
+            // 1. Asegurar sesión
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            // 2. Validar autenticación (Blindaje)
+            if (!isset($_SESSION['usuario']) || !isset($_SESSION['usuario']['id'])) {
+                echo json_encode(["status" => "error", "msg" => "Sesión expirada. Recarga la página."]);
+                return; // ¡DETENER EJECUCIÓN!
+            }
+            $datos = array(
+                "id_variante" => $_POST['id_producto'],
+                "cantidad"    => isset($_POST['cantidad']) ? (int)$_POST['cantidad'] : 0,
+                "tipo"        => $_POST['tipo_movimiento'], // 'compra_entrada' o 'traslado_tienda'
+                "observacion" => $_POST['observacion'] ?? '',
+                "id_usuario"  => $_SESSION['usuario']['id'] ?? null
+            );
+            
+            // 2. Llamamos al MODELO para que haga el trabajo sucio
+            $response = $productoModel->mdlRegistrarMovimiento($datos);
+            break;
+
         case 'editarVariante':
             $db = Conexion::conectar();
             $db->beginTransaction();
@@ -346,7 +369,7 @@ try {
                     $variante['nombre_categoria'] = $productoPadre['categoria'];
                     $variante['descripcion'] = $productoPadre['descripcion'];
                 }
-                
+
                 $response = ["status" => "success", "data" => [
                     "variante" => $variante,
                     "imagenes" => $productoModel->getImagenesVariante($id),

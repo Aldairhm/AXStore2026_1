@@ -93,7 +93,7 @@ $(document).ready(function () {
       mostrarError("El stock inicial debe ser al menos 1 unidad.");
     }
   });
-
+  
   // --- BLOQUE 2: GESTIÓN DE ATRIBUTOS Y ESQUEMA ---
   $("#btnAgregarFilaAtributo").click(function () {
     // 1. Blindaje de Integridad: Si hay ventas, el esquema es inmutable

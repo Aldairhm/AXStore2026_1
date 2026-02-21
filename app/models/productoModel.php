@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types = 1)
-;
+declare(strict_types=1);
 
 require_once __DIR__ . "/../../config/conexion.php";
 
@@ -91,6 +90,82 @@ class Producto
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    static public function mdlRegistrarMovimiento($datos)
+    {
+        $con = Conexion::conectar();
+
+        try {
+            // INICIO DE LA TRANSACCIÓN (El "Seguro de vida")
+            $con->beginTransaction();
+
+            // PASO A: FOTOGRAFÍA DEL MOMENTO (Bloqueamos la fila para que nadie más la edite)
+            $stmt = $con->prepare("SELECT stock, reserva FROM variante WHERE id = :id FOR UPDATE");
+            $stmt->execute([':id' => $datos['id_variante']]);
+            $actual = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            // Variables para el historial
+            $stock_ant_tienda   = $actual['stock'];
+            $reserva_ant_bodega = $actual['reserva'];
+
+            // PASO B: LÓGICA MATEMÁTICA
+            $enum = '';
+            if ($datos['tipo'] == 'compra_entrada') {
+                // Solo suma a reserva
+                $enum = 'COMPRA';
+                $sqlUpd = "UPDATE variante SET reserva = reserva + :cant WHERE id = :id";
+
+                $stmtUpd = $con->prepare($sqlUpd);
+                $stmtUpd->execute([
+                    ':cant' => $datos['cantidad'],
+                    ':id'   => $datos['id_variante']
+                ]);
+            } elseif ($datos['tipo'] == 'traslado_tienda') {
+                // Validamos que haya existencias reales
+                $enum = 'TRASLADO DE BODEGA A TIENDA';
+                if ($actual['reserva'] < $datos['cantidad']) {
+                    throw new Exception("Stock insuficiente en bodega."); // Esto dispara el catch
+                }
+                // Resta reserva, Suma stock
+                $sqlUpd = "UPDATE variante SET reserva = reserva - :cantResta, stock = stock + :cantSuma WHERE id = :id";
+
+                $stmtUpd = $con->prepare($sqlUpd);
+                $stmtUpd->execute([
+                    ':cantResta' => $datos['cantidad'], // El valor es el mismo
+                    ':cantSuma'  => $datos['cantidad'], // Pero lo pasamos con nombres distintos
+                    ':id'        => $datos['id_variante']
+                ]);
+            }
+
+            // PASO D: GUARDAR EN HISTORIAL (KARDEX)
+            $sqlHistorial = "INSERT INTO movimientos_bodega 
+                        (id_variante, id_usuario, tipo_movimiento, cantidad, 
+                         stock_anterior_tienda, reserva_anterior_bodega, observacion) 
+                         VALUES 
+                        (:id_var, :id_user, :tipo, :cant, 
+                         :st_ant, :rs_ant, :obs)";
+
+            $stmtHist = $con->prepare($sqlHistorial);
+            $stmtHist->execute([
+                ':id_var'  => $datos['id_variante'],
+                ':id_user' => $datos['id_usuario'],
+                ':tipo'    => $enum,
+                ':cant'    => $datos['cantidad'],
+                ':st_ant'  => $stock_ant_tienda,
+                ':rs_ant'  => $reserva_ant_bodega,
+                ':obs'     => $datos['observacion']
+            ]);
+
+            // SI LLEGAMOS AQUÍ, TODO SALIÓ BIEN
+            $con->commit(); // ¡Guardar cambios permanentemente!
+
+            return ["status" => "success", "message" => "Movimiento registrado correctamente"];
+        } catch (Exception $e) {
+            // SI ALGO FALLÓ EN EL CAMINO
+            $con->rollBack(); // ¡Deshacer todo como si nada hubiera pasado!
+            return ["status" => "error", "message" => "Error: " . $e->getMessage()];
+        }
+    }
+
     public function getVariantePorId(int $id): ?array
     {
         // [MEJORA] Ahora hacemos JOIN completo para traer info del padre y evitar queries extra
@@ -112,8 +187,7 @@ class Producto
 
             // Retornamos el array o null si no se encuentra el ID
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
             // Log de error si algo sale mal con la base de datos
             error_log("Error en getVariantePorId: " . $e->getMessage());
             return null;
@@ -385,8 +459,7 @@ class Producto
                 "id_variante" => $img['id_variante'],
                 "refreshGrid" => $debeRefrescarGrid // <--- Esto asegura que el JS actúe
             ];
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             if ($this->conexion->inTransaction())
                 $this->conexion->rollBack();
             return ["status" => "error", "message" => $e->getMessage()];
@@ -410,8 +483,7 @@ class Producto
             if ($transaccionPropia)
                 $this->conexion->commit();
             return true;
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             if ($transaccionPropia)
                 $this->conexion->rollBack();
             return false;

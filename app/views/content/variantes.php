@@ -163,11 +163,11 @@
                                 <div class="row g-2 mb-3">
                                     <div class="col-6">
                                         <label class="form-label small fw-bold">Stock Actual</label>
-                                        <input type="number" id="stock_actual_edit" name="stock_actual_edit" class="form-control form-control-sm bg-light fw-bold" required>
+                                        <input type="number" id="stock_actual_edit" name="stock_actual_edit" class="form-control form-control-sm bg-light fw-bold" readonly>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label small fw-bold">Reserva (Mín.)</label>
-                                        <input type="number" name="stock_minimo_edit" id="stock_minimo_edit" class="form-control form-control-sm border-warning" required>
+                                        <input type="number" name="stock_minimo_edit" id="stock_minimo_edit" class="form-control form-control-sm border-warning" readonly>
                                     </div>
                                 </div>
 
@@ -260,6 +260,107 @@
                     <button type="button" id="btnGuardarGaleria" class="btn btn-primary btn-sm px-4 rounded-pill d-none shadow-sm">
                         <i class="bi bi-cloud-arrow-up me-1"></i> Subir Seleccionadas
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalStock" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
+
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #0b5ee1, #052c65);">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-box-seam me-2"></i> Gestión de Inventario
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <h4 id="stockNombreProducto" class="text-center fw-bold mb-4 text-dark">Nombre del Producto</h4>
+
+                    <ul class="nav nav-pills nav-fill mb-4" id="pills-tab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-bold" id="pills-compra-tab" data-bs-toggle="pill" data-bs-target="#pills-compra" type="button" role="tab">
+                                <i class="bi bi-cart-plus me-2"></i> Nueva Compra
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold" id="pills-traslado-tab" data-bs-toggle="pill" data-bs-target="#pills-traslado" type="button" role="tab">
+                                <i class="bi bi-arrow-left-right me-2"></i> Surtir Tienda
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="pills-tabContent">
+
+                        <div class="tab-pane fade show active" id="pills-compra" role="tabpanel">
+                            <div class="alert alert-primary d-flex align-items-center" role="alert">
+                                <i class="bi bi-info-circle-fill me-2"></i>
+                                <div>
+                                    Esto sumará unidades a la <strong>Reserva (Bodega)</strong>.
+                                </div>
+                            </div>
+
+                            <form id="formCompra">
+                                <input type="hidden" name="id_producto" id="idProductoCompra">
+                                <input type="hidden" name="tipo_movimiento" value="compra_entrada">
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Cantidad a Ingresar</label>
+                                    <input type="number" class="form-control form-control-lg" name="cantidad" placeholder="0" min="1" step="1" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Referencia / Factura (Opcional)</label>
+                                    <input type="text" class="form-control" name="observacion" placeholder="Ej: Factura #554 Proveedor X">
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-save me-2"></i> Registrar Entrada
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="tab-pane fade" id="pills-traslado" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-4 px-3">
+                                <div class="text-center">
+                                    <small class="text-muted d-block text-uppercase">Bodega</small>
+                                    <span class="h4 fw-bold text-secondary" id="displayBodega">0</span>
+                                </div>
+
+                                <i class="bi bi-arrow-right fs-2 text-primary"></i>
+
+                                <div class="text-center">
+                                    <small class="text-muted d-block text-uppercase">Tienda</small>
+                                    <span class="h4 fw-bold text-success" id="displayTienda">0</span>
+                                </div>
+                            </div>
+
+                            <form id="formTraslado">
+                                <input type="hidden" name="id_producto" id="idProductoTraslado">
+                                <input type="hidden" name="tipo_movimiento" value="traslado_tienda">
+                                <input type="hidden" id="maxBodega">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Cantidad a Mover</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control form-control-lg" name="cantidad" id="inputTraslado" placeholder="0" min="1" step="1" required>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="moverTodo()">Todo</button>
+                                    </div>
+                                    <div class="form-text text-danger d-none" id="errorTraslado">No tienes suficiente en bodega.</div>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="bi bi-check-circle me-2"></i> Confirmar Traslado
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>

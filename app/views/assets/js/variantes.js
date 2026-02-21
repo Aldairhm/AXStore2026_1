@@ -369,6 +369,84 @@ function abrirGaleria(id, nombre) {
   cargarFotosExistentes(id);
 }
 
+// Función para abrir el modal desde la tarjeta del producto
+function abrirModalStock(id, nombre, reserva, stock) {
+  // 1. Cargar datos en el Modal
+  $("#stockNombreProducto").text(nombre);
+
+  // Para el formulario de Compra
+  $("#idProductoCompra").val(id);
+
+  // Para el formulario de Traslado
+  $("#idProductoTraslado").val(id);
+  $("#displayBodega").text(reserva);
+  $("#displayTienda").text(stock);
+  $("#maxBodega").val(reserva); // Guardamos el límite para validar
+
+  // Limpiar inputs anteriores
+  $('input[name="cantidad"]').val("");
+  $("#errorTraslado").addClass("d-none");
+
+  // Resetear a la primera pestaña
+  var firstTabEl = document.querySelector("#pills-compra-tab");
+  var firstTab = new bootstrap.Tab(firstTabEl);
+  firstTab.show();
+
+  // 2. Mostrar el Modal
+  $("#modalStock").modal("show");
+}
+
+// Función auxiliar para el botón "Todo"
+function moverTodo() {
+  let max = $("#maxBodega").val();
+  $("#inputTraslado").val(max);
+}
+
+// Validación en tiempo real del traslado
+$("#inputTraslado").on("input", function () {
+  let valor = parseInt($(this).val()) || 0;
+  let max = parseInt($("#maxBodega").val()) || 0;
+
+  if (valor > max) {
+    $("#errorTraslado").removeClass("d-none");
+    $('button[type="submit"]', "#formTraslado").prop("disabled", true);
+  } else {
+    $("#errorTraslado").addClass("d-none");
+    $('button[type="submit"]', "#formTraslado").prop("disabled", false);
+  }
+});
+
+// Manejo del Envío (AJAX) - Ejemplo genérico
+// Tendrás que adaptar la URL a tu controlador real
+$("#formCompra, #formTraslado").on("submit", function (e) {
+  e.preventDefault();
+
+  let formData = new FormData(this);
+  // Agregamos la opción para tu controlador
+  formData.append("accion", "registrarMovimiento");
+
+  $.ajax({
+    url: "app/controllers/productoController.php", // Ajusta tu ruta
+    type: "POST",
+    data: formData,
+    contentType: false,
+    processData: false,
+    success: function (response) {
+      // Aquí recargas la tabla o muestras alerta de éxito
+      $("#modalStock").modal("hide");
+
+      // Swal.fire de éxito...
+      mostrarExito(response.message);
+
+      // Recargar productos para ver los cambios
+      cargarVariantesGrid(idProducto);
+
+      //cerramos el modal
+      $("#modalStock").modal("show");
+    },
+  });
+});
+
 // 4. RENDERIZADO CON JQUERY
 function renderProducts(productsList) {
   const $productGrid = $("#product-grid");
@@ -390,53 +468,64 @@ function renderProducts(productsList) {
     let stockText = product.stock > 0 ? `${product.stock} un.` : "Agotado";
 
     const card = `
-        <div class="col">
-            <div class="card h-100 border-0 shadow-sm card-variante">
-                <span class="badge ${stockClass} position-absolute top-0 start-0 m-3 shadow-sm">
-                    ${stockText}
-                </span>
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm card-variante">
+            <span class="badge ${stockClass} position-absolute top-0 start-0 m-3 shadow-sm">
+                ${stockText}
+            </span>
 
-                <div class="p-3 bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
-                    <img src="${ruta}${product.imagen}" 
-                         class="img-fluid" 
-                         style="max-height: 100%; object-fit: contain;" 
-                         alt="${product.nombre}">
+            <span class="badge bg-secondary position-absolute top-0 end-0 m-3 shadow-sm" title="En Bodega">
+                <i class="bi bi-building"></i> ${product.reserva || 0}
+            </span>
+
+            <div class="p-3 bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                <img src="${ruta}${product.imagen}" 
+                     class="img-fluid" 
+                     style="max-height: 100%; object-fit: contain;" 
+                     alt="${product.nombre}">
+            </div>
+
+            <div class="card-body d-flex flex-column p-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="badge bg-light text-dark border-0 small text-uppercase" style="font-size: 0.65rem;">
+                        ${product.nombre_categoria}
+                    </span>
                 </div>
+                
+                <h5 class="card-title fw-bold text-dark mb-1" style="font-size: 1rem;">${product.nombre}</h5>
+                <p class="text-muted small mb-3">Ref: ${product.nombre_producto_padre}</p>
+                
+                <div class="mt-auto">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="h5 mb-0 fw-bold text-primary">$${precioFormateado}</span>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-outline-success btn-sm rounded-pill px-3 me-1" 
+                                    onclick="abrirModalStock(${product.id}, '${product.nombre}', ${product.reserva || 0}, ${product.stock})"
+                                    title="Gestionar Entradas y Traslados">
+                                <i class="bi bi-box-seam"></i>
+                            </button>
 
-                <div class="card-body d-flex flex-column p-3">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="badge bg-light text-dark border-0 small text-uppercase" style="font-size: 0.65rem;">
-                            ${product.nombre_categoria}
-                        </span>
-                    </div>
-                    
-                    <h5 class="card-title fw-bold text-dark mb-1" style="font-size: 1rem;">${product.nombre}</h5>
-                    <p class="text-muted small mb-3">Ref: ${product.nombre_producto_padre}</p>
-                    
-                    <div class="mt-auto">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <span class="h5 mb-0 fw-bold text-primary">$${precioFormateado}</span>
-                            </div>
+                            <button class="btn btn-outline-primary btn-sm rounded-pill px-3 me-1" 
+                                    onclick="abrirGaleria(${product.id}, '${product.nombre}')"
+                                    title="Gestionar Fotos">
+                                <i class="bi bi-images"></i>
+                            </button>
                             
-                            <div class="btn-group">
-                                <button class="btn btn-outline-primary btn-sm rounded-pill px-3 me-1" 
-                                        onclick="abrirGaleria(${product.id}, '${product.nombre}')"
-                                        title="Gestionar Fotos">
-                                    <i class="bi bi-images"></i>
-                                </button>
-                                
-                                <button class="btn btn-dark btn-sm rounded-pill px-3 btnEditarVariante" 
-                                        data-id="${product.id}">
-                                    Editar
-                                </button>
-                            </div>
+                            <button class="btn btn-dark btn-sm rounded-pill px-3 btnEditarVariante" 
+                                    data-id="${product.id}"
+                                    title="Editar Detalles">
+                                <i class="bi bi-pencil"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    `;
+    </div>
+`;
     $productGrid.append(card);
   });
 }
