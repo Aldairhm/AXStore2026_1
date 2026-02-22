@@ -80,6 +80,8 @@ class Salida
 
     public function obtenerTodasLasSalidas(): array
     {
+        $this->limpiarSalidasVencidas();
+
         $sql = "SELECT 
                     s.id,
                     s.id_variante,
@@ -96,6 +98,7 @@ class Salida
                     s.direccion,
                     s.observaciones,
                     s.estado,
+                    s.fecha_cancelacion,
                     s.created_at,
                     v.sku,
                     vi.ruta_imagen as imagen,
@@ -158,17 +161,19 @@ class Salida
 
         $params = [];
 
+        $sql .= " WHERE estado != 'Cancelado'";
+
         if ($fechaInicio && $fechaFin) {
-            $sql .= " WHERE fecha_salida BETWEEN :fecha_inicio AND :fecha_fin";
+            $sql .= " AND fecha_salida BETWEEN :fecha_inicio AND :fecha_fin";
             $params[':fecha_inicio'] = $fechaInicio;
             $params[':fecha_fin'] = $fechaFin;
         }
         elseif ($fechaInicio) {
-            $sql .= " WHERE fecha_salida >= :fecha_inicio";
+            $sql .= " AND fecha_salida >= :fecha_inicio";
             $params[':fecha_inicio'] = $fechaInicio;
         }
         elseif ($fechaFin) {
-            $sql .= " WHERE fecha_salida <= :fecha_fin";
+            $sql .= " AND fecha_salida <= :fecha_fin";
             $params[':fecha_fin'] = $fechaFin;
         }
 
@@ -329,7 +334,7 @@ class Salida
     /**
      * Cambiar el estado de una salida
      */
-    public function cambiarEstadoSalida(int $id, string $nuevoEstado): bool
+    public function cambiarEstadoSalida(int $id, string $nuevoEstado, string $motivo = ''): bool
     {
         $estadosValidos = ['Pendiente', 'En camino', 'Entregado', 'Cancelado'];
 
@@ -337,12 +342,30 @@ class Salida
             return false;
         }
 
-        $sql = "UPDATE salida SET estado = :estado WHERE id = :id";
-        $stmt = $this->conexion->prepare($sql);
-        return $stmt->execute([
+        // Definir SQL base
+        $sql = "UPDATE salida SET estado = :estado";
+        $params = [
             ':estado' => $nuevoEstado,
-            ':id' => $id
-        ]);
+            ':id'     => $id
+        ];
+
+        // Si se proporciona un motivo, guardarlo en observaciones
+        if (!empty($motivo)) {
+            $sql .= ", observaciones = :motivo";
+            $params[':motivo'] = $motivo;
+        }
+
+        // Manejar fecha de cancelación explícitamente
+        if ($nuevoEstado === 'Cancelado') {
+            $sql .= ", fecha_cancelacion = NOW()";
+        } else {
+            $sql .= ", fecha_cancelacion = NULL";
+        }
+
+        $sql .= " WHERE id = :id";
+
+        $stmt = $this->conexion->prepare($sql);
+        return $stmt->execute($params);
     }
 
     /**
@@ -440,8 +463,8 @@ class Salida
         $this->conexion->beginTransaction();
 
         if ($esTotal) {
-            // Devolución total: cancelar la salida
-            if (!$this->cambiarEstadoSalida($id, 'Cancelado')) {
+            // Devolución total: cancelar la salida y guardar motivo
+            if (!$this->cambiarEstadoSalida($id, 'Cancelado', $motivo)) {
                 throw new Exception("Error al cancelar la salida");
             }
         } else {
@@ -450,12 +473,18 @@ class Salida
             $nuevoSubtotal = $nuevaCantidad * (float)$salida['precio_unitario'];
             $nuevoTotal    = max(0.0, $nuevoSubtotal - (float)$salida['descuento']);
 
-            $sql = "UPDATE salida SET cantidad = :cantidad, subtotal = :subtotal, total = :total WHERE id = :id";
+            $sql = "UPDATE salida SET 
+                        cantidad = :cantidad, 
+                        subtotal = :subtotal, 
+                        total = :total,
+                        observaciones = :motivo
+                    WHERE id = :id";
             $stmt = $this->conexion->prepare($sql);
             if (!$stmt->execute([
                 ':cantidad' => $nuevaCantidad,
                 ':subtotal' => $nuevoSubtotal,
                 ':total'    => $nuevoTotal,
+                ':motivo'   => $motivo ?: $salida['observaciones'], // Mantener anterior si no hay nuevo
                 ':id'       => $id
             ])) {
                 throw new Exception("Error al actualizar la cantidad");
@@ -467,7 +496,18 @@ class Salida
             throw new Exception("Error al restaurar el stock");
         }
 
-        $this->conexion->commit();
+            // 3. Registrar en el historial de devoluciones (NUEVO)
+            $sqlDev = "INSERT INTO devolucion (id_salida, cantidad, motivo) VALUES (:id_salida, :cantidad, :motivo)";
+            $stmtDev = $this->conexion->prepare($sqlDev);
+            if (!$stmtDev->execute([
+                ':id_salida' => $id,
+                ':cantidad'  => $cantidadADevolver,
+                ':motivo'    => $motivo ?: 'Devolución procesada'
+            ])) {
+                throw new Exception("Error al registrar el historial de devoluciones");
+            }
+
+            $this->conexion->commit();
 
         $mensaje = $esTotal
             ? "Devolución total: se canceló la salida y se restauraron {$cantidadADevolver} unidades."
@@ -487,6 +527,21 @@ class Salida
 }
 
     /**
+     * Eliminar permanentemente salidas canceladas después de 3 días
+     */
+    public function limpiarSalidasVencidas(): void
+    {
+        try {
+            $sql = "DELETE FROM salida 
+                    WHERE estado = 'Cancelado' 
+                    AND fecha_cancelacion <= DATE_SUB(NOW(), INTERVAL 3 DAY)";
+            $this->conexion->exec($sql);
+        } catch (Exception $e) {
+            // Silencio, no queremos que un error de limpieza bloquee el listado
+        }
+    }
+
+    /**
      * Obtener estadísticas de devoluciones
      */
     public function obtenerEstadisticasDevoluciones(): array
@@ -495,12 +550,22 @@ class Salida
                     COUNT(*) as total_devoluciones,
                     SUM(cantidad) as unidades_devueltas,
                     SUM(total) as monto_devuelto,
-                    DATE(MAX(created_at)) as ultima_devolucion
+                    DATE(MAX(fecha_cancelacion)) as ultima_devolucion
                 FROM salida
                 WHERE estado = 'Cancelado'";
 
         $stmt = $this->conexion->prepare($sql);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    }
+    /**
+     * Obtener el historial de devoluciones de una salida
+     */
+    public function obtenerHistorialDevoluciones(int $idSalida): array
+    {
+        $sql = "SELECT * FROM devolucion WHERE id_salida = :id ORDER BY fecha_registro DESC";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->execute([':id' => $idSalida]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

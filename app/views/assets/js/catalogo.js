@@ -135,23 +135,11 @@ function renderProducts(productsList) {
         let precioVenta = Number(product.precio_venta);
         let precioFormateado = precioVenta.toFixed(2);
         
-        // --- LÓGICA DE ETIQUETAS (BADGES) ---
-        let badgesHtml = '';
-        
-        // 1. Etiqueta NUEVO (Basado en ID si no hay fecha)
-        if (product.id > umbralNuevo) {
-            badgesHtml += '<span class="badge-premium badge-new">NUEVO</span>';
-        }
-        
-        // 2. Etiqueta STOCK BAJO (Si stock es menor o igual a reserva)
-        if (product.stock > 0 && product.stock <= product.reserva) {
-            badgesHtml += '<span class="badge-premium badge-low-stock">STOCK BAJO</span>';
-        }
-
-        // 3. Etiqueta TOP VENTAS (Si tiene más de 5 unidades vendidas)
-        if (parseInt(product.ventas_totales) >= 5) {
-            badgesHtml += '<span class="badge-premium badge-top">TOP VENTAS</span>';
-        }
+        // --- LÓGICA DE ETIQUETAS (BADGES): STOCK Y RESERVA ---
+        let badgesHtml = `
+            <span class="badge-premium badge-stock"><i class="fas fa-box me-1"></i>Stock: ${product.stock}</span>
+            <span class="badge-premium badge-reserva"><i class="fas fa-clock me-1"></i>Res: ${product.reserva}</span>
+        `;
 
         // --- LÓGICA DE IMAGENES (HOVER FX) ---
         const mainImg = `${ruta}${product.imagen}`;
@@ -190,8 +178,6 @@ function renderProducts(productsList) {
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <span class="badge bg-light text-dark border">${product.nombre_categoria}</span>
                             <div class="text-end">
-                                <span class="d-block small fw-bold ${stockColor}">${product.stock > 0 ? product.stock + ' un.' : 'AGOTADO'}</span>
-                                <span class="d-block x-small text-muted" style="font-size: 0.7rem;">Reserva: ${product.reserva} un.</span>
                                 <span class="d-block x-small text-success fw-bold" style="font-size: 0.75rem;">Comisión: $${parseFloat(product.comision).toFixed(2)}</span>
                             </div>
                         </div>
@@ -479,7 +465,23 @@ function setupEvents() {
                         $attr.html(html);
                     }
                     
+                    // [NUEVO] Generar texto para copiar (Expandido)
+                    let extraAttrs = "";
+                    if (data.atributos && data.atributos.length > 0) {
+                        data.atributos.forEach(attr => {
+                            extraAttrs += `🔹 ${attr.nombre_atributo}: ${attr.valor}\n`;
+                        });
+                    }
+
+                     const copyText = `🛍️ *${nombrePadre}${nombreVariante ? ' - ' + nombreVariante : ''}*\n` +
+                                     `📁 Categoría: ${v.nombre_categoria}\n` +
+                                     `💰 PRECIO: $${parseFloat(v.precio_venta).toFixed(2)}\n` +
+                                     extraAttrs +
+                                     `${v.descripcion ? '\n📝 *Descripción:*\n' + v.descripcion : ''}`;
+                    $("#qv-copy-text").val(copyText);
+                    
                     $("#modalQuickView").modal("show");
+                    $("#btnSalidaFromQuick").data("id", id);
                 } else {
                     Swal.fire("Error", response.message, "error");
                 }
@@ -500,7 +502,43 @@ function setupEvents() {
         });
     });
 
-    // Google Maps dinámico en Registro
+    // [NUEVO] Botón Copiar Información
+    $(document).on("click", "#btn-copy-info", function() {
+        const text = $("#qv-copy-text").val();
+        navigator.clipboard.writeText(text).then(() => {
+            const $btn = $(this);
+            const originalIcon = $btn.html();
+            $btn.html('<i class="fas fa-check text-success"></i>');
+            setTimeout(() => $btn.html(originalIcon), 2000);
+            
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: '¡Copiado al portapapeles!',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        });
+    });
+
+    // [NUEVO] Botón Descargar Imagen Actual
+    $(document).on("click", "#btn-download-img", function() {
+        const imgSrc = $("#qv-main-img").attr("src");
+        if (!imgSrc || imgSrc.includes("default.png")) {
+            Swal.fire("Aviso", "No hay una imagen válida para descargar.", "info");
+            return;
+        }
+
+        const link = document.createElement("a");
+        link.href = imgSrc;
+        // Extraer nombre de archivo original
+        const fileName = imgSrc.split('/').pop();
+        link.download = `AXStore_${fileName}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
 
     // Google Maps dinámico en Registro
     $("#direccion").on("input", function() {

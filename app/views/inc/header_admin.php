@@ -18,6 +18,7 @@
                     <li><a href="<?php echo APP_URL; ?>productos"><i class="fas fa-shopping-bag me-1"></i>Productos</a></li>
                     <li><a href="<?php echo APP_URL; ?>categorias"><i class="fas fa-folder-open me-1"></i>Categorías</a></li>
                     <li><a href="<?php echo APP_URL; ?>catalogo"><i class="fas fa-clipboard-list me-1"></i>Catálogo</a></li>
+                    <li><a href="<?php echo APP_URL; ?>salidas"><i class="fas fa-truck me-1"></i>Salidas</a></li>
                     <li><a href="<?php echo APP_URL; ?>usuario"><i class="fas fa-users me-1"></i>Usuarios</a></li>
                     <li><a href="#contacto"><i class="fas fa-envelope me-1"></i>Contacto</a></li>
                 </ul>
@@ -177,9 +178,11 @@
                                             <?php echo $_SESSION['usuario']['username']; ?>
                                         </div>
                                     </div>
-                                <?php else: ?>
+                                <?php
+else: ?>
                                     <div class="p-2 text-center text-muted small">No hay sesión activa</div>
-                                <?php endif; ?>
+                                <?php
+endif; ?>
                             </div>
                         </li>
 

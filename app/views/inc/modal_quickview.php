@@ -55,9 +55,29 @@
                             </div>
                         </div>
 
+                        <!-- Kit de Contenido (Redes Sociales) -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-dark small text-uppercase mb-3 d-flex align-items-center">
+                                <i class="fas fa-bullhorn text-primary me-2"></i>Kit de Contenido
+                            </h6>
+                            <div class="position-relative">
+                                <textarea id="qv-copy-text" class="form-control bg-light border-0 small mb-2" rows="4" readonly style="font-size: 0.85rem; resize: none;"></textarea>
+                                <button id="btn-copy-info" class="btn btn-sm btn-dark position-absolute top-0 end-0 m-2 opacity-75 hover-opacity-100" title="Copiar al portapapeles">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="d-grid mt-2">
+                                <button id="btn-download-img" class="btn btn-outline-primary btn-sm rounded-pill">
+                                    <i class="fas fa-image me-2"></i>Descargar Imagen Actual
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Botones de Acción -->
                         <div class="d-grid gap-2">
-                            <!-- Aquí irían botones adicionales como "Agregar al Carrito" -->
+                             <button class="btn btn-success btnSalidaFromQuick" id="btnSalidaFromQuick">
+                                <i class="fas fa-check-circle me-1"></i> REGISTRAR ENTREGA
+                            </button>
                         </div>
                     </div>
                 </div>

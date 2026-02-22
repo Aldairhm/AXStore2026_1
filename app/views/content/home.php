@@ -614,6 +614,140 @@
         </div>
     </div>
 
+    <!-- Modal de Salida de Producto -->
+    <div class="modal fade" id="modalSalidaProducto" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-check-circle me-2"></i>Registrar Entrega de Producto
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form id="formSalidaProducto" novalidate>
+                    <div class="modal-body">
+                        <input type="hidden" name="id_variante" id="id_variante_salida">
+                        <input type="hidden" name="precio_unitario" id="precio_unitario_salida">
+
+                        <div class="row">
+                            <!-- Columna izquierda: Información del producto -->
+                            <div class="col-md-5 border-end">
+                                <h6 class="fw-bold text-muted mb-3">INFORMACIÓN DEL PRODUCTO</h6>
+                                
+                                <!-- Imagen del producto -->
+                                <div class="text-center mb-3">
+                                    <div class="border rounded p-2 bg-light" style="height: 200px;">
+                                        <img id="imgProductoSalida" src="" class="img-fluid h-100" style="object-fit: contain;" alt="Producto">
+                                    </div>
+                                </div>
+
+                                <!-- Detalles del producto -->
+                                <div class="bg-light p-3 rounded">
+                                    <p class="mb-2"><strong>Producto:</strong> <span id="nombreProductoSalida"></span></p>
+                                    <p class="mb-2"><strong>SKU:</strong> <span id="skuProductoSalida" class="badge bg-dark"></span></p>
+                                    <p class="mb-2"><strong>Precio:</strong> <span id="precioProductoSalida" class="text-primary fw-bold"></span></p>
+                                    <p class="mb-0">
+                                        <strong>Stock Disponible:</strong> 
+                                        <span id="stockProductoSalida" class="badge bg-success"></span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Columna derecha: Formulario de salida -->
+                            <div class="col-md-7">
+                                <h6 class="fw-bold text-muted mb-3">DATOS DE LA ENTREGA</h6>
+
+                                <!-- Cantidad -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Cantidad a Despachar <span class="text-danger">*</span></label>
+                                    <input type="number" name="cantidad" id="cantidad_salida" class="form-control" min="1">
+                                    <small class="text-muted">Unidades que saldrán del inventario</small>
+                                </div>
+
+                                <div class="row g-2 mb-3">
+                                    <!-- Fecha de salida -->
+                                    <div class="col-6">
+                                        <label class="form-label fw-bold small">Fecha de Salida <span class="text-danger">*</span></label>
+                                        <input type="date" name="fecha_salida" id="fecha_salida" class="form-control">
+                                    </div>
+
+                                    <!-- Hora de salida -->
+                                    <div class="col-6">
+                                        <label class="form-label fw-bold small">Hora <span class="text-danger">*</span></label>
+                                        <input type="time" name="hora_salida" id="hora_salida" class="form-control">
+                                    </div>
+                                </div>
+
+                                <!-- Fecha de Entrega -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Fecha Aproximada de Entrega <span class="text-danger">*</span></label>
+                                    <input type="date" name="fecha_entrega" id="fecha_entrega" class="form-control">
+                                </div>
+
+                                <!-- Dirección -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Punto de Entrega / Dirección Exacta <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-map-marker-alt"></i></span>
+                                        <textarea name="direccion_entrega" id="direccion_entrega" class="form-control" rows="2" placeholder="Ej. Gasolinera Texaco Merliot o Col. Escalón, Pje 2, #123"></textarea>
+                                    </div>
+                                    <div class="mt-2" id="mapLinkContainer" style="display: none;">
+                                        <a href="#" id="googleMapsLink" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">
+                                            <i class="fas fa-map-marked-alt me-1"></i> Ver en Google Maps
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 mb-3">
+                                    <!-- Costo de Envío -->
+                                    <div class="col-6">
+                                        <label class="form-label fw-bold small">Costo de Envío</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text fw-bold">$</span>
+                                            <input type="number" name="costo_envio" id="costo_envio" class="form-control" step="0.01" min="0" value="0.00">
+                                        </div>
+                                    </div>
+
+                                    <!-- Descuento -->
+                                    <div class="col-6">
+                                        <label class="form-label fw-bold small">Descuento ($)</label>
+                                        <input type="number" name="descuento" id="descuento_salida" class="form-control" step="0.01" min="0" value="0.00">
+                                        <small class="text-muted">Monto a descontar (opcional)</small>
+                                    </div>
+                                </div>
+
+                                <!-- Resumen de totales -->
+                                <div class="alert alert-info mb-0 py-2 px-3">
+                                    <div class="d-flex justify-content-between mb-1 small">
+                                        <span>Subtotal:</span>
+                                        <strong id="subtotalSalida">$0.00</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-1 small">
+                                        <span>Descuento:</span>
+                                        <strong class="text-danger" id="descuentoSalidaPreview">-$0.00</strong>
+                                    </div>
+                                    <hr class="my-1">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="fw-bold">TOTAL:</span>
+                                        <strong class="text-primary fs-6" id="totalSalida">$0.00</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer bg-light py-2">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success btn-sm" id="btnRegistrarSalida">
+                            <i class="fas fa-check me-1"></i> Registrar Entrega
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Quick View (Vista Rápida Home) -->
     <?php include 'app/views/inc/modal_quickview.php'; ?>
 

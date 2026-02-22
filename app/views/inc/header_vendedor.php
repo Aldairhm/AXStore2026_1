@@ -14,6 +14,7 @@
             <nav id="navmenu" class="navmenu">
                 <ul>
                     <li><a href="<?php echo APP_URL; ?>home" class="active"><i class="fas fa-home me-1"></i>Inicio</a></li>
+                    <li><a href="<?php echo APP_URL; ?>salidas"><i class="fas fa-truck me-1"></i>Salidas</a></li>
                     <li><a href="#contacto"><i class="fas fa-envelope me-1"></i>Contacto</a></li>
                 </ul>
             </nav>
@@ -170,9 +171,11 @@
                                             <?php echo $_SESSION['usuario']['username']; ?>
                                         </div>
                                     </div>
-                                <?php else: ?>
+                                <?php
+else: ?>
                                     <div class="p-2 text-center text-muted small">No hay sesión activa</div>
-                                <?php endif; ?>
+                                <?php
+endif; ?>
                             </div>
                         </li>
 

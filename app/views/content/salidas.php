@@ -126,13 +126,7 @@
                 </div>
             </div>
 
-            <!-- Pestañas de Navegación -->
-            <!-- Título de sección simplificado -->
-            <div class="mb-4 border-bottom pb-2">
-                <h5 class="fw-bold text-success">
-                    <i class="fas fa-check-circle me-2"></i>Listado de Entregas Realizadas
-                </h5>
-            </div>
+
 
             <!-- Filtros -->
             <div class="card border-0 shadow-sm mb-4">

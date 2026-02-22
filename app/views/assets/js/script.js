@@ -312,10 +312,11 @@ document.addEventListener('DOMContentLoaded', function() {
             let precioVenta = Number(product.precio_venta);
             let precioFormateado = precioVenta.toFixed(2);
             
-            let badgesHtml = '';
-            if (product.id > umbralNuevo) badgesHtml += '<span class="badge-premium badge-new">NUEVO</span>';
-            if (parseInt(product.ventas_totales) >= 5) badgesHtml += '<span class="badge-premium badge-top">TOP VENTAS</span>';
-            if (product.stock > 0 && product.stock <= product.reserva) badgesHtml += '<span class="badge-premium badge-low-stock">STOCK BAJO</span>';
+            // Etiquetas de Información: Stock y Reserva
+            let badgesHtml = `
+                <span class="badge-premium badge-stock"><i class="fas fa-box me-1"></i>Stock: ${product.stock}</span>
+                <span class="badge-premium badge-reserva"><i class="fas fa-clock me-1"></i>Res: ${product.reserva}</span>
+            `;
 
             const mainImg = `${rutaBase}${product.imagen || 'default.png'}`;
             const hoverImg = product.imagen_hover ? `${rutaBase}${product.imagen_hover}` : mainImg;
@@ -343,8 +344,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <span class="badge bg-light text-dark border">${product.nombre_categoria}</span>
                             <div class="text-end">
-                                <span class="d-block small fw-bold ${stockColor}">${product.stock > 0 ? product.stock + ' un.' : 'AGOTADO'}</span>
-                                <span class="d-block x-small text-muted" style="font-size: 0.7rem;">Reserva: ${product.reserva} un.</span>
                                 <span class="d-block x-small text-success fw-bold" style="font-size: 0.75rem;">Comisión: $${parseFloat(product.comision).toFixed(2)}</span>
                             </div>
                         </div>
@@ -467,10 +466,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         $("#qv-main-img").attr("src", ruta + "default.png");
                     }
-
                     const $attrContainer = $("#qv-attributes");
                     $attrContainer.empty();
-                    if (data.atributos.length > 0) {
+                    if (data.atributos && data.atributos.length > 0) {
                         let attrHtml = '<div class="row row-cols-2 g-2">';
                         data.atributos.forEach(attr => {
                             attrHtml += `<div class="col"><div class="p-2 border rounded bg-light small"><span class="text-muted">${attr.nombre_atributo}:</span> <strong class="text-dark">${attr.valor}</strong></div></div>`;
@@ -478,6 +476,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         attrHtml += '</div>';
                         $attrContainer.append(attrHtml);
                     }
+                    
+                    // [NUEVO] Generar texto para copiar (Expandido)
+                    let extraAttrs = "";
+                    if (data.atributos && data.atributos.length > 0) {
+                        data.atributos.forEach(attr => {
+                            extraAttrs += `🔹 ${attr.nombre_atributo}: ${attr.valor}\n`;
+                        });
+                    }
+
+                     const copyText = `🛍️ *${nombrePadre}${nombreVariante ? ' - ' + nombreVariante : ''}*\n` +
+                                     `📁 Categoría: ${v.nombre_categoria}\n` +
+                                     `💰 PRECIO: $${parseFloat(v.precio_venta).toFixed(2)}\n` +
+                                     extraAttrs +
+                                     `${v.descripcion ? '\n📝 *Descripción:*\n' + v.descripcion : ''}`;
+                    $("#qv-copy-text").val(copyText);
+
                     $("#modalQuickView").modal("show");
                     $("#btnSalidaFromQuick").data("id", id);
                 } else {
@@ -501,6 +515,150 @@ document.addEventListener('DOMContentLoaded', function() {
         const newSrc = $(this).find("img").attr("src");
         $("#qv-main-img").fadeOut(200, function() {
             $(this).attr("src", newSrc).fadeIn(200);
+        });
+    });
+
+    // [NUEVO] Botón Copiar Información (Home)
+    $(document).on("click", "#btn-copy-info", function() {
+        const text = $("#qv-copy-text").val();
+        navigator.clipboard.writeText(text).then(() => {
+            const $btn = $(this);
+            const originalIcon = $btn.html();
+            $btn.html('<i class="fas fa-check text-success"></i>');
+            setTimeout(() => $btn.html(originalIcon), 2000);
+            
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: '¡Copiado al portapapeles!',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        });
+    });
+
+    // [NUEVO] Botón Descargar Imagen Actual (Home)
+    $(document).on("click", "#btn-download-img", function() {
+        const imgSrc = $("#qv-main-img").attr("src");
+        if (!imgSrc || imgSrc.includes("default.png")) {
+            Swal.fire("Aviso", "No hay una imagen válida para descargar.", "info");
+            return;
+        }
+
+        const link = document.createElement("a");
+        link.href = imgSrc;
+        const fileName = imgSrc.split('/').pop();
+        link.download = `AXStore_${fileName}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+
+    // Acción desde Quick View (Registro de Salida)
+    $(document).on("click", "#btnSalidaFromQuick", function() {
+        const id = $(this).data("id");
+        const product = allProducts.find(p => p.id == id);
+        
+        if (product) {
+            // Cerrar Quick View antes de abrir Salida
+            $("#modalQuickView").modal("hide");
+            setTimeout(() => abrirModalSalida(product), 500);
+        }
+    });
+
+    function abrirModalSalida(product) {
+        console.log("Abriendo Modal Salida (Home) para:", product);
+        
+        // Llenar campos ocultos
+        $("#id_variante_salida").val(product.id);
+        $("#precio_unitario_salida").val(product.precio_venta);
+        
+        // Llenar vista previa
+        $("#nombreProductoSalida").text(product.nombre);
+        $("#skuProductoSalida").text(product.sku);
+        $("#precioProductoSalida").text("$" + parseFloat(product.precio_venta).toFixed(2));
+        $("#stockProductoSalida").text(product.stock + " un.");
+        $("#imgProductoSalida").attr("src", "app/views/assets/images/" + (product.imagen || 'default.png'));
+        
+        // Reiniciar formulario
+        $("#formSalidaProducto")[0].reset();
+        
+        // Establecer fecha y hora actual
+        const ahora = new Date();
+        const offset = ahora.getTimezoneOffset() * 60000;
+        const localISO = new Date(ahora.getTime() - offset).toISOString();
+        $("#fecha_salida").val(localISO.split('T')[0]);
+        $("#hora_salida").val(ahora.getHours().toString().padStart(2, '0') + ':' + ahora.getMinutes().toString().padStart(2, '0'));
+        
+        calcularTotales();
+        $("#modalSalidaProducto").modal("show");
+    }
+
+    function calcularTotales() {
+        const cant = parseInt($("#cantidad_salida").val()) || 0;
+        const precio = parseFloat($("#precio_unitario_salida").val()) || 0;
+        const envio = parseFloat($("#costo_envio").val()) || 0;
+        const desc = parseFloat($("#descuento_salida").val()) || 0;
+        
+        const subtotal = cant * precio;
+        const total = subtotal + envio - desc;
+        
+        $("#subtotalSalida").text("$" + subtotal.toFixed(2));
+        $("#descuentoSalidaPreview").text("-$" + desc.toFixed(2));
+        $("#totalSalida").text("$" + Math.max(0, total).toFixed(2));
+    }
+
+    // Google Maps dinámico
+    $("#direccion_entrega").on("input", function() {
+        const query = $(this).val().trim();
+        const $container = $("#mapLinkContainer");
+        const $link = $("#googleMapsLink");
+        
+        if (query.length > 3) {
+            $link.attr("href", `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`);
+            $container.fadeIn();
+        } else {
+            $container.fadeOut();
+        }
+    });
+
+    // Calcular totales al cambiar valores
+    $(document).on("input", "#cantidad_salida, #costo_envio, #descuento_salida", calcularTotales);
+
+    // Registrar Salida desde Home
+    $("#formSalidaProducto").on("submit", function(e) {
+        e.preventDefault();
+        
+        const $btn = $("#btnRegistrarSalida");
+        $btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin me-1"></i> Procesando...');
+        
+        const formData = new FormData(this);
+        formData.append("accion", "registrarSalida");
+        
+        $.ajax({
+            url: "app/controllers/salidaController.php",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: "json",
+            success: function(response) {
+                if (response.status === "success") {
+                    Swal.fire("¡Éxito!", response.message, "success").then(() => {
+                        $("#modalSalidaProducto").modal("hide");
+                        cargarDatosHome(); // Recargar datos para actualizar stock
+                    });
+                } else {
+                    Swal.fire("Error", response.message, "error");
+                }
+            },
+            error: function() {
+                Swal.fire("Error", "Error de conexión con el servidor.", "error");
+            },
+            complete: function() {
+                $btn.prop("disabled", false).html('<i class="fas fa-check me-1"></i> Registrar Entrega');
+            }
         });
     });
 

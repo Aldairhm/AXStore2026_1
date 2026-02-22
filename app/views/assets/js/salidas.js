@@ -82,9 +82,9 @@ function aplicarFiltros() {
     const fechaDesde = $("#fechaDesde").val();
     const fechaHasta = $("#fechaHasta").val();
     const ordenar = $("#ordenar").val();
-    // activeTab ya no es necesario, siempre filtramos por entregados
-    // let activeTab = $("#salidasTabs .nav-link.active").attr("id"); 
-    // if (!activeTab) activeTab = 'pendientes-tab';
+    
+    // Forzar estado 'Entregado' ya que se eliminó la pestaña de cancelados
+    const activeStatus = "Entregado";
 
     filteredSalidas = allSalidas.filter(salida => {
         const estado = salida.estado || 'Pendiente';
@@ -96,8 +96,7 @@ function aplicarFiltros() {
         const matchesFechaDesde = !fechaDesde || salida.fecha_salida >= fechaDesde;
         const matchesFechaHasta = !fechaHasta || salida.fecha_salida <= fechaHasta;
 
-        // Filtro fijo: Solo mostrar salidas Entregadas
-        // El usuario solicitó simplificar la vista para trabajar solo con entregas
+        // Solo mostrar entregados
         const matchesTab = (estado === 'Entregado');
 
         return matchesSearch && matchesFechaDesde && matchesFechaHasta && matchesTab;
@@ -165,13 +164,24 @@ function renderSalidas() {
 // Obtener badge de estado (con lógica de vencimiento)
 function getBadgeEstado(estado, fechaEntrega = null) {
     // Ya no hay lógica de vencimiento porque todo es entregado
-    if (estado === 'Entregado') {
-        return '<span class="badge bg-success">Entregado</span>';
+    let badgeEstado = '';
+    switch(estado) {
+        case 'Entregado':
+            badgeEstado = `<span class="badge bg-success bg-opacity-10 text-success border border-success-subtle rounded-pill px-3"><i class="fas fa-check-circle me-1"></i>Entregado</span>`;
+            break;
+        case 'Cancelado':
+            badgeEstado = `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle rounded-pill px-3"><i class="fas fa-ban me-1"></i>Cancelado</span>`;
+            break;
+        case 'En camino':
+            badgeEstado = `<span class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle rounded-pill px-3"><i class="fas fa-truck me-1"></i>En camino</span>`;
+            break;
+        case 'Pendiente':
+            badgeEstado = `<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle rounded-pill px-3"><i class="fas fa-clock me-1"></i>Pendiente</span>`;
+            break;
+        default:
+            badgeEstado = `<span class="badge bg-info bg-opacity-10 text-info border border-info-subtle rounded-pill px-3">${estado}</span>`;
     }
-    if (estado === 'Cancelado') {
-        return '<span class="badge bg-secondary">Cancelado</span>';
-    }
-    return `<span class="badge bg-dark">${estado}</span>`;
+    return badgeEstado;
 }
 
 // Verificar si puede devolver (frontend)
@@ -186,24 +196,34 @@ function puedeDevolver(salida) {
         };
     }
 
-    // Ya no bloqueamos 'Entregado', se permite devolución siempre que no esté cancelado
-    /* 
-    if (estado === 'Entregado') {
+    // Validar plazo de 7 días
+    if (salida.fecha_salida) {
+        const fechaSalida = new Date(salida.fecha_salida + 'T00:00:00');
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0); 
+        
+        const diffTime = hoy - fechaSalida;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays > 7) {
+            return {
+                puede: false,
+                motivo: `Plazo vencido (${diffDays} días)`,
+                diasTranscurridos: diffDays
+            };
+        }
+
         return {
-            puede: false,
-            motivo: 'Producto ya entregado'
+            puede: true,
+            motivo: 'Devolución permitida',
+            diasRestantes: 7 - diffDays
         };
     }
-    */
 
-    /* 
-    Se permite devolución solo para estados: Pendiente y En camino
-    */
-
-    // Permitir devolución en cualquier estado activo (Pendiente, En camino, Entregado)
     return {
         puede: true,
-        diasRestantes: null // Ya no aplicamos restricción visual de días
+        motivo: 'Devolución permitida',
+        diasRestantes: 7
     };
 }
 
@@ -229,6 +249,29 @@ function crearCardSalida(salida) {
     const estado = salida.estado || 'Pendiente';
     const badgeEstado = getBadgeEstado(estado);
     
+    // Info de cancelación/devolución para la card
+    let infoExtraCard = '';
+    if (estado === 'Cancelado' && salida.fecha_cancelacion) {
+        const fCanc = new Date(salida.fecha_cancelacion);
+        infoExtraCard = `
+            <div class="mt-2 py-1 px-2 bg-danger bg-opacity-10 border border-danger-subtle rounded small">
+                <p class="mb-0 text-danger" style="font-size: 0.7rem;">
+                    <i class="fas fa-undo-alt me-1"></i><strong>Devuelto el:</strong> ${fCanc.toLocaleDateString()}
+                </p>
+                ${salida.observaciones ? `<p class="mb-0 text-muted" style="font-size: 0.65rem;">${salida.observaciones}</p>` : ''}
+            </div>
+        `;
+    } else if (salida.observaciones && salida.observaciones.toLowerCase().includes('devolución')) {
+        // Para devoluciones parciales que siguen 'Entregado'
+        infoExtraCard = `
+            <div class="mt-2 py-1 px-2 bg-warning bg-opacity-10 border border-warning-subtle rounded small">
+                <p class="mb-0 text-warning-emphasis" style="font-size: 0.7rem;">
+                    <i class="fas fa-exclamation-circle me-1"></i><strong>Nota:</strong> ${salida.observaciones}
+                </p>
+            </div>
+        `;
+    }
+    
     // Verificar si puede devolver
     const validacionDevolucion = puedeDevolver(salida);
     const puedeDevol = validacionDevolucion.puede;
@@ -246,6 +289,7 @@ function crearCardSalida(salida) {
                                 <i class="far fa-calendar me-1"></i>${fechaFormateada}
                                 <i class="far fa-clock ms-2 me-1"></i>${horaFormateada}
                             </p>
+                            ${infoExtraCard}
                         </div>
                         <button class="btn btn-sm btn-outline-primary btnVerDetalle" 
                                 data-id="${salida.id}">
@@ -417,22 +461,41 @@ function mostrarModalDetalle(salida) {
     const estado = salida.estado || 'Pendiente';
     const badgeEstado = getBadgeEstado(estado, salida.fecha_entrega);
 
-    // Información de devolución: Ya no restringimos por tiempo, así que simplificamos el mensaje o lo quitamos si es redundante.
-    // Solo mostramos si está cancelado.
+    // Información de devolución: Validar plazo de 7 días
+    const validacion = puedeDevolver(salida);
     let infoDevolucion = '';
     if (estado === 'Cancelado') {
+        const fechaCanc = salida.fecha_cancelacion ? new Date(salida.fecha_cancelacion).toLocaleDateString('es-ES', { 
+            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+        }) : 'No registrada';
+
         infoDevolucion = `
-            <div class="alert alert-danger mb-3">
-                <i class="fas fa-ban me-2"></i>
-                <strong>Salida Cancelada</strong>
+            <div class="alert alert-danger mb-4 shadow-sm border-0">
+                <div class="d-flex">
+                    <div class="me-3">
+                        <i class="fas fa-ban fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Salida Cancelada / Devuelta</h6>
+                        <p class="mb-1 small"><strong>Fecha:</strong> ${fechaCanc}</p>
+                        ${salida.observaciones ? `<p class="mb-0 small"><strong>Motivo:</strong> ${salida.observaciones}</p>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+ else if (!validacion.puede) {
+        infoDevolucion = `
+            <div class="alert alert-warning mb-3">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Plazo Vencido:</strong> ${validacion.motivo}. La devolución ya no es posible.
             </div>
         `;
     } else {
-        // Mensaje informativo opcional
         infoDevolucion = `
             <div class="alert alert-info mb-3">
                 <i class="fas fa-info-circle me-2"></i>
-                <strong>Devolución disponible:</strong> Puede procesar devoluciones parciales o totales.
+                <strong>Devolución disponible:</strong> Puede procesar devoluciones parciales o totales. Le quedan <strong>${validacion.diasRestantes} días</strong> de plazo.
             </div>
         `;
     }
@@ -483,6 +546,29 @@ function mostrarModalDetalle(salida) {
                 <h6 class="fw-bold text-muted mb-3">DETALLES DE LA SALIDA</h6>
 
                 ${infoDevolucion}
+
+                <!-- Historial de Devoluciones (NUEVO) -->
+                ${salida.historial_devoluciones && salida.historial_devoluciones.length > 0 ? `
+                <div class="mb-4">
+                    <h6 class="fw-bold small mb-2 text-danger"><i class="fas fa-history me-1"></i>HISTORIAL DE CAMBIOS / DEVOLUCIONES</h6>
+                    <div class="list-group list-group-flush border rounded shadow-sm overflow-hidden">
+                        ${salida.historial_devoluciones.map(dev => {
+                            const fDev = new Date(dev.fecha_registro);
+                            return `
+                                <div class="list-group-item list-group-item-action py-2">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle rounded-pill">
+                                            -${dev.cantidad} un.
+                                        </span>
+                                        <small class="text-muted"><i class="far fa-clock me-1"></i>${fDev.toLocaleString('es-ES')}</small>
+                                    </div>
+                                    <p class="mb-0 small mt-1 text-secondary">${dev.motivo || 'Sin motivo registrado'}</p>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                ` : ''}
 
                 <div class="mb-4">
                     <div class="bg-danger bg-opacity-10 p-3 rounded mb-3">
@@ -581,6 +667,10 @@ function devolverSalida(id, cantidadOriginal, idVariante, nombreProducto) {
             <p>Cantidad vendida original: <strong>${cantidadOriginal}</strong></p>
             <p class="mb-2">Ingrese la cantidad a devolver al stock:</p>
             <input type="number" id="cantidadDevolver" class="swal2-input" min="1" max="${cantidadOriginal}" value="${cantidadOriginal}">
+            <div class="mt-3">
+                <label class="form-label fw-bold small">Motivo de la Devolución</label>
+                <textarea id="motivoDevolucion" class="form-control" rows="2" placeholder="Ej: Defecto de fábrica, cambio de talle..."></textarea>
+            </div>
             <p class="text-muted small mt-2">
                 <i class="fas fa-info-circle"></i> Si devuelve todo (${cantidadOriginal}), la salida se cancelará.<br>
                 Si devuelve menos, será una devolución parcial.
@@ -594,23 +684,26 @@ function devolverSalida(id, cantidadOriginal, idVariante, nombreProducto) {
         cancelButtonText: 'Cancelar',
         preConfirm: () => {
             const cantidad = Swal.getPopup().querySelector('#cantidadDevolver').value;
+            const motivo = Swal.getPopup().querySelector('#motivoDevolucion').value || 'Devolución solicitada por usuario';
+            
             if (!cantidad || cantidad <= 0) {
                 Swal.showValidationMessage('Debe ingresar una cantidad válida');
             } else if (parseInt(cantidad) > parseInt(cantidadOriginal)) {
                 Swal.showValidationMessage(`No puede devolver más de lo vendido (${cantidadOriginal})`);
             }
-            return { cantidad: cantidad };
+            return { cantidad: cantidad, motivo: motivo };
         }
     }).then((result) => {
         if (result.isConfirmed) {
             const cantidadDevolver = result.value.cantidad;
-            procesarDevolucion(id, cantidadDevolver);
+            const motivo = result.value.motivo;
+            procesarDevolucion(id, cantidadDevolver, motivo);
         }
     });
 }
 
 // Procesar la devolución
-function procesarDevolucion(id, cantidad) {
+function procesarDevolucion(id, cantidad, motivo = "") {
     $.ajax({
         url: "app/controllers/salidaController.php",
         method: "POST",
@@ -618,8 +711,8 @@ function procesarDevolucion(id, cantidad) {
         data: {
             accion: "devolverSalida",
             id: id,
-            motivo: "Devolución solicitada por usuario",
-            cantidad: cantidad // Enviamos cantidad
+            motivo: motivo,
+            cantidad: cantidad 
         },
         success: function (response) {
             if (response.status === "success") {
@@ -663,8 +756,14 @@ function showNoResults() {
 }
 
 // Actualizar contador
+// Actualizar contador
 function updateResultCount() {
     $("#resultCount").text(filteredSalidas.length);
+    // Siempre mostrar como 'entregas' ya no hay pestaña de cancelados
+    const container = $("#resultCount").parent();
+    if (container.length) {
+        container.html(`<span id="resultCount">${filteredSalidas.length}</span> entregas encontradas`);
+    }
 }
 
 // Exportar Historial a PDF (Respeta Filtros)
@@ -842,15 +941,25 @@ async function exportarSalidasPDF() {
 function cambiarEstadoSalida(id, nuevoEstado, accionNombre) {
     Swal.fire({
         title: `¿${accionNombre}?`,
-        text: `La salida pasará a estado "${nuevoEstado}"`,
+        html: `
+            <p>La salida pasará a estado <strong>"${nuevoEstado}"</strong></p>
+            <div class="mt-3 text-start">
+                <label class="form-label small fw-bold">Nota / Observación (opcional):</label>
+                <textarea id="notaEstado" class="form-control" rows="2" placeholder="Ej: No se encontró al cliente, pedido duplicado..."></textarea>
+            </div>
+        `,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
         confirmButtonText: 'Sí, continuar',
-        cancelButtonText: 'Cancelar'
+        cancelButtonText: 'Cancelar',
+        preConfirm: () => {
+            return Swal.getPopup().querySelector('#notaEstado').value;
+        }
     }).then((result) => {
         if (result.isConfirmed) {
+            const motivo = result.value || '';
             $.ajax({
                 url: "app/controllers/salidaController.php",
                 method: "POST",
@@ -858,7 +967,8 @@ function cambiarEstadoSalida(id, nuevoEstado, accionNombre) {
                 data: {
                     accion: "cambiarEstado",
                     id: id,
-                    nuevo_estado: nuevoEstado
+                    nuevo_estado: nuevoEstado,
+                    motivo: motivo // Pasamos el motivo
                 },
                 success: function(response) {
                     if (response.status === "success") {
@@ -926,7 +1036,8 @@ function setupEvents() {
     $("#btnExportar").on("click", exportarSalidasPDF);
 
     // Cambio de pestaña
-    $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+    $('#historyTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+        currentPage = 1;
         aplicarFiltros();
     });
 

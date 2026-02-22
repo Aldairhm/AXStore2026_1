@@ -273,14 +273,18 @@
 }
 
 .badge-premium {
-    padding: 5px 12px;
-    font-size: 10px;
+    padding: 6px 14px;
+    font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    border-radius: 4px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    letter-spacing: 1.2px;
+    border-radius: 6px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
     color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: inline-flex;
+    align-items: center;
 }
 
 .badge-new {
@@ -293,6 +297,14 @@
 
 .badge-low-stock {
     background: linear-gradient(45deg, #dc3545, #ff5e62);
+}
+
+.badge-stock {
+    background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+}
+
+.badge-reserva {
+    background: linear-gradient(135deg, #f12711 0%, #f5af19 100%);
 }
 
 /* IMAGEN CONTAINER Y HOVER EFFECT */
