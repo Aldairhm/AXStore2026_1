@@ -215,12 +215,12 @@ class Producto
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function registrarVariante(int $idP, string $sku, string $hash, string $nom, float $pC, float $pV, int $sA, int $sM, float $com): ?int
+    public function registrarVariante(int $idP, string $sku, string $hash, string $nom, float $pV, int $sA, int $sM, float $com): ?int
     {
-        $sql = "INSERT INTO variante (id_producto, sku, hash_combinacion, nombre_variante, precio_compra, precio_venta, stock, reserva, comision) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO variante (id_producto, sku, hash_combinacion, nombre_variante, precio_venta, stock, reserva, comision) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $this->conexion->prepare($sql);
-        return $stmt->execute([$idP, $sku, $hash, $nom, $pC, $pV, $sA, $sM, $com]) ? (int)$this->conexion->lastInsertId() : null;
+        return $stmt->execute([$idP, $sku, $hash, $nom, $pV, $sA, $sM, $com]) ? (int)$this->conexion->lastInsertId() : null;
     }
 
     // 2. En el método actualizarDatosVariante

@@ -102,7 +102,6 @@
                                                     <th class="ps-3">Variante</th>
                                                     <th width="120px">SKU</th>
                                                     <th width="120px">Imagen</th>
-                                                    <th width="100px">P. Compra</th>
                                                     <th width="100px">P. Venta</th>
                                                     <th width="80px">Stock</th>
                                                     <th width="80px">Reserva</th>
@@ -369,7 +368,7 @@
     <?php require_once "./app/views/inc/script.php"; ?>
     <?php require_once "./app/views/inc/footer.php"; ?>
     <script src="app/views/assets/js/variantes.js?v=21"></script>
-    <script src="app/views/assets/js/producto.js?v=47"></script>
+    <script src="app/views/assets/js/producto.js?v=57"></script>
 </body>
 
 </html>

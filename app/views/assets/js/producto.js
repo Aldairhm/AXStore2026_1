@@ -356,7 +356,6 @@ function generarMatrizUnificada() {
                 <input type="text" name="v_sku[]" class="form-control form-control-sm bg-light text-center fw-bold text-primary" value="${skuPlaceholder}" readonly>
             </td>
             <td><input type="file" name="v_foto[]" class="form-control form-control-sm" accept="image/*"></td>
-            <td><input type="number" name="v_precio_compra[]" class="form-control form-control-sm" placeholder="0.00" step="0.01" required></td>
             <td><input type="number" name="v_precio_venta[]" class="form-control form-control-sm" placeholder="0.00" step="0.01" required></td>
             <td><input type="number" name="v_stock_actual[]" class="form-control form-control-sm" value="1" required></td>
             <td><input type="number" name="v_stock_minimo[]" class="form-control form-control-sm" value="1" required></td>

@@ -120,7 +120,6 @@ try {
                         $sku,
                         $hash,
                         $_POST['v_nombre'][$i],
-                        (float)$_POST['v_precio_compra'][$i],
                         (float)$_POST['v_precio_venta'][$i],
                         (int)$_POST['v_stock_actual'][$i],
                         (int)$_POST['v_stock_minimo'][$i],
@@ -308,7 +307,7 @@ try {
                             move_uploaded_file($_FILES['v_foto']['tmp_name'][$i], __DIR__ . "/../views/assets/images/" . $foto);
                         }
 
-                        $idV = $productoModel->registrarVariante($idP, $sku, $hash, $_POST['v_nombre'][$i], (float)$_POST['v_precio_compra'][$i], (float)$_POST['v_precio_venta'][$i], (int)$_POST['v_stock_actual'][$i], (int)$_POST['v_stock_minimo'][$i], (float)$_POST['v_comision'][$i]);
+                        $idV = $productoModel->registrarVariante($idP, $sku, $hash, $_POST['v_nombre'][$i], (float)$_POST['v_precio_venta'][$i], (int)$_POST['v_stock_actual'][$i], (int)$_POST['v_stock_minimo'][$i], (float)$_POST['v_comision'][$i]);
                         $productoModel->registrarImagenVariante($idV, $foto, 1);
                         foreach ($attrObj as $idA => $val) {
                             $productoModel->registrarVarianteValor($idV, (int)$idA, trim($val));
