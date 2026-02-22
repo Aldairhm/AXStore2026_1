@@ -75,9 +75,7 @@
 
                         <!-- Botones de Acción -->
                         <div class="d-grid gap-2">
-                             <button class="btn btn-success btnSalidaFromQuick" id="btnSalidaFromQuick">
-                                <i class="fas fa-check-circle me-1"></i> REGISTRAR ENTREGA
-                            </button>
+                             
                         </div>
                     </div>
                 </div>
