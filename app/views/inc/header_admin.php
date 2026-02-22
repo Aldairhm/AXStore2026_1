@@ -20,7 +20,6 @@
                     <li><a href="<?php echo APP_URL; ?>catalogo"><i class="fas fa-clipboard-list me-1"></i>Catálogo</a></li>
                     <li><a href="<?php echo APP_URL; ?>salidas"><i class="fas fa-truck me-1"></i>Salidas</a></li>
                     <li><a href="<?php echo APP_URL; ?>usuario"><i class="fas fa-users me-1"></i>Usuarios</a></li>
-                    <li><a href="#contacto"><i class="fas fa-envelope me-1"></i>Contacto</a></li>
                 </ul>
             </nav>
 

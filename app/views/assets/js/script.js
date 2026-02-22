@@ -825,10 +825,26 @@ async function descargarFichaProducto(product) {
     doc.text("------------------------------------------", pageWidth / 2, yPos, { align: "center" });
     yPos += 5;
     
-    // Stock Info
-    doc.setFontSize(9);
-    doc.text(`STOCK DISPONIBLE: ${product.stock} UNI.`, pageWidth / 2, yPos, { align: "center" });
-    yPos += 10;
+    // Logo 
+    try {
+            const logoUrl = "app/views/assets/images/logo.png"; 
+            const logoData = await getBase64ImageFromUrl(logoUrl);
+
+            const logoW = 50; // ancho del logo en mm
+            const logoH = 30; // alto del logo en mm 
+            const xLogo = (pageWidth - logoW) / 2;
+
+            doc.addImage(logoData, "PNG", xLogo, yPos, logoW, logoH);
+            yPos += logoH + 5;
+        } catch (err) {
+            // Si falla la carga del logo, poner texto de respaldo
+            console.warn("No se pudo cargar el logo, usando texto de respaldo:", err);
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "bold");
+            doc.text("AX STORE", pageWidth / 2, yPos + 5, { align: "center" });
+            yPos += 15;
+        }
+
     
     // Footer
     doc.setFontSize(7);

@@ -23,7 +23,24 @@ $(document).ready(function () {
     });
 
     // -------------------------------------------------------------------------
-    // 2. FUNCIONES DE VALIDACIÓN
+    // 2. RECORDARME — Cargar email guardado al iniciar
+    // -------------------------------------------------------------------------
+
+    const emailGuardado = localStorage.getItem('recordarme_email');
+    if (emailGuardado && $('#username').length) {
+        $('#username').val(emailGuardado);
+        // Marcar el checkbox visualmente
+        $('#formLogin input[name="remember"]').prop('checked', true);
+        const box = document.querySelector('.check-custom');
+        if (box) {
+            box.style.background = 'hsl(320,60%,52%)';
+            box.style.borderColor = 'hsl(320,60%,52%)';
+            box.innerHTML = '<svg width="8" height="10" viewBox="0 0 8 10"><polyline points="1,5 3,8 7,2" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>';
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // 3. FUNCIONES DE VALIDACIÓN
     // -------------------------------------------------------------------------
 
     function limpiarErroresFormulario($form) {
@@ -54,7 +71,6 @@ $(document).ready(function () {
         const password = $('#password').val().trim();
         let errores = false;
 
-        // Validar Username
         if (username === '') {
             mostrarErrorCampo($('#username'), 'El usuario o correo es obligatorio');
             errores = true;
@@ -66,7 +82,6 @@ $(document).ready(function () {
             errores = true;
         }
 
-        // Validar Password
         if (password === '') {
             mostrarErrorCampo($('#password'), 'La contraseña es obligatoria');
             errores = true;
@@ -76,10 +91,7 @@ $(document).ready(function () {
         }
 
         if (errores) {
-            Toast.fire({
-                icon: 'error',
-                title: 'Por favor, corrija los errores del formulario'
-            });
+            Toast.fire({ icon: 'error', title: 'Por favor, corrija los errores del formulario' });
             return false;
         }
 
@@ -93,20 +105,13 @@ $(document).ready(function () {
 
         if (username === '') {
             mostrarErrorCampo($('#username'), 'El correo es obligatorio');
-            Toast.fire({
-                icon: 'error',
-                title: 'Ingrese su correo electrónico'
-            });
+            Toast.fire({ icon: 'error', title: 'Ingrese su correo electrónico' });
             return false;
         }
 
         if (!validarEmail(username)) {
             mostrarErrorCampo($('#username'), 'Formato de correo inválido');
-            Swal.fire({
-                icon: 'warning',
-                title: 'Correo inválido',
-                text: 'Por favor, ingrese un correo electrónico válido'
-            });
+            Swal.fire({ icon: 'warning', title: 'Correo inválido', text: 'Por favor, ingrese un correo electrónico válido' });
             return false;
         }
 
@@ -120,7 +125,6 @@ $(document).ready(function () {
         const clave2 = $('#clave_confirmar').val();
         let errores = false;
 
-        // Validar Contraseña Nueva
         if (clave1 === '') {
             mostrarErrorCampo($('#clave_nueva'), 'La contraseña es obligatoria');
             errores = true;
@@ -132,7 +136,6 @@ $(document).ready(function () {
             errores = true;
         }
 
-        // Validar Confirmación de Contraseña
         if (clave2 === '') {
             mostrarErrorCampo($('#clave_confirmar'), 'Confirme su contraseña');
             errores = true;
@@ -142,11 +145,7 @@ $(document).ready(function () {
         }
 
         if (errores) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Datos incompletos',
-                text: 'Por favor, corrija los errores del formulario'
-            });
+            Swal.fire({ icon: 'warning', title: 'Datos incompletos', text: 'Por favor, corrija los errores del formulario' });
             return false;
         }
 
@@ -154,22 +153,23 @@ $(document).ready(function () {
     }
 
     // -------------------------------------------------------------------------
-    // 3. FORMULARIO DE INICIO DE SESIÓN
+    // 4. FORMULARIO DE INICIO DE SESIÓN
     // -------------------------------------------------------------------------
 
     $('#formLogin').on('submit', function (e) {
         e.preventDefault();
 
-        // Validar antes de enviar
-        if (!validarFormularioLogin()) {
-            return;
-        }
+        if (!validarFormularioLogin()) return;
 
         const $btn = $(this).find('button[type="submit"]');
         const textoOriginal = $btn.html();
         $btn.html('<i class="fas fa-spinner fa-spin"></i> Verificando...').prop('disabled', true);
 
         const formData = new FormData(this);
+
+        // ── RECORDARME: leer si el checkbox está marcado ──
+        const recordarme = $('input[name="remember"]').is(':checked');
+        const emailActual = $('#username').val().trim();
 
         $.ajax({
             url: `${CTRL_LOGIN}?opcion=login`,
@@ -180,6 +180,14 @@ $(document).ready(function () {
             dataType: 'json',
             success: function (response) {
                 if (response.status === 'success') {
+
+                    // ── RECORDARME: guardar o borrar email según elección ──
+                    if (recordarme) {
+                        localStorage.setItem('recordarme_email', emailActual);
+                    } else {
+                        localStorage.removeItem('recordarme_email');
+                    }
+
                     Swal.fire({
                         icon: 'success',
                         title: '¡Bienvenido!',
@@ -190,18 +198,16 @@ $(document).ready(function () {
                     setTimeout(function () { window.location.href = 'home'; }, 1600);
 
                 } else if (response.status === 'inactive') {
-                    // --- ESTA ES LA ALERTA DE WARNING ---
                     $btn.html(textoOriginal).prop('disabled', false);
                     Swal.fire({
                         icon: 'warning',
                         title: 'Usuario Inactivo',
                         text: response.message,
                         confirmButtonText: 'Entendido',
-                        confirmButtonColor: '#f8bb86' // Color naranja warning
+                        confirmButtonColor: '#f8bb86'
                     });
 
                 } else {
-                    // Error normal (credenciales incorrectas)
                     $btn.html(textoOriginal).prop('disabled', false);
                     Swal.fire({
                         icon: 'error',
@@ -214,7 +220,6 @@ $(document).ready(function () {
             error: function (xhr) {
                 $btn.html(textoOriginal).prop('disabled', false);
                 console.error('Error de conexión:', xhr.responseText);
-
                 Swal.fire({
                     icon: 'error',
                     title: 'Error del Servidor',
@@ -226,23 +231,19 @@ $(document).ready(function () {
         });
     });
 
-    // Limpiar errores al escribir en los campos
     $('#username, #password').on('input', function () {
         $(this).removeClass('is-invalid is-valid');
         $(this).next('.invalid-feedback, .valid-feedback').remove();
     });
 
     // -------------------------------------------------------------------------
-    // 4. FORMULARIO DE RECUPERAR CONTRASEÑA
+    // 5. FORMULARIO DE RECUPERAR CONTRASEÑA
     // -------------------------------------------------------------------------
 
     $('#formRecuperar').on('submit', function (e) {
         e.preventDefault();
 
-        // Validar antes de enviar
-        if (!validarFormularioRecuperar()) {
-            return;
-        }
+        if (!validarFormularioRecuperar()) return;
 
         const $btn = $(this).find('button[type="submit"]');
         const textoOriginal = $btn.html();
@@ -273,9 +274,7 @@ $(document).ready(function () {
                         confirmButtonText: 'Aceptar',
                         confirmButtonColor: '#3085d6',
                         allowOutsideClick: false
-                    }).then(() => {
-                        window.location.href = 'login';
-                    });
+                    }).then(() => { window.location.href = 'login'; });
                 } else {
                     Swal.fire({
                         icon: 'error',
@@ -289,7 +288,6 @@ $(document).ready(function () {
             error: function (xhr) {
                 $btn.html(textoOriginal).prop('disabled', false);
                 console.error('Error de conexión:', xhr.responseText);
-
                 Swal.fire({
                     icon: 'error',
                     title: 'Error de Conexión',
@@ -301,23 +299,19 @@ $(document).ready(function () {
         });
     });
 
-    // Limpiar errores al escribir
     $('#username_recuperar').on('input', function () {
         $(this).removeClass('is-invalid is-valid');
         $(this).next('.invalid-feedback, .valid-feedback').remove();
     });
 
     // -------------------------------------------------------------------------
-    // 5. FORMULARIO DE CAMBIAR CONTRASEÑA
+    // 6. FORMULARIO DE CAMBIAR CONTRASEÑA
     // -------------------------------------------------------------------------
 
     $('#formNuevaClave').on('submit', function (e) {
         e.preventDefault();
 
-        // Validar antes de enviar
-        if (!validarFormularioNuevaClave()) {
-            return;
-        }
+        if (!validarFormularioNuevaClave()) return;
 
         const $btn = $(this).find('button[type="submit"]');
         const textoOriginal = $btn.html();
@@ -343,9 +337,7 @@ $(document).ready(function () {
                         confirmButtonText: 'Iniciar Sesión',
                         confirmButtonColor: '#3085d6',
                         allowOutsideClick: false
-                    }).then(() => {
-                        window.location.href = 'login';
-                    });
+                    }).then(() => { window.location.href = 'login'; });
                 } else {
                     Swal.fire({
                         icon: 'error',
@@ -359,7 +351,6 @@ $(document).ready(function () {
             error: function (xhr) {
                 $btn.html(textoOriginal).prop('disabled', false);
                 console.error('Error de conexión:', xhr.responseText);
-
                 Swal.fire({
                     icon: 'error',
                     title: 'Error del Servidor',
@@ -371,42 +362,16 @@ $(document).ready(function () {
         });
     });
 
-    // Limpiar errores al escribir
     $('#clave_nueva, #clave_confirmar').on('input', function () {
         $(this).removeClass('is-invalid is-valid');
         $(this).next('.invalid-feedback, .valid-feedback').remove();
     });
 
-    // Validación en tiempo real de coincidencia de contraseñas
-    $('#clave_confirmar').on('input', function () {
-        const clave1 = $('#clave_nueva').val();
-        const clave2 = $(this).val();
-
-        if (clave2.length > 0) {
-            if (clave1 === clave2) {
-                $(this).removeClass('is-invalid').addClass('is-valid');
-                $(this).next('.invalid-feedback').remove();
-                if ($(this).next('.valid-feedback').length === 0) {
-                    $(this).after('<div class="valid-feedback"><i class="fas fa-check-circle"></i> Las contraseñas coinciden</div>');
-                }
-            } else {
-                $(this).removeClass('is-valid').addClass('is-invalid');
-                $(this).next('.valid-feedback').remove();
-                if ($(this).next('.invalid-feedback').length === 0) {
-                    $(this).after('<div class="invalid-feedback"><i class="fas fa-times-circle"></i> Las contraseñas no coinciden</div>');
-                }
-            }
-        } else {
-            $(this).removeClass('is-invalid is-valid');
-            $(this).next('.invalid-feedback, .valid-feedback').remove();
-        }
-    });
-
     // -------------------------------------------------------------------------
-    // 6. FUNCIONALIDADES ADICIONALES
+    // 7. FUNCIONALIDADES ADICIONALES
     // -------------------------------------------------------------------------
 
-    // Toggle para mostrar/ocultar contraseñas
+    // Toggle mostrar/ocultar contraseña
     $('.toggle-password').on('click', function () {
         const targetId = $(this).attr('data-target');
         const $input = $(targetId);
@@ -423,73 +388,70 @@ $(document).ready(function () {
         }
     });
 
-    // Prevenir espacios en blanco al inicio y final
+    // Prevenir espacios al inicio/final
     $('input[type="text"], input[type="email"], input[type="password"]').on('blur', function () {
-        const valorLimpio = $(this).val().trim();
-        $(this).val(valorLimpio);
+        $(this).val($(this).val().trim());
     });
 
-    // Detectar Enter en campos para enviar formulario
+    // Enter en campos para enviar formulario
     $('input').on('keypress', function (e) {
-        if (e.which === 13) {
-            $(this).closest('form').submit();
-        }
+        if (e.which === 13) $(this).closest('form').submit();
     });
 
-    // Indicador de fortaleza de contraseña (opcional)
-    $('#clave_nueva').on('input', function () {
-        const password = $(this).val();
-        let fuerza = 0;
-        let mensaje = '';
-        let colorClass = '';
+    // ── INDICADOR DE FORTALEZA (solo en página nueva_clave) ──
+    // Guardado con null-check para evitar errores en otras páginas
+    const inputClave    = document.getElementById('clave_nueva');
+    const strengthFill  = document.getElementById('strengthFill');
+    const strengthLabel = document.getElementById('strengthLabel');
+    const inputConfirm  = document.getElementById('clave_confirmar');
+    const matchLabel    = document.getElementById('matchLabel');
 
-        if (password.length >= 6) fuerza++;
-        if (password.length >= 8) fuerza++;
-        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) fuerza++;
-        if (/\d/.test(password)) fuerza++;
-        if (/[^a-zA-Z\d]/.test(password)) fuerza++;
+    if (inputClave && strengthFill && strengthLabel) {
+        inputClave.addEventListener('input', function () {
+            const val = this.value;
+            let score = 0;
+            if (val.length >= 8)          score++;
+            if (/[A-Z]/.test(val))        score++;
+            if (/[0-9]/.test(val))        score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
 
-        switch (fuerza) {
-            case 0:
-            case 1:
-                mensaje = 'Débil';
-                colorClass = 'text-danger';
-                break;
-            case 2:
-            case 3:
-                mensaje = 'Media';
-                colorClass = 'text-warning';
-                break;
-            case 4:
-            case 5:
-                mensaje = 'Fuerte';
-                colorClass = 'text-success';
-                break;
-        }
+            const levels = [
+                { w: '0%',    color: 'transparent', text: '' },
+                { w: '25%',   color: '#e53e3e',      text: 'Muy débil' },
+                { w: '50%',   color: '#dd6b20',      text: 'Débil' },
+                { w: '75%',   color: '#d69e2e',      text: 'Moderada' },
+                { w: '100%',  color: '#38a169',      text: 'Fuerte' },
+            ];
 
-        // Mostrar indicador si existe el contenedor
-        if ($('#password-strength').length > 0 && password.length > 0) {
-            $('#password-strength')
-                .removeClass('text-danger text-warning text-success')
-                .addClass(colorClass)
-                .html(`<small><i class="fas fa-shield-alt"></i> Fortaleza: <strong>${mensaje}</strong></small>`);
-        } else if (password.length === 0) {
-            $('#password-strength').html('');
-        }
-    });
+            strengthFill.style.width      = levels[score].w;
+            strengthFill.style.background = levels[score].color;
+            strengthLabel.textContent     = levels[score].text;
+            strengthLabel.style.color     = levels[score].color;
+        });
+    }
+
+    if (inputConfirm && matchLabel && inputClave) {
+        inputConfirm.addEventListener('input', function () {
+            if (this.value === inputClave.value) {
+                matchLabel.textContent = '✓ Las contraseñas coinciden';
+                matchLabel.style.color = '#38a169';
+            } else {
+                matchLabel.textContent = '✗ Las contraseñas no coinciden';
+                matchLabel.style.color = '#e53e3e';
+            }
+        });
+    }
 
     // -------------------------------------------------------------------------
-    // 7. EFECTOS VISUALES Y ANIMACIONES
+    // 8. EFECTOS VISUALES
     // -------------------------------------------------------------------------
 
-    // Efecto de focus en inputs
     $('input').on('focus', function () {
         $(this).parent().addClass('input-focused');
     }).on('blur', function () {
         $(this).parent().removeClass('input-focused');
     });
 
-    // Animación suave al cargar la página
     $('.login-form, .recover-form, .new-password-form').hide().fadeIn(800);
 
 });

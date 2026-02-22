@@ -82,7 +82,7 @@ try {
             if ($datosUsuario) {
                 // 2. Generar TOKEN con expiración (Formato: randomHex.timestamp)
                 // Usamos 24 bytes (48 hex chars) + separador + 10 digitos tiempo = ~60 chars (seguro para varchar 64/100)
-                $caducidad = time() + (5 * 60); // 5 minutos a partir de ahora
+                $caducidad = time() + (15 * 60); // 15 minutos a partir de ahora
                 $tokenAleatorio = bin2hex(random_bytes(24));
                 $token = $tokenAleatorio . '.' . $caducidad;
 
