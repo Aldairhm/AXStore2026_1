@@ -309,11 +309,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const umbralNuevo = maxId - 12;
 
         productos.forEach((product, index) => {
+            
+            // Convertimos a números para evitar bugs en devoluciones
+            const reservaNum = parseInt(product.reserva) || 0;
+            const stockNum = parseInt(product.stock) || 0;
+
             let precioVenta = Number(product.precio_venta);
             let precioFormateado = precioVenta.toFixed(2);
             
-            // Etiquetas de Información: Stock y Reserva
+            // --- LÓGICA DE CARTELES CORREGIDA ---
+            let cartelesExtra = '';
+            if (stockNum <= 0 && reservaNum <= 0) {
+                cartelesExtra = '<span class="badge-premium badge-low-stock"><i class="fas fa-times-circle me-1"></i> Agotado</span>';
+            } else if (stockNum <= 0 && reservaNum > 0) {
+                cartelesExtra = '<span class="badge-premium badge-top"><i class="fas fa-truck-loading me-1"></i> Esperando bodega</span>';
+            }
+
+            // Etiquetas de Información: Stock, Reserva y Cartel Extra
             let badgesHtml = `
+                ${cartelesExtra}
                 <span class="badge-premium badge-stock"><i class="fas fa-box me-1"></i>Stock: ${product.stock}</span>
                 <span class="badge-premium badge-reserva"><i class="fas fa-clock me-1"></i>Res: ${product.reserva}</span>
             `;

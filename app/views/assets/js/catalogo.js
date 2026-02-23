@@ -107,12 +107,31 @@ function renderProducts(productsList) {
     $productGrid.removeClass("d-none");
 
     $.each(productsList, function (i, product) {
+        
+        // Convertimos a números reales para evitar errores de lectura
+        const reservaNum = parseInt(product.reserva) || 0;
+        const stockNum = parseInt(product.stock) || 0;
+
         const precioFormateado = Number(product.precio_venta).toFixed(2);
         const mainImg  = `${ruta}${product.imagen}`;
         const hoverImg = product.imagen_hover ? `${ruta}${product.imagen_hover}` : mainImg;
-        const disabledBtn = product.stock <= 0 ? 'disabled' : '';
+        
+        // CORRECCIÓN: El botón solo se bloquea si NO hay stock en Tienda
+        const disabledBtn = stockNum <= 0 ? 'disabled' : '';
+
+        // --- LÓGICA DE CARTELES CORREGIDA ---
+        let cartelesExtra = '';
+        
+        if (stockNum <= 0 && reservaNum <= 0) {
+            // No hay ni en tienda ni en bodega
+            cartelesExtra = '<span class="badge-premium badge-low-stock"><i class="fas fa-times-circle me-1"></i> Agotado</span>';
+        } else if (stockNum <= 0 && reservaNum > 0) {
+            // No hay en tienda, pero SÍ hay en bodega
+            cartelesExtra = '<span class="badge-premium badge-top"><i class="fas fa-truck-loading me-1"></i> Esperando bodega</span>';
+        }
 
         const badgesHtml = `
+            ${cartelesExtra}
             <span class="badge-premium badge-stock"><i class="fas fa-box me-1"></i>Stock: ${product.stock}</span>
             <span class="badge-premium badge-reserva"><i class="fas fa-clock me-1"></i>Res: ${product.reserva}</span>
         `;
