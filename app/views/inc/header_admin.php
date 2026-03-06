@@ -49,7 +49,7 @@
                         </li>
 
                         <li class="grupo-item ventas">
-                            <a class="dropdown-item" href="LINK_DE_VENTAS_ONLINE" target="_blank">
+                            <a class="dropdown-item" href="https://chat.whatsapp.com/KL4yYuJFvCGJ6Kv1notGG4?mode=gi_t" target="_blank">
                                 <div class="grupo-icon">
                                     <i class="fas fa-shopping-cart"></i>
                                 </div>
@@ -62,7 +62,7 @@
                         </li>
 
                         <li class="grupo-item entregas-ss">
-                            <a class="dropdown-item" href="LINK_ENTREGAS_SS" target="_blank">
+                            <a class="dropdown-item" href="https://chat.whatsapp.com/CvaX87e1rweHpN17d7Z3DT?mode=hq1tswa" target="_blank">
                                 <div class="grupo-icon">
                                     <i class="fas fa-truck"></i>
                                 </div>
@@ -75,7 +75,7 @@
                         </li>
 
                         <li class="grupo-item entregas-dept">
-                            <a class="dropdown-item" href="LINK_ENTREGAS_DEPT" target="_blank">
+                            <a class="dropdown-item" href="https://chat.whatsapp.com/KiwDZlHO3LHHFWJ02H4vhB?mode=gi_t" target="_blank">
                                 <div class="grupo-icon">
                                     <i class="fas fa-shipping-fast"></i>
                                 </div>
@@ -88,7 +88,7 @@
                         </li>
 
                         <li class="grupo-item consultas">
-                            <a class="dropdown-item" href="LINK_CONSULTAS" target="_blank">
+                            <a class="dropdown-item" href="https://chat.whatsapp.com/JMjwo6P73evJ7vzYllO3Nm?mode=hq2tswa" target="_blank">
                                 <div class="grupo-icon">
                                     <i class="fas fa-question-circle"></i>
                                 </div>
@@ -101,7 +101,7 @@
                         </li>
 
                         <li class="grupo-item fotos">
-                            <a class="dropdown-item" href="LINK_FOTOS" target="_blank">
+                            <a class="dropdown-item" href="https://chat.whatsapp.com/LoHOGrP5cfx0ElXwrkXLR4?mode=hqctswa" target="_blank">
                                 <div class="grupo-icon">
                                     <i class="fas fa-camera"></i>
                                 </div>
@@ -114,7 +114,7 @@
                         </li>
 
                         <li class="grupo-item devoluciones">
-                            <a class="dropdown-item" href="LINK_DEVOLUCIONES" target="_blank">
+                            <a class="dropdown-item" href="https://chat.whatsapp.com/I66pPbxESDAIbyxxMrHsZU?mode=gi_t" target="_blank">
                                 <div class="grupo-icon">
                                     <i class="fas fa-undo-alt"></i>
                                 </div>
@@ -127,7 +127,7 @@
                         </li>
 
                         <li class="grupo-item agotado">
-                            <a class="dropdown-item" href="LINK_AGOTADO" target="_blank">
+                            <a class="dropdown-item" href="#categorias" target="_blank">
                                 <div class="grupo-icon">
                                     <i class="fas fa-exclamation-triangle"></i>
                                 </div>

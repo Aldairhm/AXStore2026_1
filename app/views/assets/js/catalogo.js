@@ -132,8 +132,8 @@ function renderProducts(productsList) {
 
         const badgesHtml = `
             ${cartelesExtra}
-            <span class="badge-premium badge-stock"><i class="fas fa-box me-1"></i>Stock: ${product.stock}</span>
-            <span class="badge-premium badge-reserva"><i class="fas fa-clock me-1"></i>Res: ${product.reserva}</span>
+            <span class="badge-premium badge-stock"><i class="fas fa-box me-1"></i>Tienda: ${product.stock}</span>
+            <span class="badge-premium badge-reserva"><i class="fas fa-clock me-1"></i>Bodega: ${product.reserva}</span>
         `;
 
         $productGrid.append(`
@@ -188,52 +188,109 @@ $(document).on("click", ".btnPdfDownload", function(e) {
 });
 
 async function descargarFichaProducto(product) {
+    console.log("Iniciando descargarFichaProducto (Home)...");
     try {
         const { jsPDF } = window.jspdf;
-        if (!jsPDF) throw new Error("jsPDF no está cargado.");
+        if (!jsPDF) throw new Error("jsPDF no está cargado correctamente.");
 
-        const doc       = new jsPDF({ unit: 'mm', format: [80, 160] });
-        const pageWidth = 80;
-        const margin    = 5;
+        // Formato Ticket (80mm x 150mm aprox)
+        const doc = new jsPDF({
+            unit: 'mm',
+            format: [80, 160]
+        });
+    
+    const pageWidth = 80;
+    const margin = 5;
+    const availableWidth = pageWidth - (margin * 2);
+    
+    // Header Ticket
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("AXStore", pageWidth / 2, 10, { align: "center" });
+    
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("******************************************", pageWidth / 2, 14, { align: "center" });
+    doc.text("FICHA DE PRODUCTO", pageWidth / 2, 18, { align: "center" });
+    doc.text("******************************************", pageWidth / 2, 22, { align: "center" });
+    
+    // Imagen del Producto (Centrada)
+    let yPos = 25;
+    try {
+        const imgUrl = "app/views/assets/images/" + (product.imagen || 'default.png');
+        const imgData = await getBase64ImageFromUrl(imgUrl);
+        const imgSize = 50; 
+        const xImg = (pageWidth - imgSize) / 2;
+        doc.addImage(imgData, "JPEG", xImg, yPos, imgSize, imgSize);
+        yPos += imgSize + 5;
+    } catch (err) {
+        console.error("Error cargando imagen para PDF:", err);
+        yPos += 5;
+    }
+    
+    // Datos del Producto
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    const splitTitle = doc.splitTextToSize(product.nombre.toUpperCase(), availableWidth);
+    doc.text(splitTitle, pageWidth / 2, yPos, { align: "center" });
+    yPos += (splitTitle.length * 5) + 2;
+    
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(`CAT: ${product.nombre_categoria}`, pageWidth / 2, yPos, { align: "center" });
+    yPos += 4;
+    doc.text(`SKU: ${product.sku}`, pageWidth / 2, yPos, { align: "center" });
+    yPos += 8;
+    
+    // Precio (Grande)
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(`PRECIO: $${parseFloat(product.precio_venta).toFixed(2)}`, pageWidth / 2, yPos, { align: "center" });
+    yPos += 10;
+    
+    // Línea divisoria
+    doc.setFontSize(8);
+    doc.text("------------------------------------------", pageWidth / 2, yPos, { align: "center" });
+    yPos += 5;
+    
+    // Logo 
+    try {
+            const logoUrl = "app/views/assets/images/logo.png"; 
+            const logoData = await getBase64ImageFromUrl(logoUrl);
 
-        doc.setFontSize(16); doc.setFont("helvetica", "bold");
-        doc.text("AXStore", pageWidth/2, 10, { align:"center" });
-        doc.setFontSize(8); doc.setFont("helvetica", "normal");
-        doc.text("******************************************", pageWidth/2, 14, { align:"center" });
-        doc.text("FICHA DE PRODUCTO",                        pageWidth/2, 18, { align:"center" });
-        doc.text("******************************************", pageWidth/2, 22, { align:"center" });
+            const logoW = 50; // ancho del logo en mm
+            const logoH = 30; // alto del logo en mm 
+            const xLogo = (pageWidth - logoW) / 2;
 
-        let yPos = 25;
-        try {
-            const imgData = await getBase64ImageFromUrl("app/views/assets/images/" + (product.imagen || 'default.png'));
-            doc.addImage(imgData, "JPEG", (pageWidth-50)/2, yPos, 50, 50);
-            yPos += 55;
-        } catch(e) { yPos += 5; }
+            doc.addImage(logoData, "PNG", xLogo, yPos, logoW, logoH);
+            yPos += logoH + 5;
+        } catch (err) {
+            // Si falla la carga del logo, poner texto de respaldo
+            console.warn("No se pudo cargar el logo, usando texto de respaldo:", err);
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "bold");
+            doc.text("AX STORE", pageWidth / 2, yPos + 5, { align: "center" });
+            yPos += 15;
+        }
 
-        doc.setFontSize(10); doc.setFont("helvetica", "bold");
-        const splitTitle = doc.splitTextToSize(product.nombre.toUpperCase(), pageWidth - margin*2);
-        doc.text(splitTitle, pageWidth/2, yPos, { align:"center" });
-        yPos += (splitTitle.length * 5) + 2;
+    
+    // Footer
+    doc.setFontSize(7);
+    doc.text("¡GRACIAS POR SU PREFERENCIA!", pageWidth / 2, yPos, { align: "center" });
+    yPos += 4;
+    doc.text(new Date().toLocaleString(), pageWidth / 2, yPos, { align: "center" });
+    
+    console.log("Guardando PDF (Home)...");
+    doc.save(`Ticket_${product.sku}.pdf`);
+    console.log("PDF guardado con éxito (Home).");
 
-        doc.setFontSize(8); doc.setFont("helvetica", "normal");
-        doc.text(`CAT: ${product.nombre_categoria}`, pageWidth/2, yPos, { align:"center" }); yPos += 4;
-        doc.text(`SKU: ${product.sku}`,              pageWidth/2, yPos, { align:"center" }); yPos += 8;
-
-        doc.setFontSize(16); doc.setFont("helvetica", "bold");
-        doc.text(`PRECIO: $${parseFloat(product.precio_venta).toFixed(2)}`, pageWidth/2, yPos, { align:"center" }); yPos += 10;
-
-        doc.setFontSize(8);
-        doc.text("------------------------------------------", pageWidth/2, yPos, { align:"center" }); yPos += 5;
-        doc.setFontSize(9);
-        doc.text(`STOCK DISPONIBLE: ${product.stock} UNI.`, pageWidth/2, yPos, { align:"center" }); yPos += 10;
-
-        doc.setFontSize(7);
-        doc.text("¡GRACIAS POR SU PREFERENCIA!", pageWidth/2, yPos, { align:"center" }); yPos += 4;
-        doc.text(new Date().toLocaleString(),     pageWidth/2, yPos, { align:"center" });
-
-        doc.save(`Ticket_${product.sku}.pdf`);
-    } catch(error) {
-        Swal.fire({ icon:'error', title:'Error al generar PDF', text:'Revisa la consola para más detalles.' });
+    } catch (error) {
+        console.error("Error fatal generando PDF (Home):", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error al generar PDF',
+            text: 'Hubo un problema al crear el ticket térmico.'
+        });
     }
 }
 

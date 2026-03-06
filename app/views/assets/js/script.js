@@ -328,8 +328,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Etiquetas de Información: Stock, Reserva y Cartel Extra
             let badgesHtml = `
                 ${cartelesExtra}
-                <span class="badge-premium badge-stock"><i class="fas fa-box me-1"></i>Stock: ${product.stock}</span>
-                <span class="badge-premium badge-reserva"><i class="fas fa-clock me-1"></i>Res: ${product.reserva}</span>
+                <span class="badge-premium badge-stock"><i class="fas fa-box me-1"></i>Tienda: ${product.stock}</span>
+                <span class="badge-premium badge-reserva"><i class="fas fa-clock me-1"></i>Bodega: ${product.reserva}</span>
             `;
 
             const mainImg = `${rutaBase}${product.imagen || 'default.png'}`;

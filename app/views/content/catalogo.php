@@ -114,7 +114,7 @@
                                     <p class="mb-2"><strong>SKU:</strong> <span id="skuProductoSalida" class="badge bg-dark"></span></p>
                                     <p class="mb-2"><strong>Precio:</strong> <span id="precioProductoSalida" class="text-primary fw-bold"></span></p>
                                     <p class="mb-0">
-                                        <strong>Stock Disponible:</strong> 
+                                        <strong>Disponible:</strong> 
                                         <span id="stockProductoSalida" class="badge bg-success"></span>
                                     </p>
                                 </div>

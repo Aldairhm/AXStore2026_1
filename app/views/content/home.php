@@ -106,7 +106,7 @@
                             Calidad que Marca la Diferencia
                         </h2>
                         <p class="text-white-50 mb-4">
-                            En nuestra tienda seleccionamos cuidadosamente productos para el hogar, ropa y repuestos de auto que combinan funcionalidad, durabilidad y buen diseño. </p>
+                            En nuestra tienda seleccionamos cuidadosamente productos para el hogar, herramientas y accesorios de auto y moto que combinan funcionalidad, durabilidad y buen diseño. </p>
                         <p class="text-white-50">
                             Trabajamos con proveedores confiables para garantizar artículos de calidad que se adapten a tus necesidades del dia a dia.</p>
                     </div>
@@ -529,7 +529,7 @@
                     <h4 class="font-luxury mb-3">¿Tienes más preguntas?</h4>
                     <p class="text-muted mb-4">Estamos aquí para ayudarte</p>
                     <div class="d-flex gap-3 justify-content-center flex-wrap">
-                        <a href="https://wa.me/50312345678" class="btn btn-success btn-lg rounded-0 px-4" target="_blank">
+                        <a href="https://chat.whatsapp.com/JMjwo6P73evJ7vzYllO3Nm?mode=hq2tswa" class="btn btn-success btn-lg rounded-0 px-4" target="_blank">
                             <i class="fab fa-whatsapp me-2"></i>Contactar por WhatsApp
                         </a>
                     </div>
@@ -648,7 +648,7 @@
                                     <p class="mb-2"><strong>SKU:</strong> <span id="skuProductoSalida" class="badge bg-dark"></span></p>
                                     <p class="mb-2"><strong>Precio:</strong> <span id="precioProductoSalida" class="text-primary fw-bold"></span></p>
                                     <p class="mb-0">
-                                        <strong>Stock Disponible:</strong> 
+                                        <strong>Disponible:</strong> 
                                         <span id="stockProductoSalida" class="badge bg-success"></span>
                                     </p>
                                 </div>
