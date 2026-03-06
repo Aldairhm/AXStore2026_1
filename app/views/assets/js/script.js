@@ -717,7 +717,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
-/*
+
 
 // ==========================================
     // BLOQUEO DE INSPECTOR Y CLIC DERECHO
@@ -748,7 +748,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
     });
-*/
+
 
     //scrip para div de envios y preguntas frecuentes
 
