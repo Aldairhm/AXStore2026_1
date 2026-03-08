@@ -734,4 +734,4 @@ async function generarPDFCatalogo() {
     }
 }
 
-} // ← fin del bloque if (!window.catalogoInicializado)
+} 
