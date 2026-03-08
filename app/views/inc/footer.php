@@ -4,7 +4,6 @@
                 <h3>Contacto</h3>
                 <p><i class="fas fa-map-marker-alt"></i>Metro Centró San Salvador. Sobre la calle Los Sisimiles, local 3-5A 3er nivel</p>
                 <p><i class="fas fa-phone"></i> +503 7888-7889</p>
-                <p><i class="fas fa-envelope"></i> info@luxuryjewels.com</p>
             </div>
             <div class="footer-section">
                 <h3>Horario</h3>

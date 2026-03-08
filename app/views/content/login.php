@@ -28,7 +28,7 @@
             <div class="brand-content">
 
                 <div class="wordmark">
-                    <span class="wordmark-label">AX Store<span class="wordmark-dot"></span></span>
+                    <span class="wordmark-label">AX STORE<span class="wordmark-dot"></span></span>
                 </div>
 
                 <p class="brand-tagline">Plataforma de gestión inteligente</p>

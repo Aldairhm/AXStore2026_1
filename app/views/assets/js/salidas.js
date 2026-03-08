@@ -16,11 +16,11 @@ function setFechasIniciales() {
     const hoy = new Date();
     const hace30Dias = new Date();
     hace30Dias.setDate(hoy.getDate() - 30);
-    
+
     const offset = hoy.getTimezoneOffset() * 60000;
     const fechaHasta = new Date(hoy.getTime() - offset).toISOString().split('T')[0];
     const fechaDesde = new Date(hace30Dias.getTime() - offset).toISOString().split('T')[0];
-    
+
     $("#fechaHasta").val(fechaHasta);
     $("#fechaDesde").val(fechaDesde);
 }
@@ -64,12 +64,12 @@ function calcularEstadisticas() {
     const total = entregas.length;
     const montoTotal = entregas.reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
     const unidadesTotales = entregas.reduce((sum, s) => sum + parseInt(s.cantidad || 0), 0);
-    
+
     // Entregas de hoy
     const offset = new Date().getTimezoneOffset() * 60000;
     const hoy = new Date(new Date().getTime() - offset).toISOString().split('T')[0];
     const salidasHoy = entregas.filter(s => s.fecha_salida === hoy).length;
-    
+
     $("#totalSalidas").text(total);
     $("#montoTotal").text("$" + montoTotal.toFixed(2));
     $("#unidadesTotales").text(unidadesTotales);
@@ -82,13 +82,13 @@ function aplicarFiltros() {
     const fechaDesde = $("#fechaDesde").val();
     const fechaHasta = $("#fechaHasta").val();
     const ordenar = $("#ordenar").val();
-    
+
     // Forzar estado 'Entregado' ya que se eliminó la pestaña de cancelados
     const activeStatus = "Entregado";
 
     filteredSalidas = allSalidas.filter(salida => {
         const estado = salida.estado || 'Pendiente';
-        const matchesSearch = searchTerm === "" || 
+        const matchesSearch = searchTerm === "" ||
             salida.sku.toLowerCase().includes(searchTerm) ||
             salida.nombre_producto.toLowerCase().includes(searchTerm) ||
             (salida.observaciones && salida.observaciones.toLowerCase().includes(searchTerm));
@@ -103,7 +103,7 @@ function aplicarFiltros() {
     });
 
     // Ordenar
-    switch(ordenar) {
+    switch (ordenar) {
         case 'fecha_desc':
             filteredSalidas.sort((a, b) => {
                 const dateA = new Date(a.fecha_salida + ' ' + a.hora_salida);
@@ -135,7 +135,7 @@ function aplicarFiltros() {
 function renderSalidas() {
     const $salidasGrid = $("#salidas-grid");
     const $noResults = $("#noResults");
-    
+
     $salidasGrid.empty();
 
     if (filteredSalidas.length === 0) {
@@ -165,7 +165,7 @@ function renderSalidas() {
 function getBadgeEstado(estado, fechaEntrega = null) {
     // Ya no hay lógica de vencimiento porque todo es entregado
     let badgeEstado = '';
-    switch(estado) {
+    switch (estado) {
         case 'Entregado':
             badgeEstado = `<span class="badge bg-success bg-opacity-10 text-success border border-success-subtle rounded-pill px-3"><i class="fas fa-check-circle me-1"></i>Entregado</span>`;
             break;
@@ -187,7 +187,7 @@ function getBadgeEstado(estado, fechaEntrega = null) {
 // Verificar si puede devolver (frontend)
 function puedeDevolver(salida) {
     const estado = salida.estado || 'Pendiente';
-    
+
     // No puede devolver si ya está cancelado
     if (estado === 'Cancelado') {
         return {
@@ -200,11 +200,11 @@ function puedeDevolver(salida) {
     if (salida.fecha_salida) {
         const fechaSalida = new Date(salida.fecha_salida + 'T00:00:00');
         const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0); 
-        
+        hoy.setHours(0, 0, 0, 0);
+
         const diffTime = hoy - fechaSalida;
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        
+
         if (diffDays > 7) {
             return {
                 puede: false,
@@ -232,23 +232,23 @@ function crearCardSalida(salida) {
     const total = parseFloat(salida.total);
     const subtotal = parseFloat(salida.subtotal);
     const descuento = parseFloat(salida.descuento || 0);
-    
+
     // Formatear fecha y hora
     const fechaSalida = new Date(salida.fecha_salida + ' ' + salida.hora_salida);
-    const fechaFormateada = fechaSalida.toLocaleDateString('es-ES', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+    const fechaFormateada = fechaSalida.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
     });
     const horaFormateada = salida.hora_salida;
 
     // Manejar imagen
     const imagenSrc = salida.imagen ? `${ruta}${salida.imagen}` : `${ruta}default.png`;
-    
+
     // Estado de la salida
     const estado = salida.estado || 'Pendiente';
     const badgeEstado = getBadgeEstado(estado);
-    
+
     // Info de cancelación/devolución para la card
     let infoExtraCard = '';
     if (estado === 'Cancelado' && salida.fecha_cancelacion) {
@@ -271,7 +271,7 @@ function crearCardSalida(salida) {
             </div>
         `;
     }
-    
+
     // Verificar si puede devolver
     const validacionDevolucion = puedeDevolver(salida);
     const puedeDevol = validacionDevolucion.puede;
@@ -360,7 +360,7 @@ function renderPagination() {
     const totalPages = Math.ceil(filteredSalidas.length / itemsPerPage);
     const $pagination = $("#pagination");
     const $paginationContainer = $("#paginationContainer");
-    
+
     $pagination.empty();
 
     if (totalPages <= 1) {
@@ -382,8 +382,8 @@ function renderPagination() {
     // Números de página
     for (let i = 1; i <= totalPages; i++) {
         if (
-            i === 1 || 
-            i === totalPages || 
+            i === 1 ||
+            i === totalPages ||
             (i >= currentPage - 1 && i <= currentPage + 1)
         ) {
             $pagination.append(`
@@ -412,9 +412,9 @@ function verDetalleSalida(id) {
         url: "app/controllers/salidaController.php",
         method: "POST",
         dataType: "json",
-        data: { 
+        data: {
             accion: "obtenerDetalleSalida",
-            id: id 
+            id: id
         },
         success: function (response) {
             if (response.status === "success") {
@@ -446,18 +446,18 @@ function mostrarModalDetalle(salida) {
     const subtotal = parseFloat(salida.subtotal);
     const descuento = parseFloat(salida.descuento || 0);
     const precioUnitario = parseFloat(salida.precio_unitario);
-    
+
     const fechaSalida = new Date(salida.fecha_salida + ' ' + salida.hora_salida);
-    const fechaFormateada = fechaSalida.toLocaleDateString('es-ES', { 
+    const fechaFormateada = fechaSalida.toLocaleDateString('es-ES', {
         weekday: 'long',
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
     });
 
     // Manejar imagen
     const imagenSrc = salida.imagen ? `${ruta}${salida.imagen}` : `${ruta}default.png`;
-    
+
     const estado = salida.estado || 'Pendiente';
     const badgeEstado = getBadgeEstado(estado, salida.fecha_entrega);
 
@@ -465,8 +465,8 @@ function mostrarModalDetalle(salida) {
     const validacion = puedeDevolver(salida);
     let infoDevolucion = '';
     if (estado === 'Cancelado') {
-        const fechaCanc = salida.fecha_cancelacion ? new Date(salida.fecha_cancelacion).toLocaleDateString('es-ES', { 
-            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+        const fechaCanc = salida.fecha_cancelacion ? new Date(salida.fecha_cancelacion).toLocaleDateString('es-ES', {
+            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
         }) : 'No registrada';
 
         infoDevolucion = `
@@ -484,7 +484,7 @@ function mostrarModalDetalle(salida) {
             </div>
         `;
     }
- else if (!validacion.puede) {
+    else if (!validacion.puede) {
         infoDevolucion = `
             <div class="alert alert-warning mb-3">
                 <i class="fas fa-exclamation-triangle me-2"></i>
@@ -553,8 +553,8 @@ function mostrarModalDetalle(salida) {
                     <h6 class="fw-bold small mb-2 text-danger"><i class="fas fa-history me-1"></i>HISTORIAL DE CAMBIOS / DEVOLUCIONES</h6>
                     <div class="list-group list-group-flush border rounded shadow-sm overflow-hidden">
                         ${salida.historial_devoluciones.map(dev => {
-                            const fDev = new Date(dev.fecha_registro);
-                            return `
+        const fDev = new Date(dev.fecha_registro);
+        return `
                                 <div class="list-group-item list-group-item-action py-2">
                                     <div class="d-flex w-100 justify-content-between align-items-center">
                                         <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle rounded-pill">
@@ -565,7 +565,7 @@ function mostrarModalDetalle(salida) {
                                     <p class="mb-0 small mt-1 text-secondary">${dev.motivo || 'Sin motivo registrado'}</p>
                                 </div>
                             `;
-                        }).join('')}
+    }).join('')}
                     </div>
                 </div>
                 ` : ''}
@@ -647,11 +647,11 @@ function mostrarModalDetalle(salida) {
     `;
 
     $("#detalleContent").html(contenido);
-    
+
     // El footer ya no necesita inyección dinámica para acciones principales,
     // pero podemos limpiarlo para evitar duplicados residuales.
     $("#modalDetalleSalida .modal-footer .btnDevolverSalida, #modalDetalleSalida .modal-footer .alert-devolucion").remove();
-    
+
     const modalElement = document.getElementById('modalDetalleSalida');
     const modal = new bootstrap.Modal(modalElement);
     modal.show();
@@ -685,7 +685,7 @@ function devolverSalida(id, cantidadOriginal, idVariante, nombreProducto) {
         preConfirm: () => {
             const cantidad = Swal.getPopup().querySelector('#cantidadDevolver').value;
             const motivo = Swal.getPopup().querySelector('#motivoDevolucion').value || 'Devolución solicitada por usuario';
-            
+
             if (!cantidad || cantidad <= 0) {
                 Swal.showValidationMessage('Debe ingresar una cantidad válida');
             } else if (parseInt(cantidad) > parseInt(cantidadOriginal)) {
@@ -712,7 +712,7 @@ function procesarDevolucion(id, cantidad, motivo = "") {
             accion: "devolverSalida",
             id: id,
             motivo: motivo,
-            cantidad: cantidad 
+            cantidad: cantidad
         },
         success: function (response) {
             if (response.status === "success") {
@@ -766,7 +766,7 @@ function updateResultCount() {
     }
 }
 
-// Exportar Historial a PDF (Respeta Filtros)
+//Reporte de salidas a PDF
 async function exportarSalidasPDF() {
     if (filteredSalidas.length === 0) {
         Swal.fire({
@@ -782,141 +782,202 @@ async function exportarSalidasPDF() {
         title: 'Generando Reporte PDF',
         text: 'Por favor espere...',
         allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
+        didOpen: () => Swal.showLoading()
     });
 
     try {
+        // ─── Métricas ────────────────────────────────────────────────────────
         const totalMonto = filteredSalidas.reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+        const totalDescuento = filteredSalidas.reduce((sum, s) => sum + parseFloat(s.descuento || 0), 0);
         const totalUnidades = filteredSalidas.reduce((sum, s) => sum + parseInt(s.cantidad || 0), 0);
-        
-        let activeTab = $("#salidasTabs .nav-link.active").text().trim();
-        const fechaDesc = `Desde: ${$("#fechaDesde").val() || 'Inicio'} Hasta: ${$("#fechaHasta").val() || 'Hoy'}`;
+        const subtotalBruto = totalMonto + totalDescuento;
+        const fechaDesc = `Desde: ${$("#fechaDesde").val() || 'Inicio'}   Hasta: ${$("#fechaHasta").val() || 'Hoy'}`;
+        const busqueda = $("#searchInput").val() || 'Ninguna';
+        const fechaArchivo = new Date().toISOString().split('T')[0];
 
+        // ─── Helpers ─────────────────────────────────────────────────────────
+        const cell = (text, opts = {}) => ({
+            text: String(text ?? 'N/A'),
+            fontSize: 8,
+            ...opts
+        });
+
+        const headerCell = (text) => ({
+            text,
+            style: 'tableHeader'
+        });
+
+        const colorEstado = (estado) => {
+            const mapa = {
+                'Entregado': '#28a745',
+                'Cancelado': '#dc3545',
+                'En camino': '#fd7e14',
+                'Pendiente': '#ffc107'
+            };
+            return mapa[estado] || '#6c757d';
+        };
+
+        // ─── Filas de datos ──────────────────────────────────────────────────
+        const filasDatos = filteredSalidas.map((s) => [
+            cell(s.id, { alignment: 'center', color: '#555' }),
+            cell(s.fecha_salida, { alignment: 'center' }),
+            cell(s.nombre_producto),
+            cell(s.sku, { alignment: 'center', fontSize: 7 }),
+            cell(s.cantidad, { alignment: 'center' }),
+            cell('$' + parseFloat(s.precio_unitario).toFixed(2), { alignment: 'right' }),
+            cell('$' + parseFloat(s.descuento || 0).toFixed(2), { alignment: 'right', color: '#dc3545' }),
+            cell('$' + parseFloat(s.total).toFixed(2), { alignment: 'right', bold: true }),
+            {
+                text: (s.estado || 'Pendiente').toUpperCase(),
+                fontSize: 7,
+                bold: true,
+                alignment: 'center',
+                color: colorEstado(s.estado)
+            },
+            cell(s.usuario || 'N/A')
+        ]);
+
+        // ─── Fila de totales ─────────────────────────────────────────────────
+        const filaTotales = [
+            { text: '', fontSize: 8 },
+            { text: '', fontSize: 8 },
+            { text: `TOTALES (${filteredSalidas.length} registros)`, fontSize: 8, bold: true, colSpan: 2, alignment: 'right' },
+            {},
+            { text: String(totalUnidades), fontSize: 8, bold: true, alignment: 'center' },
+            { text: '', fontSize: 8 },
+            { text: '-$' + totalDescuento.toFixed(2), fontSize: 8, bold: true, alignment: 'right', color: '#dc3545' },
+            { text: '$' + totalMonto.toFixed(2), fontSize: 9, bold: true, alignment: 'right', color: '#0b5ee1' },
+            { text: '', fontSize: 8 },
+            { text: '', fontSize: 8 }
+        ];
+
+        // ─── Documento ───────────────────────────────────────────────────────
         const docDefinition = {
             pageSize: 'A4',
             pageOrientation: 'landscape',
-            pageMargins: [30, 40, 30, 40],
-            header: function(currentPage, pageCount) {
-                return {
-                    text: 'AX STORE - Reporte de Historial de Salidas',
-                    alignment: 'center',
-                    margin: [0, 15, 0, 0],
-                    fontSize: 8,
-                    color: '#999'
-                };
-            },
-            footer: function(currentPage, pageCount) {
-                return {
-                    text: `Página ${currentPage} de ${pageCount}`,
-                    alignment: 'center',
-                    margin: [0, 10, 0, 0],
-                    fontSize: 8
-                };
-            },
+            pageMargins: [30, 45, 30, 40],
+
+            header: (currentPage, pageCount) => ({
+                columns: [
+                    { text: 'AX STORE - Reporte de Historial de Salidas', fontSize: 8, color: '#999', margin: [30, 15, 0, 0] },
+                    { text: `Pág. ${currentPage} / ${pageCount}`, fontSize: 8, color: '#999', alignment: 'right', margin: [0, 15, 30, 0] }
+                ]
+            }),
+
+            footer: () => ({
+                text: `Generado el ${new Date().toLocaleString()} — AX STORE`,
+                alignment: 'center',
+                fontSize: 7,
+                color: '#bbb',
+                margin: [0, 10, 0, 0]
+            }),
+
             content: [
+                // ─── Título ──────────────────────────────────────────────────
                 {
                     columns: [
                         { text: 'REPORTE DE SALIDAS', style: 'mainHeader' },
-                        { 
-                            text: [
-                                { text: 'Fecha Generación: ', bold: true },
-                                new Date().toLocaleString()
-                            ], 
-                            alignment: 'right', 
-                            fontSize: 9,
-                            margin: [0, 5, 0, 0]
+                        {
+                            stack: [
+                                { text: 'Fecha de Generación', fontSize: 7, color: '#999' },
+                                { text: new Date().toLocaleString(), fontSize: 9, bold: true }
+                            ],
+                            alignment: 'right',
+                            margin: [0, 4, 0, 0]
                         }
                     ]
                 },
-                {
-                    canvas: [{ type: 'line', x1: 0, y1: 5, x2: 780, y2: 5, lineWidth: 1, lineColor: '#0b5ee1' }]
-                },
+                { canvas: [{ type: 'line', x1: 0, y1: 4, x2: 781, y2: 4, lineWidth: 2, lineColor: '#0b5ee1' }] },
                 { text: '\n' },
+
+                // ─── Resumen en 2 columnas (sin canvas separador) ─────────────────────
                 {
                     columns: [
                         {
                             stack: [
                                 { text: 'FILTROS APLICADOS', style: 'sectionTitle' },
-                                { text: `Pestaña: ${activeTab}`, fontSize: 9 },
-                                { text: `Rango: ${fechaDesc}`, fontSize: 9 },
-                                { text: `Búsqueda: ${$("#searchInput").val() || 'Ninguna'}`, fontSize: 9 }
-                            ]
+                                { text: `Rango de fechas: ${fechaDesc}`, fontSize: 8 },
+                                { text: `Búsqueda activa: ${busqueda}`, fontSize: 8 }
+                            ],
+                            width: '*'
                         },
                         {
                             stack: [
                                 { text: 'RESUMEN GENERAL', style: 'sectionTitle', alignment: 'right' },
-                                { text: `Total Salidas: ${filteredSalidas.length}`, alignment: 'right', fontSize: 9 },
-                                { text: `Cant. Total Unidades: ${totalUnidades}`, alignment: 'right', fontSize: 9 },
-                                { text: `Monto Acumulado: $${totalMonto.toFixed(2)}`, alignment: 'right', fontSize: 11, bold: true, color: '#0b5ee1' }
-                            ]
+                                { text: `Registros: ${filteredSalidas.length}   |   Unidades: ${totalUnidades}`, alignment: 'right', fontSize: 8 },
+                                { text: `Subtotal bruto: $${subtotalBruto.toFixed(2)}`, alignment: 'right', fontSize: 8, color: '#555' },
+                                { text: `Descuentos aplicados: -$${totalDescuento.toFixed(2)}`, alignment: 'right', fontSize: 8, color: '#dc3545' },
+                               // { canvas: [{ type: 'line', x1: 0, y1: 3, x2: 200, y2: 3, lineWidth: 0.5, lineColor: '#ccc' }], margin: [0, 2, 0, 2] },
+                                { text: `Total Neto: $${totalMonto.toFixed(2)}`, alignment: 'right', fontSize: 13, bold: true, color: '#0b5ee1' }
+                            ],
+                            width: '*',
+                            margin: [20, 0, 0, 0]
                         }
                     ]
                 },
                 { text: '\n' },
+
+                // ─── Tabla principal ──────────────────────────────────────────
                 {
                     table: {
                         headerRows: 1,
-                        widths: [40, 60, '*', 50, 40, 50, 50, 60, 60, 60],
+                        widths: [30, 55, '*', 50, 35, 52, 55, 58, 58, 55],
                         body: [
                             [
-                                { text: 'ID', style: 'tableHeader' },
-                                { text: 'FECHA', style: 'tableHeader' },
-                                { text: 'PRODUCTO', style: 'tableHeader' },
-                                { text: 'SKU', style: 'tableHeader' },
-                                { text: 'CANT', style: 'tableHeader' },
-                                { text: 'PRECIO', style: 'tableHeader' },
-                                { text: 'ENVÍO', style: 'tableHeader' },
-                                { text: 'TOTAL', style: 'tableHeader' },
-                                { text: 'ESTADO', style: 'tableHeader' },
-                                { text: 'USUARIO', style: 'tableHeader' }
+                                headerCell('ID'),
+                                headerCell('FECHA'),
+                                headerCell('PRODUCTO'),
+                                headerCell('SKU'),
+                                headerCell('CANT'),
+                                headerCell('P. UNIT'),
+                                headerCell('DESCUENTO'),
+                                headerCell('TOTAL'),
+                                headerCell('ESTADO'),
+                                headerCell('USUARIO')
                             ],
-                            ...filteredSalidas.map(s => [
-                                { text: s.id, alignment: 'center', fontSize: 8 },
-                                { text: s.fecha_salida, alignment: 'center', fontSize: 8 },
-                                { text: s.nombre_producto, fontSize: 8 },
-                                { text: s.sku, alignment: 'center', fontSize: 7 },
-                                { text: s.cantidad, alignment: 'center', fontSize: 8 },
-                                { text: '$' + parseFloat(s.precio_unitario).toFixed(2), alignment: 'right', fontSize: 8 },
-                                { text: '$' + parseFloat(s.precio_envio || 0).toFixed(2), alignment: 'right', fontSize: 8 },
-                                { text: '$' + parseFloat(s.total).toFixed(2), alignment: 'right', fontSize: 8, bold: true },
-                                { 
-                                    text: s.estado.toUpperCase(), 
-                                    alignment: 'center', 
-                                    fontSize: 7, 
-                                    bold: true,
-                                    color: s.estado === 'Entregado' ? '#28a745' : s.estado === 'Cancelado' ? '#dc3545' : '#ffc107'
-                                },
-                                { text: s.usuario || 'N/A', fontSize: 8 }
-                            ])
+                            ...filasDatos,
+                            filaTotales
                         ]
                     },
                     layout: {
-                        fillColor: function (rowIndex, node, columnIndex) {
-                            return (rowIndex % 2 === 0) ? '#f8f9fa' : null;
+                        fillColor: (rowIndex, node) => {
+                            if (rowIndex === 0) return null;
+                            if (rowIndex === node.table.body.length - 1) return '#e8f0fe'; // fila totales
+                            return rowIndex % 2 === 0 ? '#f8f9fa' : null;
                         },
-                        hLineWidth: function (i, node) { return (i === 0 || i === node.table.body.length) ? 0.5 : 0.1; },
-                        vLineWidth: function (i, node) { return 0; },
-                        hLineColor: function (i, node) { return '#e2e8f0'; }
+                        hLineWidth: (i, node) => (i === 0 || i === node.table.body.length) ? 1 : 0.2,
+                        vLineWidth: () => 0,
+                        hLineColor: () => '#d0d7e2',
+                        paddingTop: () => 4,
+                        paddingBottom: () => 4
                     }
                 }
             ],
+
             styles: {
-                mainHeader: { fontSize: 18, bold: true, color: '#0b5ee1' },
-                sectionTitle: { fontSize: 10, bold: true, color: '#333', margin: [0, 0, 0, 5] },
+                mainHeader: {
+                    fontSize: 20,
+                    bold: true,
+                    color: '#0b5ee1',
+                    margin: [0, 0, 0, 4]
+                },
+                sectionTitle: {
+                    fontSize: 9,
+                    bold: true,
+                    color: '#333',
+                    margin: [0, 0, 0, 4]
+                },
                 tableHeader: {
                     bold: true,
-                    fontSize: 9,
+                    fontSize: 8,
                     color: 'white',
                     fillColor: '#0b5ee1',
                     alignment: 'center',
-                    margin: [0, 2, 0, 2]
+                    margin: [0, 3, 0, 3]
                 }
             }
         };
 
-        const fechaArchivo = new Date().toISOString().split('T')[0];
         window.pdfMake.createPdf(docDefinition).download(`Reporte_Salidas_${fechaArchivo}.pdf`);
         Swal.close();
 
@@ -936,7 +997,6 @@ async function exportarSalidasPDF() {
         Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar el reporte PDF' });
     }
 }
-
 // Cambiar estado con confirmación
 function cambiarEstadoSalida(id, nuevoEstado, accionNombre) {
     Swal.fire({
@@ -970,7 +1030,7 @@ function cambiarEstadoSalida(id, nuevoEstado, accionNombre) {
                     nuevo_estado: nuevoEstado,
                     motivo: motivo // Pasamos el motivo
                 },
-                success: function(response) {
+                success: function (response) {
                     if (response.status === "success") {
                         Swal.fire({
                             icon: 'success',
@@ -987,7 +1047,7 @@ function cambiarEstadoSalida(id, nuevoEstado, accionNombre) {
                         Swal.fire('Error', response.message, 'error');
                     }
                 },
-                error: function() {
+                error: function () {
                     Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
                 }
             });
@@ -1000,9 +1060,9 @@ function setupEvents() {
     // Filtros
     $("#searchInput").on("keyup", aplicarFiltros);
     $("#fechaDesde, #fechaHasta, #ordenar").on("change", aplicarFiltros);
-    
+
     // Limpiar filtros
-    $("#btnLimpiarFiltros").on("click", function() {
+    $("#btnLimpiarFiltros").on("click", function () {
         $("#searchInput").val("");
         setFechasIniciales();
         $("#ordenar").val("fecha_desc");
@@ -1010,7 +1070,7 @@ function setupEvents() {
     });
 
     // Estadísticas interactivas
-    $("#totalSalidas").closest(".stat-card").on("click", function() {
+    $("#totalSalidas").closest(".stat-card").on("click", function () {
         $("#searchInput").val("");
         setFechasIniciales();
         $("#ordenar").val("fecha_desc");
@@ -1018,13 +1078,13 @@ function setupEvents() {
         Swal.fire({ icon: 'info', title: 'Filtros Reiniciados', text: 'Viendo todas las salidas', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
     });
 
-    $("#montoTotal").closest(".stat-card").on("click", function() {
+    $("#montoTotal").closest(".stat-card").on("click", function () {
         $("#ordenar").val("monto_desc");
         aplicarFiltros();
         Swal.fire({ icon: 'info', title: 'Ordenado por Monto', text: 'Filtrando por mayores ingresos', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
     });
 
-    $("#salidasHoy").closest(".stat-card").on("click", function() {
+    $("#salidasHoy").closest(".stat-card").on("click", function () {
         const hoy = new Date().toISOString().split('T')[0];
         $("#fechaDesde, #fechaHasta").val(hoy);
         $("#ordenar").val("fecha_desc");
@@ -1042,22 +1102,22 @@ function setupEvents() {
     });
 
     // Ver detalle
-    $(document).on("click", ".btnVerDetalle", function() {
+    $(document).on("click", ".btnVerDetalle", function () {
         const id = $(this).data("id");
         verDetalleSalida(id);
     });
 
     // Acción de botones de estado (Despachar, Entregar)
-    $(document).on("click", ".btnCambiarEstado", function() {
+    $(document).on("click", ".btnCambiarEstado", function () {
         const id = $(this).data("id");
         const nuevoEstado = $(this).data("nuevo-estado");
         const accionNombre = $(this).data("accion");
-        
+
         cambiarEstadoSalida(id, nuevoEstado, accionNombre);
     });
 
     // Devolver salida
-    $(document).on("click", ".btnDevolverSalida", function() {
+    $(document).on("click", ".btnDevolverSalida", function () {
         const id = $(this).data("id");
         const cantidad = $(this).data("cantidad");
         const idVariante = $(this).data("variante");
@@ -1067,7 +1127,7 @@ function setupEvents() {
     });
 
     // Paginación
-    $(document).on("click", ".pagination .page-link", function(e) {
+    $(document).on("click", ".pagination .page-link", function (e) {
         e.preventDefault();
         const page = parseInt($(this).data("page"));
         if (page && page !== currentPage) {
@@ -1078,7 +1138,7 @@ function setupEvents() {
     });
 
     // Imprimir detalle (Ticket PDF)
-    $("#btnImprimirDetalle").on("click", function() {
+    $("#btnImprimirDetalle").on("click", function () {
         if (currentSalidaDetail) {
             generarPDFTicket(currentSalidaDetail);
         } else {
@@ -1124,12 +1184,15 @@ async function generarPDFTicket(salida) {
     });
 
     try {
-        // En este archivo 'ruta' ya está definido arriba
         const imgUrl = salida.imagen ? `${ruta}${salida.imagen}` : `${ruta}default.png`;
         const base64Img = await getBase64ImageFromURL(imgUrl);
 
+        // Logo de la empresa (puedes cambiar la ruta)
+        const logoUrl = `${ruta}logo.png`;
+        const base64Logo = await getBase64ImageFromURL(logoUrl);
+
         const docDefinition = {
-            pageSize: { width: 226.77, height: 'auto' }, // ~80mm width
+            pageSize: { width: 226.77, height: 'auto' },
             pageMargins: [10, 10, 10, 10],
             content: [
                 { text: 'AX STORE', style: 'storeName' },
@@ -1145,7 +1208,13 @@ async function generarPDFTicket(salida) {
                 {
                     columns: [
                         { text: 'Fecha:', bold: true, fontSize: 8 },
-                        { text: salida.fecha_salida + ' ' + salida.hora_salida, alignment: 'right', fontSize: 8 }
+                        { text: salida.fecha_salida, alignment: 'right', fontSize: 8 }
+                    ]
+                },
+                {
+                    columns: [
+                        { text: 'Hora:', bold: true, fontSize: 8 },
+                        { text: salida.hora_salida, alignment: 'right', fontSize: 8 }
                     ]
                 },
                 {
@@ -1175,6 +1244,10 @@ async function generarPDFTicket(salida) {
                                 { text: salida.cantidad + ' x $' + parseFloat(salida.precio_unitario).toFixed(2), alignment: 'right', fontSize: 8 }
                             ],
                             [
+                                { text: 'Descuento', fontSize: 8 },
+                                { text: '$' + parseFloat(salida.descuento || 0).toFixed(2), alignment: 'right', fontSize: 8 }
+                            ],
+                            [
                                 { text: 'Subtotal', bold: true, fontSize: 8 },
                                 { text: '$' + parseFloat(salida.subtotal).toFixed(2), alignment: 'right', bold: true, fontSize: 8 }
                             ]
@@ -1183,32 +1256,16 @@ async function generarPDFTicket(salida) {
                     layout: 'noBorders'
                 },
                 { text: '\n' },
-                { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 206.77, y2: 0, lineWidth: 0.5 }] },
-                { text: 'ENVÍO / ENTREGA', style: 'sectionHeader' },
-                { text: 'Dirección:', bold: true, fontSize: 7 },
-                { text: salida.direccion_entrega || 'N/A', fontSize: 7, margin: [0, 0, 0, 5] },
-                {
-                    columns: [
-                        { text: 'Fecha Est. Entrega:', bold: true, fontSize: 7 },
-                        { text: salida.fecha_entrega || 'N/A', alignment: 'right', fontSize: 7 }
-                    ]
-                },
-                { text: '\n' },
+
+                // ✅ SECCIÓN: TOTAL A PAGAR (antes era Envío/Entrega)
                 { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 206.77, y2: 0, lineWidth: 1 }] },
+                { text: 'TOTAL A PAGAR', style: 'sectionHeader' },
                 {
                     table: {
                         widths: ['*', 'auto'],
                         body: [
                             [
-                                { text: 'Gastos de Envío', fontSize: 8 },
-                                { text: '$' + parseFloat(salida.precio_envio || 0).toFixed(2), alignment: 'right', fontSize: 8 }
-                            ],
-                            [
-                                { text: 'Costo Extra', fontSize: 8 },
-                                { text: '$' + parseFloat(salida.costo_extra || 0).toFixed(2), alignment: 'right', fontSize: 8 }
-                            ],
-                            [
-                                { text: 'TOTAL A PAGAR', style: 'totalLabel' },
+                                { text: 'Total', style: 'totalLabel' },
                                 { text: '$' + parseFloat(salida.total).toFixed(2), style: 'totalValue' }
                             ]
                         ]
@@ -1217,6 +1274,16 @@ async function generarPDFTicket(salida) {
                     margin: [0, 5, 0, 5]
                 },
                 { text: '\n' },
+
+                // ✅ SECCIÓN: LOGO DE LA EMPRESA (antes era el Total)
+                { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 206.77, y2: 0, lineWidth: 0.5 }] },
+                base64Logo ? {
+                    image: base64Logo,
+                    width: 80,
+                    alignment: 'center',
+                    margin: [0, 10, 0, 10]
+                } : { text: 'AX STORE', alignment: 'center', fontSize: 14, bold: true, margin: [0, 10, 0, 10] },
+
                 { text: '¡Gracias por su preferencia!', alignment: 'center', fontSize: 8, italic: true },
                 { text: 'AX STORE', alignment: 'center', fontSize: 7, margin: [0, 10, 0, 0], color: '#aaa' }
             ],

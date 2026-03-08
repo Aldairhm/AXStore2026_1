@@ -107,7 +107,7 @@
                                                     <th width="120px">SKU</th>
                                                     <th width="120px">Imagen</th>
                                                     <th width="100px">P. Venta</th>
-                                                    <th width="80px">Stock</th>
+                                                    <th width="80px">Tienda</th>
                                                     <th width="80px">Reserva</th>
                                                     <th width="80px">Comision</th>
                                                     <th width="40px"></th>

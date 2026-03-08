@@ -106,7 +106,7 @@ class Salida
                     s.precio_unitario, s.subtotal, s.precio_envio, s.costo_extra,
                     s.total, s.fecha_salida, s.hora_salida, s.fecha_entrega,
                     s.direccion, s.observaciones, s.estado, s.fecha_cancelacion,
-                    s.created_at,
+                    s.created_at, s.descuento,
                     v.sku,
                     vi.ruta_imagen         as imagen,
                     v.nombre_variante      as nombre_producto,
